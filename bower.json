@@ -1,0 +1,23 @@
+{
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "~1.3.15",
+    "angular-filter": "~0.5.4",
+    "angular-moment": "~0.10.0",
+    "bootstrap": "~3.3.4",
+    "angular-sails": "~1.1.3",
+    "toastr": "~2.1.1",
+    "font-awesome": "~4.3.0",
+    "vex": "~2.3.2"
+  },
+  "name": "home",
+  "version": "0.0.0",
+  "author": "anonymous node/sails user",
+  "private": true
+}
