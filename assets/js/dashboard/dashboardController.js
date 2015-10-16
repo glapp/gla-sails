@@ -1,9 +1,24 @@
 /**
  * Created by Fabio on 05.02.2015.
  */
-var clabshomeApp = angular.module('clabshomeApp', ['ngSails', 'angularMoment', 'angular.filter']);
 
-clabshomeApp.controller('clabsController', function ($scope, $sails, $filter, $http, moment) {
+(function () {
+  'use strict';
+
+  angular.module('glaPilotApp')
+    .controller('dashboardController', dashboardController);
+
+  dashboardController.$inject = ["$scope", "ngSails"];
+
+  function dashboardController($scope, $sails) {
+
+
+
+  }
+
+})();
+
+/*clabshomeApp.controller('clabsController', function ($scope, $sails, $filter, $http, moment) {
   // User
   var getUsers = function () {
     $sails.get('/user/getUsersInclBalance')
