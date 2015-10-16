@@ -16,8 +16,7 @@ module.exports = function (grunt) {
       options: {
         targetDir: './assets/vendor',
         layout: function (type, component, source) {
-          if (component == 'sails.io.js') return 'sails-io-js';
-          if (component == 'vex') return 'vex';
+          if (component == 'sails.io.js') return '';
           var pathc = path.parse(source);
           return path.normalize(pathc.dir);
         },
