@@ -8,11 +8,22 @@
 module.exports = {
 
   attributes: {
-    username: {
+    email: {
+      type: 'email',
+      required: true,
+      unique: true
+    },
+    encryptedPassword: {
       type: 'string',
       required: true
     },
-    password: {
+    lastLoggedIn: {
+      type: 'date',
+      required: true,
+      defaultsTo: new Date(0)
+    },
+    // url for gravatar
+    gravatarUrl: {
       type: 'string'
     }
   }

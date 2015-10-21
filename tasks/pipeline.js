@@ -15,7 +15,8 @@
 // (if you're using LESS with the built-in default config, you'll want
 //  to change `assets/styles/importer.less` instead.)
 var cssFilesToInject = [
-  'styles/**/*.css'
+  'styles/**/*.css',
+  'vendor/**/*.css'
 ];
 
 
@@ -29,10 +30,12 @@ var jsFilesToInject = [
   // Dependencies like jQuery, or Angular are brought in here
   'vendor/**/jquery.js',
   'vendor/**/angular.js',
+  'js/dependencies/**/*.js',
   'vendor/**/*.js',
 
-  // Load Angular Module
-  'js/app.module.js',
+  // Load Angular Modules
+  'js/public/**/*.Module.js',
+  'js/private/**/*.Module.js',
 
   // All of the rest of your client-side js files
   // will be injected here in no particular order.

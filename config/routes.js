@@ -32,12 +32,21 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  '/': {
-    view: 'dashboard'
-  },
-  '/users': {
-    view: 'users'
-  }
+  ////////////////////////////////////////////////////////////
+  // Server-rendered HTML webpages
+  ////////////////////////////////////////////////////////////
+
+  'GET /signup': {view: 'signup'},
+  'GET /': 'PageController.showHomePage',
+
+  ////////////////////////////////////////////////////////////
+  // JSON API
+  ////////////////////////////////////////////////////////////
+
+  // User enrollment + authentication
+  'POST /signup': 'UserController.signup',
+  'PUT /login': 'UserController.login',
+  'GET /logout': 'UserController.logout'
 
   /***************************************************************************
   *                                                                          *

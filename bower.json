@@ -18,6 +18,8 @@
   "dependencies": {
     "angular": "~1.4.7",
     "bootstrap": "~3.3.5",
-    "angular-sails": "~1.1.4"
+    "angular-sails": "~1.1.4",
+    "font-awesome": "~4.4.0",
+    "angular-toastr": "~1.5.0"
   }
 }

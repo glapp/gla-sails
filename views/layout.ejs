@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="gla-pilot">
+<html>
   <head>
     <title>GLA pilot</title>
 
@@ -29,34 +29,57 @@
 
     <!--STYLES-->
     <link rel="stylesheet" href="/styles/importer.css">
+    <link rel="stylesheet" href="/vendor/bower_components/angular-toastr/dist/angular-toastr.css">
     <!--STYLES END-->
+
+    <!--Added this so the client has access to the csrf tag and it's grabbed first service side on every page -->
+    <script type="text/javascript">
+      window.SAILS_LOCALS = { _csrf: "<%= _csrf %>" };
+    </script>
   </head>
   <body>
-  <nav class="navbar navbar-inverse navbar-fixed-top">
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+  <!-- Creates the navbar -->
+  <nav ng-app="HomepageModule" ng-controller="HomepageController" class="navbar navbar-default navbar-inverse">
+
+    <!-- This creates the mechanism for the collapse button -->
+    <button type="button" class="navbar-toggle" data-toggle="collapse" ng-init="navCollapsed = true" ng-click="navCollapsed = !navCollapsed">
+
+      <!-- This controls the number of lines in the image when the nav collapse -->
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+
+    <!-- This is the brand on the left-hand side. -->
+    <a class="navbar-brand" href="/#">GLA Pilot</a>
+    <div class="collapse navbar-collapse" ng-class="!navCollapsed && 'in'">
+
+      <!-- LOGIN FORM -->
+      <div ng-hide="loggedIn">
+        <form ng-submit="submitLoginForm()" class="navbar-form navbar-right">
+
+          <!-- E M A I L -->
+          <div class="form-group">
+            <input ng-model="loginForm.email" type="text" placeholder="Email" name="email" class="form-control">
+          </div>
+
+          <!-- P A S S W O R D -->
+          <div class="form-group">
+            <input ng-model="loginForm.password" type="password" placeholder="Password" name="password" class="form-control">
+          </div>
+
+          <!-- S U B M I T -->
+          <button type="submit" class="btn btn-success">
+            <span ng-show="!loginForm.loading">Sign in</span>
+            <span ng-show="loginForm.loading" class="fa fa-spinner"></span>
+            <span ng-show="loginForm.loading">Signing up...</span>
           </button>
-          <a class="navbar-brand" href="#">GLA - pilot</a>
-        </div>
-        <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="/users">Users</a></li>
-            <!--<li><a href="#">Dashboard</a></li>
-            <li><a href="#">Settings</a></li>
-            <li><a href="#">Profile</a></li>
-            <li><a href="#">Help</a></li>-->
-          </ul>
-          <!--<form class="navbar-form navbar-right">
-            <input type="text" class="form-control" placeholder="Search...">
-          </form>-->
-        </div>
+          <a href="/signup" class="btn btn-info">Sign up</a>
+          <input type="hidden" name="_csrf" value="<%= _csrf %>" />
+        </form>
       </div>
-    </nav>
+    </div>
+  </nav>
 
   <%- body %>
 
@@ -115,13 +138,18 @@
     <script src="/vendor/sails.io.js"></script>
     <script src="/vendor/bower_components/jquery/dist/jquery.js"></script>
     <script src="/vendor/bower_components/angular/angular.js"></script>
+    <script src="/js/dependencies/compareTo.module.js"></script>
     <script src="/vendor/bower_components/angular-sails/dist/angular-sails.js"></script>
+    <script src="/vendor/bower_components/angular-toastr/dist/angular-toastr.tpls.js"></script>
     <script src="/vendor/bower_components/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="/js/app.module.js"></script>
-    <script src="/js/dashboard/dashboardController.js"></script>
-    <script src="/js/dashboard/dashboardService.js"></script>
-    <script src="/js/users/usersController.js"></script>
-    <script src="/js/users/usersService.js"></script>
+    <script src="/js/public/homepage/Homepage.Module.js"></script>
+    <script src="/js/public/signup/Signup.Module.js"></script>
+    <script src="/js/public/users/Users.Module.js"></script>
+    <script src="/js/private/dashboard/dashboard.Module.js"></script>
+    <script src="/js/private/dashboard/dashboard.Controller.js"></script>
+    <script src="/js/public/homepage/Homepage.Controller.js"></script>
+    <script src="/js/public/signup/Signup.Controller.js"></script>
+    <script src="/js/public/users/Users.Controller.js"></script>
     <!--SCRIPTS END-->
   </body>
 </html>
