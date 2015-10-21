@@ -8,9 +8,9 @@
 module.exports = {
 
   attributes: {
-    application_id: {
+    /*application_id: {
       model: 'Application'
-    }
+    }*/
   }
 };
 

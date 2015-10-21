@@ -8,7 +8,7 @@
 module.exports = {
 
   attributes: {
-    optimize: {
+    /*optimize: {
       type: 'string',
       //required: true
     },
@@ -21,7 +21,7 @@ module.exports = {
       type: 'string',
       collection: 'Constraint',
       via: 'policy_id'
-    }
+    }*/
   }
 };
 

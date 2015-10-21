@@ -8,14 +8,14 @@
 module.exports = {
 
   attributes: {
-    owner: {
+    /*owner: {
       model: 'User',
       //required: true
     },
     policy: {
       model: 'Policy',
       //required: true
-    }
+    }*/
   }
 };
 
