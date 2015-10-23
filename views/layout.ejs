@@ -37,9 +37,9 @@
       window.SAILS_LOCALS = { _csrf: "<%= _csrf %>" };
     </script>
   </head>
-  <body>
+  <body ng-app="AppModule">
   <!-- Creates the navbar -->
-  <nav ng-app="HomepageModule" ng-controller="HomepageController" class="navbar navbar-default navbar-inverse">
+  <nav ng-controller="NavbarController" class="navbar navbar-default navbar-inverse" ng-cloak>
 
     <!-- This creates the mechanism for the collapse button -->
     <button type="button" class="navbar-toggle" data-toggle="collapse" ng-init="navCollapsed = true" ng-click="navCollapsed = !navCollapsed">
@@ -55,9 +55,8 @@
     <div class="collapse navbar-collapse" ng-class="!navCollapsed && 'in'">
 
       <!-- LOGIN FORM -->
-      <div ng-hide="loggedIn">
-        <form ng-submit="submitLoginForm()" class="navbar-form navbar-right">
-
+      <form ng-submit="submitLoginForm()" class="navbar-form navbar-right">
+        <div ng-hide="user">
           <!-- E M A I L -->
           <div class="form-group">
             <input ng-model="loginForm.email" type="text" placeholder="Email" name="email" class="form-control">
@@ -76,8 +75,11 @@
           </button>
           <a href="/signup" class="btn btn-info">Sign up</a>
           <input type="hidden" name="_csrf" value="<%= _csrf %>" />
-        </form>
-      </div>
+        </div>
+        <div ng-hide="!user">
+          <button  ng-click="logout()" class="btn btn-info">Log out</button>
+        </div>
+      </form>
     </div>
   </nav>
 
@@ -107,7 +109,7 @@
     -->
 
     <!--TEMPLATES-->
-    
+
     <!--TEMPLATES END-->
 
 
@@ -142,14 +144,10 @@
     <script src="/vendor/bower_components/angular-sails/dist/angular-sails.js"></script>
     <script src="/vendor/bower_components/angular-toastr/dist/angular-toastr.tpls.js"></script>
     <script src="/vendor/bower_components/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="/js/public/homepage/Homepage.Module.js"></script>
-    <script src="/js/public/signup/Signup.Module.js"></script>
-    <script src="/js/public/users/Users.Module.js"></script>
-    <script src="/js/private/dashboard/dashboard.Module.js"></script>
-    <script src="/js/private/dashboard/dashboard.Controller.js"></script>
-    <script src="/js/public/homepage/Homepage.Controller.js"></script>
+    <script src="/js/App.Module.js"></script>
+    <script src="/js/private/dashboard/Dashboard.Controller.js"></script>
+    <script src="/js/public/navbar/Navbar.Controller.js"></script>
     <script src="/js/public/signup/Signup.Controller.js"></script>
-    <script src="/js/public/users/Users.Controller.js"></script>
     <!--SCRIPTS END-->
   </body>
 </html>

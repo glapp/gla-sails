@@ -1,11 +1,9 @@
-angular.module('HomepageModule').controller('HomepageController', ['$scope', '$http', 'toastr', function($scope, $http, toastr){
+angular.module('AppModule').controller('NavbarController', ['$scope', '$rootScope', '$http', 'toastr', function($scope, $rootScope, $http, toastr){
 
   // set-up loginForm loading state
   $scope.loginForm = {
     loading: false
   };
-
-  $scope.loggedIn = false;
 
   $scope.submitLoginForm = function (){
 
@@ -17,8 +15,8 @@ angular.module('HomepageModule').controller('HomepageController', ['$scope', '$h
       email: $scope.loginForm.email,
       password: $scope.loginForm.password
     })
-      .then(function onSuccess (){
-        $scope.loggedIn = true;
+      .then(function onSuccess (sailsResponse){
+        $rootScope.user = sailsResponse.data.id;
         // Refresh the page now that we've been logged in.
         window.location = '/';
       })
@@ -46,5 +44,13 @@ angular.module('HomepageModule').controller('HomepageController', ['$scope', '$h
       });
   };
 
+  $scope.logout = function() {
+    $http.get('/logout')
+      .then(function onSuccess (sailsResponse){
+        $rootScope.user = null;
+        // Refresh the page now that we've been logged in.
+        window.location = '/';
+      })
+  };
 
 }]);

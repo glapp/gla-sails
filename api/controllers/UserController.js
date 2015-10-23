@@ -10,6 +10,10 @@ module.exports = {
    * Check the provided email address and password, and if they
    * match a real user in the database, sign in.
    */
+  confirmLogin: function(req, res) {
+    res.send(req.session.me);
+  },
+
   login: function (req, res) {
 
     // Try to look up user using the provided email address
@@ -115,7 +119,7 @@ module.exports = {
 
   /**
    * Log out.
-   * (wipes `me` from the sesion)
+   * (wipes `me` from the session)
    */
   logout: function (req, res) {
 
@@ -127,14 +131,14 @@ module.exports = {
       // If session refers to a user who no longer exists, still allow logout.
       if (!user) {
         sails.log.verbose('Session refers to a user who no longer exists.');
-        return res.backToHomePage();
+        return res.ok('homepage');
       }
 
       // Wipe out the session (log out)
       req.session.me = null;
 
       // Either send a 200 OK or redirect to the home page
-      return res.backToHomePage();
+      return res.ok('homepage');
 
     });
   }
