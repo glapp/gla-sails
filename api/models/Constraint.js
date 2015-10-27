@@ -8,7 +8,24 @@
 module.exports = {
 
   attributes: {
-
+    application_id: {
+      model: 'Application',
+      required: true
+    },
+    identifier: {
+      type: 'String',
+      // enum: ['blah5', 'blah6'],
+      // required: true
+    },
+    operator: {
+      type: 'String',
+      // enum: ['blah7', 'blah8'],
+      // required: true
+    },
+    value: {
+      type: 'float',
+      // required: true
+    }
   }
 };
 

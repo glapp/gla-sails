@@ -1,16 +1,24 @@
 /**
 * Component.js
 *
-* @description :: TODO: You might write a short summary of how this model works and what it represents here.
+* @description :: Contains data about the components
 * @docs        :: http://sailsjs.org/#!documentation/models
 */
 
 module.exports = {
 
   attributes: {
-    /*application_id: {
-      model: 'Application'
-    }*/
+    application_id: {
+      model: 'Application',
+      required: true
+    },
+    state: {
+      type: 'string'
+      // enum: ['blah3', 'blah4']
+    },
+    dockerImageURL: {
+      type: 'string'
+    }
   }
 };
 
