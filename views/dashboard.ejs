@@ -25,7 +25,7 @@
           <br/>
 
           <!-- Disable button until the form has no errors -->
-          <button class="btn btn-primary btn-lg btn-block" type="submit" ng-disabled="add-app.$invalid">
+          <button class="btn btn-primary btn-lg btn-block" type="submit">
             <span ng-show="!addAppForm.loading">Add Application</span>
             <span class="overlord-loading-spinner fa fa-spinner" ng-show="addAppForm.loading"></span>
             <span ng-show="addAppForm.loading">Creating app...</span>
@@ -42,6 +42,29 @@
           <img src="/images/cloud.jpg" class="img-responsive" alt="Generic placeholder thumbnail">
           <h4>{{app.name}}</h4>
           <span class="text-muted">AWS - micro</span>
+
+          <form ng-submit="addComponent(app)" id="add-component" class="form-signin" name="add-component">
+            <h2 class="form-signin-heading">Add component</h2>
+
+            <div class="row">
+              <div class="control-group form-group">
+                <label>Component git url</label>
+                <input type="text" class="form-control" placeholder="git URL" name="git" ng-model="addComponentForm.url" required>
+              </div>
+
+              <br/>
+
+              <!-- Disable button until the form has no errors -->
+              <button class="btn btn-primary btn-lg btn-block" type="submit">
+                <span ng-show="!addComponentForm.loading">Add Application</span>
+                <span class="overlord-loading-spinner fa fa-spinner" ng-show="addComponentForm.loading"></span>
+                <span ng-show="addComponentForm.loading">Creating component...</span>
+              </button>
+
+              <input type="hidden" name="_csrf" value="<%= _csrf %>"/>
+            </div>
+          </form>
+
         </div>
       </div>
     </div>

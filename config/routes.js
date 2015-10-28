@@ -51,7 +51,9 @@ module.exports.routes = {
 
   // Application query
   'GET /getUserApps': 'ApplicationController.getUserApps',
-  'POST /app': 'ApplicationController.addApplication'
+  'POST /app': 'ApplicationController.addApplication',
+  'POST /component': 'ComponentController.cloneGitRepo'
+
 
   /***************************************************************************
   *                                                                          *

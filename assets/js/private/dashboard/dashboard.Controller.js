@@ -2,7 +2,13 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
 
   $scope.applications = [];
 
+  $scope.components = [];
+
   $scope.addAppForm = {
+    loading: false
+  };
+
+  $scope.addComponentForm = {
     loading: false
   };
 
@@ -23,6 +29,28 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
       })
       .finally(function eitherWay() {
         $scope.addAppForm.loading = false;
+        $scope.addAppForm.name = null;
+      })
+  };
+
+  $scope.addComponent = function (app) {
+    // Set the loading state (i.e. show loading spinner)
+    $scope.addComponentForm.loading = true;
+
+    // Submit request to Sails.
+    $http.post('/component', {
+      gitUrl: $scope.addComponentForm.url,
+      app: app.id
+    })
+      .then(function onSuccess(sailsResponse) {
+        $scope.components.push(sailsResponse.data);
+      })
+      .catch(function onError(sailsResponse) {
+        console.log(sailsResponse);
+      })
+      .finally(function eitherWay() {
+        $scope.addComponentForm.loading = false;
+        $scope.addComponentForm.url = null;
       })
   };
 
