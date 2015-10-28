@@ -10,10 +10,10 @@ var fstream = require('fstream');
 var Docker = require('dockerode');
 var tar = require('tar');
 
-var docker = new Docker({
+var docker = new Docker(/*{
   host: '192.168.99.100',
   port: process.env.DOCKER_PORT || 2375,
-});
+}*/);
 
 module.exports = {
   cloneGitRepo: function (req, res) {
