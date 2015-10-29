@@ -31,7 +31,7 @@ module.exports = {
       }
 
       var index = gitUrl.lastIndexOf("/") + 1;
-	var name = gitUrl.substr(index);
+	    var name = gitUrl.substr(index);
       var path = '.tmp/' + name;
 
       fs.stat(path + '/Dockerfile', function (err, stat) {
@@ -49,7 +49,7 @@ module.exports = {
             }
           );
         } else {
-          console.log('Some other error: ', err.code);
+          console.log('Some other error with Dockerfile: ', err.code);
           res.serverError();
         }
 
@@ -60,6 +60,7 @@ module.exports = {
 
         function onError(err) {
           console.error('An error occurred:', err)
+          res.serverError();
         }
 
         function onEnd() {
@@ -74,18 +75,17 @@ module.exports = {
         fstream.Reader({ path: path, type: "Directory" })
           .on('error', onError)
           .pipe(packer)
-          .pipe(dirDest);
-
-	var repoName = 'glapp/' + name + ':1.0';
-	console.log(repoName);
-        // Build image
-        docker.buildImage(path + '.tar', {t: repoName}, function(err, response) {
-          if (err) console.log(err);
-          console.log(response);
-          res.ok();
-        });
-
-        res.serverError();
+          .pipe(dirDest)
+          .on('end', function() {
+            var repoName = 'glapp/' + name + ':1.0';
+            console.log(repoName);
+            // Build image
+            docker.buildImage(path + '.tar', {t: repoName}, function(err, response) {
+              if (err) console.log(err);
+              console.log(response);
+              res.ok();
+            });
+          });
       });
     })
   }
