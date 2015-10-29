@@ -31,7 +31,8 @@ module.exports = {
       }
 
       var index = gitUrl.lastIndexOf("/") + 1;
-      var path = '.tmp/' + gitUrl.substr(index);
+	var name = gitUrl.substr(index);
+      var path = '.tmp/' + name;
 
       fs.stat(path + '/Dockerfile', function (err, stat) {
         if (err == null) {
@@ -75,8 +76,10 @@ module.exports = {
           .pipe(packer)
           .pipe(dirDest);
 
+	var repoName = 'glapp/' + name + ':1.0';
+	console.log(repoName);
         // Build image
-        docker.buildImage(path + '.tar', {t: 'glapp/' + path}, function(err, response) {
+        docker.buildImage(path + '.tar', {t: repoName}, function(err, response) {
           if (err) console.log(err);
           console.log(response);
           res.ok();
