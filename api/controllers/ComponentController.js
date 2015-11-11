@@ -13,7 +13,7 @@ var tar = require('tar-fs');
 var debug = 1;
 
 var docker = new Docker({
-  host: '192.168.33.10',
+  host: process.env.DOCKER_HOST || 'localhost',
   port: process.env.DOCKER_PORT || 4243,
 });
 
@@ -47,15 +47,10 @@ module.exports = {
         console.log('--> ERROR', err);
         res.serverError(err);
       });
-
-
-    //});
   }
 };
 
 var makeTar = function (name, path) {
-  console.log('---------> DEBUG: git clone successful');
-
   fs.stat(path + '/Dockerfile', function (err, stat) {
     if (err == null) {
       console.log('File exists');
@@ -80,7 +75,6 @@ var makeTar = function (name, path) {
     // Make tar
     tar.pack(path).pipe(fs.createWriteStream(path + '.tar'))
       .on('finish', function () {
-        console.log('---------> DEBUG ULTIMATE');
         buildDockerImage(name, path);
       });
   });
@@ -98,18 +92,11 @@ var buildDockerImage = function (name, path) {
     docker.modem.followProgress(stream, onFinished, onProgress);
 
     function onFinished(err, output) {
-      //output is an array with output json parsed objects
-      //...
+      console.log('FINISHED')
     }
 
     function onProgress(event) {
       console.log(event);
     }
-
-    /*console.log('trying to build ' + repoName + ' from tar ' + path + '.tar');
-     if (err) {
-     console.log('--------------> ERROR:', err);
-     }
-     console.log(response);*/
   });
 };
