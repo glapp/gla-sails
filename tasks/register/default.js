@@ -1,3 +1,3 @@
 module.exports = function (grunt) {
-	grunt.registerTask('default', ['bower', 'compileAssets', 'linkAssets',  'watch']);
+	grunt.registerTask('default', ['bower', 'compileAssets', 'linkAssets', /*'mochaTest',*/ 'watch']);
 };
