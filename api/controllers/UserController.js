@@ -46,7 +46,9 @@ module.exports = {
           req.session.me = user.id;
 
           // All done- let the client know that everything worked.
-          return res.ok();
+          return res.json({
+            id: user.id
+          });
         }
       });
     });

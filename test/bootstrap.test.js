@@ -17,8 +17,6 @@ before(function (done) {
     if (err)
       return done(err);
 
-
-
     // Load fixtures
     var barrels = new Barrels();
 
@@ -26,9 +24,12 @@ before(function (done) {
     var fixtures = barrels.data;
 
     // Populate the DB
-    barrels.populate(['User', 'Application'], function(err) {
+    barrels.populate(['user'], function(err) {
       if (err) console.error(err);
-      done(err);
+      barrels.populate(['application'], function(err) {
+        if (err) console.error(err);
+        done(err, sails);
+      });
     });
   });
 });
