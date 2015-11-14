@@ -11,7 +11,12 @@ module.exports = {
    * match a real user in the database, sign in.
    */
   confirmLogin: function(req, res) {
-    res.send(req.session.me);
+    if (req.session.me) {
+      res.ok({id: req.session.me});
+    } else {
+      res.ok();
+
+    }
   },
 
   login: function (req, res) {

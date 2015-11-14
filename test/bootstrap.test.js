@@ -1,6 +1,8 @@
 var Sails = require('sails');
 var Barrels = require('barrels');
 require('should');
+var request = require('supertest');
+
 
 // Global before hook
 before(function (done) {
@@ -16,6 +18,11 @@ before(function (done) {
   }, function(err, sails) {
     if (err)
       return done(err);
+
+    // Create first user
+    request(sails.hooks.http.app)
+      .post('/signup')
+      .send({email: 'first@test.com', password: 'first'});
 
     // Load fixtures
     var barrels = new Barrels();
