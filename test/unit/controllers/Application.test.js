@@ -6,7 +6,8 @@
  */
 var request = require('supertest');
 var expect = require('chai').expect;
-require('./User.test.js');
+
+var agent;
 
 describe('ApplicationController', function () {
 
@@ -15,31 +16,29 @@ describe('ApplicationController', function () {
 
     // Logging in
     before(function (done) {
-      request(sails.hooks.http.app)
+      agent = request.agent(sails.hooks.http.app);
+      agent
         .put('/login')
-        .send({email: 'signup@test.com', password: 'test'})
+        .send({email: 'test@test.com', password: 'password'})
         .end(function (err, res) {
-          Cookies = res.headers['set-cookie'].pop().split(';')[0];
           done();
         })
     });
 
-    it('should get no application', function (done) {
-      var req = request(sails.hooks.http.app).get('/getUserApps');
-      req.cookies = Cookies;
-      req
+    it('should get pre-filled application', function (done) {
+      agent
+        .get('/getUserApps')
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
-          expect(res.body).to.be.empty;
+          expect(res.body).to.have.length(1);
+          expect(res.body[0].name).to.equal('TestApplication');
           done();
         })
     });
 
     it('should add an application', function (done) {
-      var req = request(sails.hooks.http.app);
-      req.cookies = Cookies;
-      req
+      agent
         .post('/app')
         .send({name: 'testapp'})
         .expect(200)

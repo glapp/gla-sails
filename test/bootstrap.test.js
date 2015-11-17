@@ -2,7 +2,8 @@ var Sails = require('sails');
 var Barrels = require('barrels');
 require('should');
 var request = require('supertest');
-
+var async = require('async');
+var Passwords = require('machinepack-passwords');
 
 // Global before hook
 before(function (done) {
@@ -15,7 +16,7 @@ before(function (done) {
       connection: 'localDiskDb',
       migrate: 'drop'
     }
-  }, function(err, sails) {
+  }, function (err, sails) {
     if (err)
       return done(err);
 
@@ -30,14 +31,34 @@ before(function (done) {
     // Save original objects in `fixtures` variable
     var fixtures = barrels.data;
 
-    // Populate the DB
-    barrels.populate(['user'], function(err) {
-      if (err) console.error(err);
-      barrels.populate(['application'], function(err) {
-        if (err) console.error(err);
-        done(err, sails);
-      });
-    });
+    // Encrypt all the passwords
+    if (barrels.data.user) {
+      async.each(barrels.data.user, function (user, done) {
+        Passwords.encryptPassword({
+          password: user.encryptedPassword,
+          difficulty: 10
+        }).exec({
+          // An unexpected error occurred.
+          error: function (err) {
+            console.error(err);
+          },
+          // OK.
+          success: function (encPassword) {
+            user.encryptedPassword = encPassword;
+            done();
+          }
+        });
+      }, function() {
+        // Populate the DB
+        barrels.populate(['user'], function (err) {
+          if (err) console.error(err);
+          barrels.populate(['application'], function (err) {
+            if (err) console.error(err);
+            done(err, sails);
+          });
+        });
+      })
+    }
   });
 });
 

@@ -42,7 +42,7 @@
   "scripts": {
     "debug": "node debug app.js",
     "start": "node app.js",
-    "test": "set PORT=9999 && set NODE_ENV=test && mocha -R spec -b --recursive"
+    "test": "mocha -R spec -b --recursive"
   },
   "main": "app.js",
   "repository": {
