@@ -27,6 +27,11 @@
  * http://sailsjs.org/#!/documentation/anatomy/myApp/config/local.js.html
  */
 
+/**
+ * TODO: Save this file as "local.js" and add your local dev variables
+ *
+ */
+
 module.exports = {
 
   /***************************************************************************

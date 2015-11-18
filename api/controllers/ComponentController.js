@@ -9,12 +9,13 @@ var clone = require("nodegit").Clone.clone;
 var fs = require('fs');
 var Docker = require('dockerode');
 var tar = require('tar-fs');
+var rimraf = require('rimraf');
 
 var debug = 1;
 
 var docker = new Docker({
-  host: process.env.DOCKER_HOST || 'localhost',
-  port: process.env.DOCKER_PORT || 4243,
+  host: sails.config.DOCKER_HOST || 'localhost',
+  port: sails.config.DOCKER_PORT || 4243,
 });
 
 module.exports = {
@@ -28,7 +29,7 @@ module.exports = {
     var regex = /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?)(([\w\.@:\/\-~]+\/)+)([\w\.@:\/\-~]+)(\.git)(\/)?/;
     var result = gitUrl.match(regex);
 
-    if (!result[9]) {
+    if (!result || !result[9]) {
       res.badRequest('invalid git url');
       return;
     }
@@ -44,13 +45,14 @@ module.exports = {
         return makeTar(name, path)
       })
       .then(buildDockerImage)
-      .then(function(){
-        // everything done
-        console.log('FINISHED')
+      .then(function () {
+        // everything done, clean up .tmp
+        cleanUp(path);
       })
       .catch(function (err) {
         console.log('--> ERROR', err);
         res.serverError(err);
+        cleanUp(path);
       });
   }
 };
@@ -97,7 +99,7 @@ var buildDockerImage = function (result) {
 
   //[name, path] = result;
 
-  return new Promise(function(resolve, reject){
+  return new Promise(function (resolve, reject) {
     var repoName = 'glapp/' + name + ':1.0';
     console.log(repoName);
     // Build image
@@ -110,6 +112,7 @@ var buildDockerImage = function (result) {
       docker.modem.followProgress(stream, onFinished, onProgress);
 
       function onFinished(err, output) {
+        var image = docker.getImage(repoName);
         resolve();
       }
 
@@ -118,5 +121,14 @@ var buildDockerImage = function (result) {
       }
     });
   });
+};
 
+var cleanUp = function (path) {
+  rimraf(path, function (err) {
+    if (err) throw err;
+    fs.unlink(path + '.tar', function (err) {
+      if (err) throw err;
+      console.log('Cleaned up.');
+    })
+  })
 };

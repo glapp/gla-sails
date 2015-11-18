@@ -13,7 +13,7 @@ before(function (done) {
       level: 'error'
     },
     models: {
-      connection: 'localDiskDb',
+      connection: 'test',
       migrate: 'drop'
     }
   }, function (err, sails) {
