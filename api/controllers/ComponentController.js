@@ -100,7 +100,7 @@ var buildDockerImage = function (result) {
   //[name, path] = result;
 
   return new Promise(function (resolve, reject) {
-    var repoName = 'glapp/' + name + ':1.0';
+    var repoName = name + ':latest';
     console.log(repoName);
     // Build image
     docker.buildImage(path + '.tar', {t: repoName}, function (err, stream) {
@@ -112,8 +112,32 @@ var buildDockerImage = function (result) {
       docker.modem.followProgress(stream, onFinished, onProgress);
 
       function onFinished(err, output) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        console.log('onFinished', output);
         var image = docker.getImage(repoName);
-        resolve();
+        // Tag the image
+        image.tag({
+          repo: 'localhost:' + sails.config.DOCKER_REGISTRY_PORT + '/' + repoName
+        }, function(err) {
+          if (err) {
+            reject(err);
+            return;
+          }
+          // Push the image
+          image.push({
+            registry: 'localhost:' + sails.config.DOCKER_REGISTRY_PORT
+          }, function(err, pushedImage) {
+            if (err) {
+              reject(err);
+              return;
+            }
+            console.log('PUSHED IMAGE', pushedImage);
+            resolve();
+          })
+        });
       }
 
       function onProgress(event) {
