@@ -96,14 +96,15 @@ var buildDockerImage = function (result) {
   console.log(arguments);
   var name = result[0];
   var path = result[1];
+  var tag = 'latest';
 
   //[name, path] = result;
 
   return new Promise(function (resolve, reject) {
-    var repoName = name + ':latest';
+    var repoName = name;
     console.log(repoName);
     // Build image
-    docker.buildImage(path + '.tar', {t: repoName}, function (err, stream) {
+    docker.buildImage(path + '.tar', {t: repoName + ':' + tag}, function (err, stream) {
       if (err) {
         //console.error(err);
         reject(err);
@@ -117,10 +118,11 @@ var buildDockerImage = function (result) {
           return;
         }
         console.log('onFinished', output);
-        var image = docker.getImage(repoName);
+        var image = docker.getImage(repoName + ':' + tag);
         // Tag the image
         image.tag({
-          repo: 'localhost:' + sails.config.DOCKER_REGISTRY_PORT + '/' + repoName
+          repo: sails.config.DOCKER_HOST + '/' + name,
+          tag: tag
         }, function(err) {
           if (err) {
             reject(err);
@@ -128,9 +130,10 @@ var buildDockerImage = function (result) {
           }
           // Push the image
           image.push({
-            registry: 'localhost:' + sails.config.DOCKER_REGISTRY_PORT
+            tag: sails.config.DOCKER_HOST + '/' + name
           }, function(err, pushedImage) {
             if (err) {
+              console.log(err);
               reject(err);
               return;
             }
