@@ -12,6 +12,10 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
     loading: false
   };
 
+  $scope.addGitURLForm = {
+    loading: false
+  };
+
   $scope.addApplication = function () {
 
     // Set the loading state (i.e. show loading spinner)
@@ -42,6 +46,27 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
       gitUrl: $scope.addComponentForm.url,
       app: app.id
     })
+      .then(function onSuccess(sailsResponse) {
+        $scope.components.push(sailsResponse.data);
+      })
+      .catch(function onError(sailsResponse) {
+        console.log(sailsResponse);
+      })
+      .finally(function eitherWay() {
+        $scope.addComponentForm.loading = false;
+        $scope.addComponentForm.url = null;
+      })
+  };
+
+  $scope.addGitURL = function (app) {
+    // Set the loading state (i.e. show loading spinner)
+    $scope.addGitURLForm.loading = true;
+
+    // Submit request to Sails.
+    $http.post('/giturl', {
+        gitUrl: $scope.addGitURLForm.url,
+        app: app.id
+      })
       .then(function onSuccess(sailsResponse) {
         $scope.components.push(sailsResponse.data);
       })
