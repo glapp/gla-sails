@@ -68,14 +68,15 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
         app: app.id
       })
       .then(function onSuccess(sailsResponse) {
+        // TODO: Add for-each
         $scope.components.push(sailsResponse.data);
       })
       .catch(function onError(sailsResponse) {
         console.log(sailsResponse);
       })
       .finally(function eitherWay() {
-        $scope.addComponentForm.loading = false;
-        $scope.addComponentForm.url = null;
+        $scope.addGitURLForm.loading = false;
+        $scope.addGitURLForm.url = null;
       })
   };
 

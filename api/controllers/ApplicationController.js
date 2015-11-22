@@ -8,6 +8,14 @@
 var clone = require("nodegit").Clone.clone;
 var fs = require('fs');
 var rimraf = require('rimraf');
+var Docker = require('dockerode');
+var yaml = require('yamljs');
+var async = require('async');
+
+var docker = new Docker({
+  host: sails.config.SWARM_HOST || 'localhost',
+  port: sails.config.SWARM_PORT || 3376
+});
 
 module.exports = {
   getUserApps: function (req, res) {
@@ -25,7 +33,7 @@ module.exports = {
   },
 
   startCompose: function (req, res) {
-    var app_id = req.param('app_id');
+    var app_id = req.param('app');
     var gitUrl = req.param('gitUrl');
 
     console.log('---------> DEBUG: Starting git clone');
@@ -45,9 +53,8 @@ module.exports = {
     clone(gitUrl, path, null)
       .then(function (repo) {
         console.log('Cloning finished.');
-        res.ok();
 
-        fs.stat(path + '/docker-compose.yml', function (err, stat) {
+        fs.stat(path + '/counter/docker-compose.yml', function (err, stat) {
           if (err == null) {
             console.log('File exists');
           } else if (err.code == 'ENOENT') {
@@ -63,7 +70,25 @@ module.exports = {
           }
 
           // docker-compose up
+          var compose = yaml.load(path + '/counter/docker-compose.yml');
+          console.log(JSON.stringify(compose));
 
+          for (var c in compose) {
+            compose[c].name = c;
+            compose[c].application_id = app_id;
+          }
+
+          var result = [];
+          async.each(compose, function(component, done) {
+            Component.create(component, function (err, created) {
+              if (err) res.badRequest();
+              result.push(created);
+              done();
+            })
+          }, function() {
+            res.ok(result);
+            cleanUp(path);
+          });
         })
       })
       .catch(function (err) {
@@ -77,10 +102,6 @@ module.exports = {
 var cleanUp = function (path) {
   rimraf(path, function (err) {
     if (err) throw err;
-    fs.unlink(path + '.tar', function (err) {
-      if (err) throw err;
-      console.log('Cleaned up.');
-    })
   })
 };
 

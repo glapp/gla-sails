@@ -8,6 +8,10 @@
 module.exports = {
 
   attributes: {
+    name: {
+      type: 'string',
+      required: true
+    },
     application_id: {
       model: 'Application',
       required: true
@@ -16,9 +20,16 @@ module.exports = {
       type: 'string'
       // enum: ['blah3', 'blah4']
     },
-    dockerImageURL: {
+    image: {
       type: 'string'
+    },
+    environment: {
+      type: 'array'
+    },
+    ports: {
+      type: 'array'
     }
+
   }
 };
 
