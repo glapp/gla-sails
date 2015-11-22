@@ -55,7 +55,8 @@ module.exports.routes = {
   // Add stuff
   'POST /app': 'ApplicationController.addApplication',
   'POST /component': 'ComponentController.buildFromGitRepo',
-  'POST /giturl': 'ApplicationController.startCompose'
+  "POST /registerComponents": 'ApplicationController.registerComponents',
+  'POST /deploy': 'ApplicationController.deploy'
 
 
 

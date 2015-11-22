@@ -23,8 +23,8 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
 
     // Submit request to Sails.
     $http.post('/app', {
-      name: $scope.addAppForm.name
-    })
+        name: $scope.addAppForm.name
+      })
       .then(function onSuccess(sailsResponse) {
         sailsResponse.data.components = [];
         $scope.applications.push(sailsResponse.data);
@@ -44,9 +44,9 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
 
     // Submit request to Sails.
     $http.post('/component', {
-      gitUrl: $scope.addComponentForm.url,
-      app: app.id
-    })
+        gitUrl: $scope.addComponentForm.url,
+        app: app.id
+      })
       .then(function onSuccess(sailsResponse) {
         $scope.components.push(sailsResponse.data);
       })
@@ -59,12 +59,12 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
       })
   };
 
-  $scope.addGitURL = function (app) {
+  $scope.registerComponents = function (app) {
     // Set the loading state (i.e. show loading spinner)
     $scope.addGitURLForm.loading = true;
 
     // Submit request to Sails.
-    $http.post('/giturl', {
+    $http.post('/registerComponents', {
         gitUrl: $scope.addGitURLForm.url,
         app: app.id
       })
@@ -79,6 +79,21 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
       .finally(function eitherWay() {
         $scope.addGitURLForm.loading = false;
         $scope.addGitURLForm.url = null;
+      })
+  };
+
+
+
+  $scope.deploy = function (app) {
+    $http.post('/deploy', {app: app})
+      .then(function onSuccess(sailsResponse) {
+
+      })
+      .catch(function onError(sailsResponse) {
+
+      })
+      .finally(function eitherWay() {
+
       })
   };
 

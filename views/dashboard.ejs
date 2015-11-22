@@ -42,7 +42,7 @@
           <img src="/images/cloud.jpg" class="img-responsive" alt="Generic placeholder thumbnail">
           <h4>{{app.name}}</h4>
 
-          <form ng-submit="addGitURL(app)" id="add-component" class="form-signin" name="add-component">
+          <form ng-submit="registerComponents(app)" id="add-component" class="form-signin" name="add-component">
             <div class="row">
               <div class="control-group form-group">
                 <label>Git URL</label>
@@ -80,6 +80,7 @@
                 </li>
               </ul>
             </div>
+            <!--<button class="btn btn-primary btn-lg btn-block" ng-click="deploy(app)">Deploy</button>-->
           </div>
         </div>
       </div>

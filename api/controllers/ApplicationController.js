@@ -34,7 +34,7 @@ module.exports = {
     })
   },
 
-  startCompose: function (req, res) {
+  registerComponents: function (req, res) {
     var app_id = req.param('app');
     var gitUrl = req.param('gitUrl');
 
@@ -98,6 +98,59 @@ module.exports = {
         res.serverError(err);
         cleanUp(path);
       });
+  },
+
+  deploy: function(req, res) {
+    var app = req.param('app');
+
+    docker.info(function(err, data) {
+      console.log(arguments);
+    });
+    /*docker.createNetwork({
+      Name: app.name
+    }, function(err, network) {
+      if (err) {
+        res.serverError(err);
+        return;
+      }
+      async.each(app.components, function(component, done) {
+        var env = [];
+        var exposed = {};
+        var portBindings = {};
+
+
+        for (var i = 0; i < component.environment; i++) {
+          env.push(component.environment[i]);
+        }
+
+        for (var i = 0; i < component.ports; i++) {
+          var split = component.ports[i].split(':');
+          exposed[split[1] + "/tcp"] = {};
+          portBindings[split[1] + "/tcp"] = [{
+            HostPort: split[0]
+          }];
+        }
+
+        docker.createContainer({
+          Image: component.image,
+          name: component.name,
+          Env: env,
+          // ExposedPorts: exposed,
+          HostConfig: {
+            PortBindings: portBindings,
+            Network: app.name
+          }
+        }, function(err, container) {
+          container.start(function(err, data) {
+            console.log(data);
+            done()
+          })
+        });
+      }, function(err) {
+        if (err) res.serverError(err);
+        else res.ok();
+      })
+    })*/
   }
 };
 
