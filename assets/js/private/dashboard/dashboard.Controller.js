@@ -26,10 +26,11 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
       name: $scope.addAppForm.name
     })
       .then(function onSuccess(sailsResponse) {
+        sailsResponse.data.components = [];
         $scope.applications.push(sailsResponse.data);
       })
       .catch(function onError(sailsResponse) {
-
+        console.log(sailsResponse);
       })
       .finally(function eitherWay() {
         $scope.addAppForm.loading = false;
@@ -68,8 +69,9 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
         app: app.id
       })
       .then(function onSuccess(sailsResponse) {
-        // TODO: Add for-each
-        $scope.components.push(sailsResponse.data);
+        for (var i = 0; i < sailsResponse.data.length; i++) {
+          app.components.push(sailsResponse.data[i]);
+        }
       })
       .catch(function onError(sailsResponse) {
         console.log(sailsResponse);

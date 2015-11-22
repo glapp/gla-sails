@@ -19,7 +19,9 @@ var docker = new Docker({
 
 module.exports = {
   getUserApps: function (req, res) {
-    Application.find({owner: req.session.me}, function (err, apps) {
+    Application.find({owner: req.session.me})
+      .populate('components')
+      .exec(function (err, apps) {
       if (err) res.notFound();
       res.ok(apps);
     })

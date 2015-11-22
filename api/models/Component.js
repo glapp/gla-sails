@@ -29,7 +29,6 @@ module.exports = {
     ports: {
       type: 'array'
     }
-
   }
 };
 
