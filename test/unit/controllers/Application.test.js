@@ -49,4 +49,14 @@ describe('ApplicationController', function () {
         });
     });
   });
+
+  describe('When an application is ready to deploy', function () {
+
+    it('should get docker info, for now', function (done) {
+      agent
+        .post('/deploy')
+        .send({app_id: 1})
+        .expect(200, done)
+    });
+  });
 });

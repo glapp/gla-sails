@@ -101,9 +101,11 @@ module.exports = {
   },
 
   deploy: function(req, res) {
-    var app = req.param('app');
+    var app_id = req.param('app_id');
 
     docker.info(function(err, data) {
+      if (err) res.serverError(err);
+      else res.ok(data);
       console.log(arguments);
     });
     /*docker.createNetwork({
