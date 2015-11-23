@@ -93,7 +93,9 @@ module.exports = {
   // DOCKER_PORT: 'PORT NUMBER'
 
   // Config for docker swarm
-  // SWARM_HOST: 'IP OF SWARM HOST',
-  // SWARM_PORT: 'PORT OF SWARM ENDPOINT'
+  // SWARM_HOST: '192.168.99.101',
+  // SWARM_PORT: '3376',
+
+  // DOCKER_CERT_PATH: '~/.docker/machine/certs'
 
 };

@@ -14,7 +14,10 @@ var async = require('async');
 
 var docker = new Docker({
   host: sails.config.SWARM_HOST || 'localhost',
-  port: sails.config.SWARM_PORT || 3376
+  port: sails.config.SWARM_PORT || 3376,
+  ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
+  cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
+  key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')
 });
 
 module.exports = {
@@ -106,7 +109,7 @@ module.exports = {
     docker.info(function(err, data) {
       if (err) res.serverError(err);
       else res.ok(data);
-      console.log(arguments);
+      console.log(JSON.stringify(data));
     });
     /*docker.createNetwork({
       Name: app.name

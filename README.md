@@ -21,7 +21,10 @@ This application is based on [Sails](http://sailsjs.org).
     * Here, again, the only change to setting up a regular swarm-agent is the swarm-discovery and the engine-opts.
     * Same command for swarm-agent-01, swarm-agent-02, etc.
   * To get the IP and the right port on the swarm-master, type ``docker-machine env --swarm swarm-master``
-* Copy config/localSample.js and name the file local.js, where SWARM_HOST and SWARM_PORT are set according to above information
+* Copy config/localSample.js
+  * Name the new file local.js
+  * Set SWARM_HOST and SWARM_PORT to the information extracted from the above command
+  * Add the DOCKER_CERT_PATH
 
 ## Run
 * Start app with `npm start`
