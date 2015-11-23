@@ -92,4 +92,8 @@ module.exports = {
   // DOCKER_HOST: 'IP OF HOST',
   // DOCKER_PORT: 'PORT NUMBER'
 
+  // Config for docker swarm
+  // SWARM_HOST: 'IP OF SWARM HOST',
+  // SWARM_PORT: 'PORT OF SWARM ENDPOINT'
+
 };
