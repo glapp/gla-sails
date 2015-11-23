@@ -2,7 +2,7 @@
   {
     "image": "bfirsh/compose-mongodb-demo",
     "environment": [
-      "MONGO_HOST=counter_mongo_1"
+      "MONGO_HOST=mongo"
     ],
     "ports": [
       "80:5000"

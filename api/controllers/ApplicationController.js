@@ -25,9 +25,9 @@ module.exports = {
     Application.find({owner: req.session.me})
       .populate('components')
       .exec(function (err, apps) {
-      if (err) res.notFound();
-      res.ok(apps);
-    })
+        if (err) res.notFound();
+        res.ok(apps);
+      })
   },
 
   addApplication: function (req, res) {
@@ -59,7 +59,7 @@ module.exports = {
       .then(function (repo) {
         console.log('Cloning finished.');
 
-        fs.stat(path + '/counter/docker-compose.yml', function (err, stat) {
+        fs.stat(path + '/docker-compose.yml', function (err, stat) {
           if (err == null) {
             console.log('File exists');
           } else if (err.code == 'ENOENT') {
@@ -75,7 +75,7 @@ module.exports = {
           }
 
           // docker-compose up
-          var compose = yaml.load(path + '/counter/docker-compose.yml');
+          var compose = yaml.load(path + '/docker-compose.yml');
           console.log(JSON.stringify(compose));
 
           for (var c in compose) {
@@ -84,14 +84,15 @@ module.exports = {
           }
 
           var result = [];
-          async.each(compose, function(component, done) {
+          async.each(compose, function (component, done) {
             Component.create(component, function (err, created) {
-              if (err) res.badRequest();
+              if (err) throw err;
               result.push(created);
               done();
             })
-          }, function() {
-            res.ok(result);
+          }, function (err) {
+            if (err) res.badRequest();
+            else res.ok(result);
             cleanUp(path);
           });
         })
@@ -103,59 +104,62 @@ module.exports = {
       });
   },
 
-  deploy: function(req, res) {
+  deploy: function (req, res) {
     var app_id = req.param('app_id');
 
-    docker.info(function(err, data) {
-      if (err) res.serverError(err);
-      else res.ok(data);
-      console.log(JSON.stringify(data));
-    });
-    /*docker.createNetwork({
-      Name: app.name
-    }, function(err, network) {
-      if (err) {
-        res.serverError(err);
-        return;
-      }
-      async.each(app.components, function(component, done) {
-        var env = [];
-        var exposed = {};
-        var portBindings = {};
-
-
-        for (var i = 0; i < component.environment; i++) {
-          env.push(component.environment[i]);
+    Application.findOne({id: app_id}).populate('components').exec(function (err, app) {
+      docker.createNetwork({
+        Name: app.name
+      }, function (err, network) {
+        if (err) {
+          res.serverError(err);
+          return;
         }
+        var components = app.components;
+        async.each(components, function (component, done) {
+          var env = [];
+          var exposed = {};
+          var portBindings = {};
 
-        for (var i = 0; i < component.ports; i++) {
-          var split = component.ports[i].split(':');
-          exposed[split[1] + "/tcp"] = {};
-          portBindings[split[1] + "/tcp"] = [{
-            HostPort: split[0]
-          }];
-        }
-
-        docker.createContainer({
-          Image: component.image,
-          name: component.name,
-          Env: env,
-          // ExposedPorts: exposed,
-          HostConfig: {
-            PortBindings: portBindings,
-            Network: app.name
+          if (component.ports) {
+            for (var i = 0; i < component.ports.length; i++) {
+              var split = component.ports[i].split(":");
+              exposed[split[1] + "/tcp"] = {};
+              portBindings[split[1] + "/tcp"] = [{
+                HostPort: split[0]
+              }];
+            }
           }
-        }, function(err, container) {
-          container.start(function(err, data) {
-            console.log(data);
-            done()
-          })
-        });
-      }, function(err) {
-        if (err) res.serverError(err);
-        else res.ok();
+
+          docker.createContainer({
+            Image: component.image,
+            name: component.name,
+            Env: component.environment,
+            ExposedPorts: exposed,
+            // Network: network,
+            HostConfig: {
+              PortBindings: portBindings,
+            }
+          }, function (err, container) {
+            if (err) throw err;
+            else {
+              container.start(function (err, data) {
+                if (err) throw err;
+                network.connect({
+                  container: container.id
+                }, function(err, data) {
+                  if (err) throw err;
+                  done();
+                });
+              })
+            }
+          });
+        }, function (err) {
+          if (err) res.serverError(err);
+          else res.ok();
+        })
       })
-    })*/
+    });
   }
 };
 
