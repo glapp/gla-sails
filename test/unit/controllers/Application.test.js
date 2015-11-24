@@ -31,8 +31,10 @@ describe('ApplicationController', function () {
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
-          expect(res.body).to.have.length(1);
+          expect(res.body).to.have.length(2);
           expect(res.body[0].name).to.equal('TestApplication');
+          expect(res.body[0].components).to.have.length(2);
+          expect(res.body[1].name).to.equal('TestApplication2');
           done();
         })
     });
@@ -47,6 +49,38 @@ describe('ApplicationController', function () {
           expect(res.body).to.contain.keys('id');
           done();
         });
+    });
+  });
+
+  describe('When an application is added', function () {
+
+    it('should turn docker-compose.yml into components', function (done) {
+      agent
+        .post('/registerComponents')
+        .send({app: 2, gitUrl: 'https://github.com/Clabfabs/docker-network-demos.git'})
+        .expect(200)
+        .end(function(err, res) {
+          if (err) throw err;
+          expect(res.body).to.have.length(2);
+          expect(res.body[0].image).to.equal('bfirsh/compose-mongodb-demo');
+          expect(res.body[1].image).to.equal('mongo');
+          done();
+        })
+    });
+  });
+
+  describe('When an application is ready to deploy', function () {
+
+    it('should deploy the application', function (done) {
+      console.warn('Your swarm will flooded with 2 containers and a new network in any case - don\'t forget to clean it!');
+      agent
+        .post('/deploy')
+        .send({app_id: 1})
+        .expect(200)
+        .end(function(err, res) {
+          if (err) throw err;
+          done();
+        })
     });
   });
 });

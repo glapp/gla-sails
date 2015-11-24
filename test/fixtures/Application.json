@@ -1,6 +1,12 @@
 [
   {
     "owner": 1,
-    "name": "TestApplication"
+    "name": "TestApplication",
+    "id": 1
+  },
+  {
+    "owner": 1,
+    "name": "TestApplication2",
+    "id": 2
   }
 ]

@@ -38,33 +38,50 @@
       <br/>
 
       <div class="row placeholders">
-        <div class="col-xs-6 col-sm-3 placeholder" ng-repeat="app in applications">
+        <div class="col-md-6" ng-repeat="app in applications">
           <img src="/images/cloud.jpg" class="img-responsive" alt="Generic placeholder thumbnail">
           <h4>{{app.name}}</h4>
-          <span class="text-muted">AWS - micro</span>
 
-          <form ng-submit="addComponent(app)" id="add-component" class="form-signin" name="add-component">
-            <h2 class="form-signin-heading">Add component</h2>
-
+          <form ng-submit="registerComponents(app)" id="add-component" class="form-signin" name="add-component">
             <div class="row">
               <div class="control-group form-group">
-                <label>Component git url</label>
-                <input type="text" class="form-control" placeholder="git URL" name="git" ng-model="addComponentForm.url" required>
+                <label>Git URL</label>
+                <input type="text" class="form-control" placeholder="git URL" name="git" ng-model="addGitURLForm.url" required>
               </div>
 
               <br/>
 
               <!-- Disable button until the form has no errors -->
               <button class="btn btn-primary btn-lg btn-block" type="submit">
-                <span ng-show="!addComponentForm.loading">Add Component</span>
-                <span class="overlord-loading-spinner fa fa-spinner" ng-show="addComponentForm.loading"></span>
-                <span ng-show="addComponentForm.loading">Creating component...</span>
+                <span ng-show="!addGitURLForm.loading">Add Git URL</span>
+                <span class="overlord-loading-spinner fa fa-spinner" ng-show="addGitURLForm.loading"></span>
+                <span ng-show="addGitURLForm.loading">Adding Git URL...</span>
               </button>
 
               <input type="hidden" name="_csrf" value="<%= _csrf %>"/>
             </div>
           </form>
 
+          <div ng-show="app.components.length > 0">
+            <h2>Components</h2>
+            <div ng-repeat="component in app.components">
+              <p>{{component.name}}</p>
+              <ul class="list-group">
+                <li class="list-group-item">Image: {{component.image}}</li>
+                <li class="list-group-item" ng-show="component.environment">Environment:
+                  <ul>
+                    <li ng-repeat="env in component.environment">{{env}}</li>
+                  </ul>
+                </li>
+                <li class="list-group-item" ng-show="component.ports">Ports:
+                  <ul>
+                    <li ng-repeat="port in component.ports">{{port}}</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+            <button class="btn btn-primary btn-lg btn-block" ng-click="deploy(app)">Deploy</button>
+          </div>
         </div>
       </div>
     </div>
