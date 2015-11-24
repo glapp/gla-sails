@@ -116,7 +116,7 @@ module.exports = {
             return;
           }
           var components = app.components;
-          async.eachSeries(components, function (component, done) {
+          async.each(components, function (component, done) {
             var env = [];
             var exposed = {};
             var portBindings = {};
@@ -144,14 +144,12 @@ module.exports = {
               else {
                 container.start(function (err, data) {
                   if (err) throw err;
-                  //setTimeout(function () { // Hack for docker swarm issue: https://github.com/docker/swarm/issues/1402
-                    // network.connect({
-                    //  container: container.id
-                    //}, function (err, data) {
-                    //  if (err) throw err;
-                      done();
-                    //});
-                  //}, 75000)
+                  // network.connect({           // Docker swarm issue: https://github.com/docker/swarm/issues/1402
+                  //  container: container.id    // TODO: Uncomment as soon as docker swarm bug is fixed
+                  //}, function (err, data) {
+                  //  if (err) throw err;
+                    done();
+                  //});
                 })
               }
             });
@@ -165,15 +163,13 @@ module.exports = {
                 res.serverError(err);
                 return;
               }
-              console.log(data);
-              res.ok();
+              res.ok(data.Containers);
             });
           })
         })
       });
   }
-}
-;
+};
 
 var cleanUp = function (path) {
   rimraf(path, function (err) {
