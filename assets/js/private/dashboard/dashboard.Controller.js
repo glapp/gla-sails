@@ -85,7 +85,7 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
 
 
   $scope.deploy = function (app) {
-    $http.post('/deploy', {app: app.id})
+    $http.post('/deploy', {app_id: app.id})
       .then(function onSuccess(sailsResponse) {
 
       })

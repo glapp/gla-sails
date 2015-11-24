@@ -108,60 +108,72 @@ module.exports = {
     var app_id = req.param('app_id');
 
     Application.findOne({id: app_id}).populate('components').exec(function (err, app) {
-      docker.createNetwork({
-        Name: app.name
-      }, function (err, network) {
-        if (err) {
-          res.serverError(err);
-          return;
-        }
-        var components = app.components;
-        async.each(components, function (component, done) {
-          var env = [];
-          var exposed = {};
-          var portBindings = {};
-
-          if (component.ports) {
-            for (var i = 0; i < component.ports.length; i++) {
-              var split = component.ports[i].split(":");
-              exposed[split[1] + "/tcp"] = {};
-              portBindings[split[1] + "/tcp"] = [{
-                HostPort: split[0]
-              }];
-            }
+        docker.createNetwork({
+          Name: app.name
+        }, function (err, network) {
+          if (err) {
+            res.serverError(err);
+            return;
           }
+          var components = app.components;
+          async.eachSeries(components, function (component, done) {
+            var env = [];
+            var exposed = {};
+            var portBindings = {};
 
-          docker.createContainer({
-            Image: component.image,
-            name: component.name,
-            Env: component.environment,
-            ExposedPorts: exposed,
-            // Network: network,
-            HostConfig: {
-              PortBindings: portBindings,
+            if (component.ports) {
+              for (var i = 0; i < component.ports.length; i++) {
+                var split = component.ports[i].split(":");
+                exposed[split[1] + "/tcp"] = {};
+                portBindings[split[1] + "/tcp"] = [{
+                  HostPort: split[0]
+                }];
+              }
             }
-          }, function (err, container) {
-            if (err) throw err;
-            else {
-              container.start(function (err, data) {
-                if (err) throw err;
-                network.connect({
-                  container: container.id
-                }, function(err, data) {
+
+            docker.createContainer({
+              Image: component.image,
+              name: component.name,
+              Env: component.environment,
+              ExposedPorts: exposed,
+              HostConfig: {
+                PortBindings: portBindings,
+              }
+            }, function (err, container) {
+              if (err) throw err;
+              else {
+                container.start(function (err, data) {
                   if (err) throw err;
-                  done();
-                });
-              })
+                  //setTimeout(function () { // Hack for docker swarm issue: https://github.com/docker/swarm/issues/1402
+                    // network.connect({
+                    //  container: container.id
+                    //}, function (err, data) {
+                    //  if (err) throw err;
+                      done();
+                    //});
+                  //}, 75000)
+                })
+              }
+            });
+          }, function (err) {
+            if (err) {
+              res.serverError(err);
+              return;
             }
-          });
-        }, function (err) {
-          if (err) res.serverError(err);
-          else res.ok();
+            network.inspect(function (err, data) {
+              if (err) {
+                res.serverError(err);
+                return;
+              }
+              console.log(data);
+              res.ok();
+            });
+          })
         })
-      })
-    });
+      });
   }
-};
+}
+;
 
 var cleanUp = function (path) {
   rimraf(path, function (err) {
