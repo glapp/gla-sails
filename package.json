@@ -8,7 +8,7 @@
     "async": "^1.5.0",
     "barrels": "^1.6.2",
     "chai": "^3.4.1",
-    "dockerode": "^2.2.3",
+    "dockerode": "git://github.com/apocas/dockerode.git",
     "ejs": "^2.3.4",
     "grunt": "^0.4.5",
     "grunt-bower-task": "^0.4.0",
@@ -39,9 +39,7 @@
     "should": "^7.1.1",
     "supertest": "^1.1.0",
     "tar-fs": "^1.8.1",
-    "redis": "*",
-    "kue": "0.9.4",
-    "kue-ui": "*"
+    "yamljs": "^0.2.4"
   },
   "scripts": {
     "debug": "node debug app.js",

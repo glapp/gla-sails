@@ -4,13 +4,30 @@ This application is based on [Sails](http://sailsjs.org).
 
 ## Pre-requisites
 * [Node.js](https://nodejs.org/)
-* [MongoDB](https://www.mongodb.org/downloads) (or whatever DB is used in config/models.js)
-  * Change to 'localDiskDb' in config/models.js if you don't want to use a db
+* [Docker-Machine](https://docs.docker.com/machine/install-machine/)
 
 ## Prepare
 * `npm install`
+* Set up a docker swarm
+  * Set up key-value storage:
+    * ``docker-machine create -d virtualbox kvstore``
+    * Unix: ``eval $(docker-machine env kvstore)``, Windows: ``FOR /f "tokens=*" %i IN ('docker-machine env --shell=cmd kvstore') DO %i``
+    * ```docker run -d --net=host progrium/consul --server -bootstrap-expect 1```
+  * Create swarm-master
+    * ```docker-machine create -d virtualbox --engine-opt "cluster-store consul://$(docker-machine ip kvstore):8500" --engine-opt "cluster-advertise eth1:2376" --swarm --swarm-master --swarm-discovery consul://$(docker-machine ip kvstore):8500 swarm-master```
+    * Note that this is the same command as setting up a regular swarm-master, but with another swarm-discovery argument and some engine-opts.
+  * Create swarm agents
+    * ```docker-machine create -d virtualbox --engine-opt "cluster-store consul://$(docker-machine ip kvstore):8500" --engine-opt "cluster-advertise eth1:2376" --swarm --swarm-discovery consul://$(docker-machine ip kvstore):8500 swarm-agent-00```
+    * Here, again, the only change to setting up a regular swarm-agent is the swarm-discovery and the engine-opts.
+    * Same command for swarm-agent-01, swarm-agent-02, etc.
+  * To get the IP and the right port on the swarm-master, type ``docker-machine env --swarm swarm-master``
+* Copy config/localSample.js
+  * Name the new file local.js
+  * Set SWARM_HOST and SWARM_PORT to the information extracted from the above command
+  * Add the DOCKER_CERT_PATH
 
 ## Run
-* start whatever DB is chosen
-  * MongoDB: `mongod --dbpath /path/to/any/db/folder`
 * Start app with `npm start`
+
+## Test
+* Run the defined tests with `npm test`

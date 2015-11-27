@@ -1,0 +1,20 @@
+[
+  {
+    "image": "bfirsh/compose-mongodb-demo",
+    "environment": [
+      "MONGO_HOST=mongo"
+    ],
+    "ports": [
+      "80:5000"
+    ],
+    "name": "web",
+    "application_id": 1,
+    "id": 1
+  },
+  {
+    "image": "mongo",
+    "name": "mongo",
+    "application_id": 1,
+    "id": 2
+  }
+]

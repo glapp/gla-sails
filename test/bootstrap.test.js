@@ -54,7 +54,10 @@ before(function (done) {
           if (err) console.error(err);
           barrels.populate(['application'], function (err) {
             if (err) console.error(err);
-            done(err, sails);
+            barrels.populate(['component'], function (err) {
+              if (err) console.error(err);
+              done(err, sails);
+            });
           });
         });
       })

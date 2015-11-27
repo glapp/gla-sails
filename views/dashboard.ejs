@@ -1,70 +1,92 @@
-<div class="container-fluid" ng-controller="DashboardController">
-  <div class="row">
-    <!--<div class="col-sm-3 col-md-2 sidebar">
-      <ul class="nav nav-sidebar">
-        <li class="active"><a href="#">Applications <span class="sr-only">(current)</span></a></li>
-        <li><a href="#">Blah1</a></li>
-        <li><a href="#">Blah2</a></li>
-      </ul>
-      <ul class="nav nav-sidebar">
-        <li><a href="">Nav item</a></li>
-      </ul>
-    </div>-->
-    <div class="col-sm-12 col-md-12 main">
-      <h1 class="page-header">Dashboard</h1>
-
-      <form ng-submit="addApplication()" id="add-app" class="form-signin" name="add-app">
-        <h2 class="form-signin-heading">Add application</h2>
+<div ng-controller="DashboardController" ng-cloak>
+  <div class="container">
+    <div class="row">
+      <!--<div class="col-sm-3 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+          <li class="active"><a href="#">Applications <span class="sr-only">(current)</span></a></li>
+          <li><a href="#">Blah1</a></li>
+          <li><a href="#">Blah2</a></li>
+        </ul>
+        <ul class="nav nav-sidebar">
+          <li><a href="">Nav item</a></li>
+        </ul>
+      </div>-->
+      <div class="col-sm-12 col-md-12 main">
+        <!--<h1 class="page-header">Dashboard</h1>-->
 
         <div class="row">
-          <div class="control-group form-group col-md-12">
-            <label>Application Name</label>
-            <input type="text" class="form-control" placeholder="Name" name="name" ng-model="addAppForm.name" required>
-          </div>
+          <div class="col-md-4" ng-repeat="app in applications">
+            <div class="panel panel-info">
 
-          <br/>
+              <div class="panel-heading">{{app.name}}</div>
+              <div class="panel-body">
+                <!--<img src="/images/cloud.jpg" class="img-responsive" alt="Generic placeholder thumbnail">-->
 
-          <!-- Disable button until the form has no errors -->
-          <button class="btn btn-primary btn-lg btn-block" type="submit">
-            <span ng-show="!addAppForm.loading">Add Application</span>
-            <span class="overlord-loading-spinner fa fa-spinner" ng-show="addAppForm.loading"></span>
-            <span ng-show="addAppForm.loading">Creating app...</span>
-          </button>
 
-          <input type="hidden" name="_csrf" value="<%= _csrf %>"/>
-        </div>
-      </form>
+                <form ng-submit="registerComponents(app)" id="add-component" class="form-signin" name="add-component">
+                  <div class="row">
+                    <div class="input-group">
+                      <input type="text" class="form-control" placeholder="git URL" name="git" ng-model="addGitURLForm.url" required>
+                      <!-- Disable button until the form has no errors -->
+                    <span class="input-group-btn">
+                      <button class="btn btn-primary btn-block" type="submit">
+                        <span ng-show="!addGitURLForm.loading">Add Git URL</span>
+                        <span class="overlord-loading-spinner fa fa-spinner" ng-show="addGitURLForm.loading"></span>
+                        <span ng-show="addGitURLForm.loading">Adding Git URL...</span>
+                      </button>
+                    </span>
+                    </div>
 
-      <br/>
+                    <br/>
 
-      <div class="row placeholders">
-        <div class="col-xs-6 col-sm-3 placeholder" ng-repeat="app in applications">
-          <img src="/images/cloud.jpg" class="img-responsive" alt="Generic placeholder thumbnail">
-          <h4>{{app.name}}</h4>
-          <span class="text-muted">AWS - micro</span>
 
-          <form ng-submit="addComponent(app)" id="add-component" class="form-signin" name="add-component">
-            <h2 class="form-signin-heading">Add component</h2>
 
-            <div class="row">
-              <div class="control-group form-group">
-                <label>Component git url</label>
-                <input type="text" class="form-control" placeholder="git URL" name="git" ng-model="addComponentForm.url" required>
+                    <input type="hidden" name="_csrf" value="<%= _csrf %>"/>
+                  </div>
+                </form>
+
+                <div ng-show="app.components.length > 0">
+                  <div ng-repeat="component in app.components">
+                    <p>{{component.name}}</p>
+                    <ul class="list-group">
+                      <li class="list-group-item">Image: {{component.image}}</li>
+                      <li class="list-group-item" ng-show="component.environment">Environment:
+                        <ul>
+                          <li ng-repeat="env in component.environment">{{env}}</li>
+                        </ul>
+                      </li>
+                      <li class="list-group-item" ng-show="component.ports">Ports:
+                        <ul>
+                          <li ng-repeat="port in component.ports">{{port}}</li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </div>
+                  <button class="btn btn-primary btn-lg btn-block" ng-click="deploy(app)">Deploy</button>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              <br/>
+        <div class="row top-buffer">
+          <form ng-submit="addApplication()" id="add-app" class="form-signin" name="add-app">
+            <div class="row">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Add application..." name="name" ng-model="addAppForm.name" required>
+                <!-- Disable button until the form has no errors -->
+                <span class="input-group-btn">
+                  <button class="btn btn-primary btn-block" type="submit">
+                    <span ng-show="!addAppForm.loading">Add Application</span>
+                    <span class="overlord-loading-spinner fa fa-spinner" ng-show="addAppForm.loading"></span>
+                    <span ng-show="addAppForm.loading">Creating app...</span>
+                  </button>
+                </span>
 
-              <!-- Disable button until the form has no errors -->
-              <button class="btn btn-primary btn-lg btn-block" type="submit">
-                <span ng-show="!addComponentForm.loading">Add Component</span>
-                <span class="overlord-loading-spinner fa fa-spinner" ng-show="addComponentForm.loading"></span>
-                <span ng-show="addComponentForm.loading">Creating component...</span>
-              </button>
-
-              <input type="hidden" name="_csrf" value="<%= _csrf %>"/>
+                <input type="hidden" name="_csrf" value="<%= _csrf %>"/>
+              </div>
             </div>
           </form>
-
         </div>
       </div>
     </div>

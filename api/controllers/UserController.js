@@ -103,7 +103,7 @@ module.exports = {
                 // send back an easily parseable status code.
                 if (err.invalidAttributes && err.invalidAttributes.email && err.invalidAttributes.email[0]
                   && err.invalidAttributes.email[0].rule === 'unique') {
-                  return res.emailAddressInUse();
+                  return res.badRequest('Email address in use');
                 }
 
                 // Otherwise, send back something reasonable as our error response.
