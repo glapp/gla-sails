@@ -1,4 +1,4 @@
-angular.module('AppModule').controller('DashboardController', ['$scope', '$http', function ($scope, $http) {
+angular.module('AppModule').controller('DashboardController', ['$scope', '$http', 'toastr', function ($scope, $http, toastr) {
 
   $scope.applications = [];
 
@@ -87,10 +87,10 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
   $scope.deploy = function (app) {
     $http.post('/deploy', {app_id: app.id})
       .then(function onSuccess(sailsResponse) {
-
+        toastr.success('Deployed!');
       })
       .catch(function onError(sailsResponse) {
-
+        toastr.error('Error while deploying:', sailsResponse);
       })
       .finally(function eitherWay() {
 
@@ -103,7 +103,7 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
         $scope.applications = data;
       })
       .error(function (data, status, headers, jwr) {
-        alert('couldn\'t load applications')
+        toastr.error('Couldn\'t load applications', 'Error')
       })
   };
 

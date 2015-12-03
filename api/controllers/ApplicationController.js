@@ -56,47 +56,8 @@ module.exports = {
 
     // Promisified process
     clone(gitUrl, path, null)
-      .then(function (repo) {
-        console.log('Cloning finished.');
-
-        fs.stat(path + '/docker-compose.yml', function (err, stat) {
-          if (err == null) {
-            console.log('File exists');
-          } else if (err.code == 'ENOENT') {
-            // Doesn't exist yet
-            console.log('No compose file');
-            cleanUp(path);
-            return;
-          } else {
-            //console.log('Some other error with Dockerfile: ', err.code);
-            console.log('Some other error with Dockerfile: ', err.code);
-            cleanUp(path);
-            return;
-          }
-
-          // docker-compose up
-          var compose = yaml.load(path + '/docker-compose.yml');
-          console.log(JSON.stringify(compose));
-
-          for (var c in compose) {
-            compose[c].name = c;
-            compose[c].application_id = app_id;
-          }
-
-          var result = [];
-          async.each(compose, function (component, done) {
-            Component.create(component, function (err, created) {
-              if (err) throw err;
-              result.push(created);
-              done();
-            })
-          }, function (err) {
-            if (err) res.badRequest();
-            else res.ok(result);
-            cleanUp(path);
-          });
-        })
-      })
+      .then(extractComponents)
+      .then()
       .catch(function (err) {
         console.log('--> ERROR', err);
         res.serverError(err);
@@ -176,4 +137,89 @@ var cleanUp = function (path) {
     if (err) throw err;
   })
 };
+
+var extractComponents = function (repo) {
+  return new Promise(function(resolve, reject) {
+    console.log('Cloning finished.');
+    fs.stat(path + '/docker-compose.yml', function (err, stat) {
+      if (err == null) {
+        console.log('File exists');
+      } else if (err.code == 'ENOENT') {
+        // Doesn't exist yet
+        console.log('No compose file');
+        cleanUp(path);
+        reject();
+      } else {
+        console.log('Some other error with Docker-Compose file: ', err.code);
+        cleanUp(path);
+        reject()
+      }
+
+      // docker-compose
+      var compose = yaml.load(path + '/docker-compose.yml');
+      console.log(JSON.stringify(compose));
+
+      for (var c in compose) {
+        compose[c].name = c;
+        compose[c].application_id = app_id;
+      }
+      resolve();
+    });
+  });
+};
+
+var createComponents = function(path, compose) {
+  return new Promise(function (resolve, reject) {
+    var result = [];
+    async.each(compose, function (component, done) {
+
+      // TODO: If "Build:", then build first. If "Image:", pull it first.
+
+      Component.create(component, function (err, created) {
+        if (err) throw err;
+        result.push(created);
+        done();
+      })
+    }, function (err) {
+      if (err) reject();
+      else resolve(result);
+    });
+  });
+};
+
+var makeTar = function (path) {
+  return new Promise(function (resolve, reject) {
+    fs.stat(path + '/Dockerfile', function (err, stat) {
+      if (err == null) {
+        console.log('File exists');
+      } else if (err.code == 'ENOENT') {
+        fs.writeFile(path + '/Dockerfile',
+          "FROM gliderlabs/herokuish\n" +
+          "COPY . /app\n" +
+          "RUN herokuish buildpack build && export PORT=5000\n" +
+          "EXPOSE 5000\n" +
+          "CMD [\"/start\", \"web\"]",
+          function (err) {
+            if (err) return console.log('Write error: ', err);
+          }
+        );
+      } else {
+        //console.log('Some other error with Dockerfile: ', err.code);
+        reject('Some other error with Dockerfile: ', err.code);
+        return;
+      }
+
+      // Dockerfile exists
+
+      // Make tar
+      tar.pack(path).pipe(fs.createWriteStream(path + '.tar'))
+        .on('finish', function () {
+          //buildDockerImage(name, path);
+          resolve(path);
+        });
+    });
+  });
+
+};
+
 
