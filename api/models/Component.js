@@ -28,6 +28,11 @@ module.exports = {
     },
     ports: {
       type: 'array'
+    },
+    ready: {
+      type: 'boolean',
+      required: true,
+      defaultsTo: false
     }
   }
 };

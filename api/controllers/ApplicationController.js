@@ -11,6 +11,7 @@ var rimraf = require('rimraf');
 var Docker = require('dockerode');
 var yaml = require('yamljs');
 var async = require('async');
+var tar = require('tar-fs');
 
 var docker = new Docker({
   host: sails.config.SWARM_HOST || 'localhost',
@@ -40,6 +41,7 @@ module.exports = {
   registerComponents: function (req, res) {
     var app_id = req.param('app');
     var gitUrl = req.param('gitUrl');
+    var user_id = req.session.me;
 
     console.log('---------> DEBUG: Starting git clone');
 
@@ -56,8 +58,17 @@ module.exports = {
 
     // Promisified process
     clone(gitUrl, path, null)
-      .then(extractComponents)
-      .then()
+      .then(function() {
+        return extractComponents(path, app_id);
+      })
+      .then(function(compose) {
+        console.log(compose);
+        return createComponents(path, compose, user_id)
+      })
+      .then(function(result) {
+        res.ok(result);
+        cleanUp(path);
+      })
       .catch(function (err) {
         console.log('--> ERROR', err);
         res.serverError(err);
@@ -138,7 +149,7 @@ var cleanUp = function (path) {
   })
 };
 
-var extractComponents = function (repo) {
+var extractComponents = function (path, app_id) {
   return new Promise(function(resolve, reject) {
     console.log('Cloning finished.');
     fs.stat(path + '/docker-compose.yml', function (err, stat) {
@@ -149,10 +160,12 @@ var extractComponents = function (repo) {
         console.log('No compose file');
         cleanUp(path);
         reject();
+        return;
       } else {
         console.log('Some other error with Docker-Compose file: ', err.code);
         cleanUp(path);
-        reject()
+        reject();
+        return;
       }
 
       // docker-compose
@@ -163,63 +176,78 @@ var extractComponents = function (repo) {
         compose[c].name = c;
         compose[c].application_id = app_id;
       }
-      resolve();
+      resolve(compose);
     });
   });
 };
 
-var createComponents = function(path, compose) {
+var createComponents = function(path, compose, user_id) {
   return new Promise(function (resolve, reject) {
     var result = [];
     async.each(compose, function (component, done) {
+      async.series([
+        function(finished) {
+          if (!component.image && component.build) {
+            component.image = 'local/' + component.name;
+            var buildpath = require('path').join(path, component.build);
+            // Make tar
+            tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
+              .on('finish', function () {
+                docker.buildImage(buildpath + '.tar', {t: component.image}, function (err, stream) {
+                  if (err) throw err;
 
-      // TODO: If "Build:", then build first. If "Image:", pull it first.
+                  docker.modem.followProgress(stream, onFinished, onProgress);
 
-      Component.create(component, function (err, created) {
+                  function onProgress(event) {
+                    console.log(_.values(event));
+                  }
+
+                  function onFinished(err, output) {
+                    if (err) throw err;
+                    component.ready = true;
+                    sails.sockets.emit(user_id, 'componentReady', component);
+                  }
+                });
+                // Callback outside the pull function to make it pull in the background
+                finished();
+              });
+          } else if (component.image && !component.build) {
+            docker.pull(component.image, function (err, stream) {
+              if (err) throw err;
+
+              docker.modem.followProgress(stream, onFinished, onProgress);
+
+              function onProgress(event) {
+                console.log(_.values(event));
+              }
+
+              function onFinished(err, output) {
+                if (err) throw err;
+                component.ready = true;
+                // sails.sockets.emit(user_id, 'componentReady', component);
+              }
+            });
+            // Callback outside the pull function to make it pull in the background
+            finished();
+          } else {
+            throw 'Build / Image attributes not valid';
+          }
+        },
+        function(finished) {
+          Component.create(component, function (err, created) {
+            if (err) throw err;
+            result.push(created);
+            finished();
+          })
+        }
+      ], function(err, results) {
         if (err) throw err;
-        result.push(created);
         done();
-      })
+      });
+
     }, function (err) {
-      if (err) reject();
+      if (err) reject(err);
       else resolve(result);
     });
   });
 };
-
-var makeTar = function (path) {
-  return new Promise(function (resolve, reject) {
-    fs.stat(path + '/Dockerfile', function (err, stat) {
-      if (err == null) {
-        console.log('File exists');
-      } else if (err.code == 'ENOENT') {
-        fs.writeFile(path + '/Dockerfile',
-          "FROM gliderlabs/herokuish\n" +
-          "COPY . /app\n" +
-          "RUN herokuish buildpack build && export PORT=5000\n" +
-          "EXPOSE 5000\n" +
-          "CMD [\"/start\", \"web\"]",
-          function (err) {
-            if (err) return console.log('Write error: ', err);
-          }
-        );
-      } else {
-        //console.log('Some other error with Dockerfile: ', err.code);
-        reject('Some other error with Dockerfile: ', err.code);
-        return;
-      }
-
-      // Dockerfile exists
-
-      // Make tar
-      tar.pack(path).pipe(fs.createWriteStream(path + '.tar'))
-        .on('finish', function () {
-          //buildDockerImage(name, path);
-          resolve(path);
-        });
-    });
-  });
-
-};
-
-

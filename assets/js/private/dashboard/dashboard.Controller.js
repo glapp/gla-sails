@@ -108,5 +108,13 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
   };
 
   getApps();
+
+  io.socket.on('componentReady', function(component) {
+    for (var i = 0; i < $scope.components.length; i++) {
+      if ($scope.components[i].id = component.id) {
+        $scope.components[i] = component;
+      }
+    }
+  })
 }])
 ;

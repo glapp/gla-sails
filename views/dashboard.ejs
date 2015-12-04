@@ -60,6 +60,8 @@
                           <li ng-repeat="port in component.ports">{{port}}</li>
                         </ul>
                       </li>
+                      <span class="label label-warning" ng-hide="component.ready">Making it ready...</span>
+                      <span class="label label-success" ng-show="component.ready">>Ready</span>
                     </ul>
                   </div>
                   <button class="btn btn-primary btn-lg btn-block" ng-click="deploy(app)">Deploy</button>
