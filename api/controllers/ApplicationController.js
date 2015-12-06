@@ -12,6 +12,7 @@ var Docker = require('dockerode');
 var yaml = require('yamljs');
 var async = require('async');
 var tar = require('tar-fs');
+var _ = require('lodash');
 
 var docker = new Docker({
   host: sails.config.SWARM_HOST || 'localhost',
@@ -27,7 +28,16 @@ module.exports = {
       .populate('components')
       .exec(function (err, apps) {
         if (err) res.notFound();
-        res.ok(apps);
+        var components = [];
+        _.each(apps, function(app) {
+          _.each(app.components, function(comp) {
+            components.push(comp);
+          })
+        });
+        res.json({
+          apps: apps,
+          components: components
+        });
       })
   },
 
@@ -61,9 +71,9 @@ module.exports = {
       .then(function() {
         return extractComponents(path, app_id);
       })
-      .then(function(compose) {
-        console.log(compose);
-        return createComponents(path, compose, user_id)
+      .then(function(components) {
+        console.log(components);
+        return createComponents(path, components, user_id)
       })
       .then(function(result) {
         res.ok(result);
@@ -169,22 +179,22 @@ var extractComponents = function (path, app_id) {
       }
 
       // docker-compose
-      var compose = yaml.load(path + '/docker-compose.yml');
-      console.log(JSON.stringify(compose));
+      var components = yaml.load(path + '/docker-compose.yml');
+      console.log(JSON.stringify(components));
 
-      for (var c in compose) {
-        compose[c].name = c;
-        compose[c].application_id = app_id;
+      for (var c in components) {
+        components[c].name = c;
+        components[c].application_id = app_id;
       }
-      resolve(compose);
+      resolve(components);
     });
   });
 };
 
-var createComponents = function(path, compose, user_id) {
+var createComponents = function(path, components, user_id) {
   return new Promise(function (resolve, reject) {
     var result = [];
-    async.each(compose, function (component, done) {
+    async.each(components, function (component, done) {
       async.series([
         function(finished) {
           if (!component.image && component.build) {
@@ -204,11 +214,14 @@ var createComponents = function(path, compose, user_id) {
 
                   function onFinished(err, output) {
                     if (err) throw err;
-                    component.ready = true;
-                    sails.sockets.emit(user_id, 'componentReady', component);
+                    // Sets the status to ready as soon as image is ready on docker swarm
+                    Component.findOrCreate(component, component, function(err, result) {
+                      result.ready = true;
+                      result.save();
+                    });
                   }
                 });
-                // Callback outside the pull function to make it pull in the background
+                // Callback outside the build function to make it build in the background
                 finished();
               });
           } else if (component.image && !component.build) {
@@ -223,8 +236,11 @@ var createComponents = function(path, compose, user_id) {
 
               function onFinished(err, output) {
                 if (err) throw err;
-                component.ready = true;
-                // sails.sockets.emit(user_id, 'componentReady', component);
+                // Sets the status to ready as soon as image is ready on docker swarm
+                Component.findOrCreate(component, component, function(err, result) {
+                  result.ready = true;
+                  result.save();
+                });
               }
             });
             // Callback outside the pull function to make it pull in the background
@@ -234,7 +250,7 @@ var createComponents = function(path, compose, user_id) {
           }
         },
         function(finished) {
-          Component.create(component, function (err, created) {
+          Component.findOrCreate({id: component.id}, component, function (err, created) {
             if (err) throw err;
             result.push(created);
             finished();

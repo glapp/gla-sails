@@ -1,4 +1,5 @@
-angular.module('AppModule').controller('DashboardController', ['$scope', '$http', 'toastr', function ($scope, $http, toastr) {
+;
+angular.module('AppModule').controller('DashboardController', ['$scope', '$sails', 'toastr', function ($scope, $sails, toastr) {
 
   $scope.applications = [];
 
@@ -22,7 +23,7 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
     $scope.addAppForm.loading = true;
 
     // Submit request to Sails.
-    $http.post('/app', {
+    $sails.post('/app', {
         name: $scope.addAppForm.name
       })
       .then(function onSuccess(sailsResponse) {
@@ -43,7 +44,7 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
     $scope.addComponentForm.loading = true;
 
     // Submit request to Sails.
-    $http.post('/component', {
+    $sails.post('/component', {
         gitUrl: $scope.addComponentForm.url,
         app: app.id
       })
@@ -64,13 +65,13 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
     $scope.addGitURLForm.loading = true;
 
     // Submit request to Sails.
-    $http.post('/registerComponents', {
+    $sails.post('/registerComponents', {
         gitUrl: $scope.addGitURLForm.url,
         app: app.id
       })
       .then(function onSuccess(sailsResponse) {
         for (var i = 0; i < sailsResponse.data.length; i++) {
-          app.components.push(sailsResponse.data[i]);
+          $scope.components.push(sailsResponse.data[i]);
         }
       })
       .catch(function onError(sailsResponse) {
@@ -85,7 +86,7 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
 
 
   $scope.deploy = function (app) {
-    $http.post('/deploy', {app_id: app.id})
+    $sails.post('/deploy', {app_id: app.id})
       .then(function onSuccess(sailsResponse) {
         toastr.success('Deployed!');
       })
@@ -98,23 +99,31 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$http'
   };
 
   var getApps = function () {
-    $http.get('/getUserApps')
+    $sails.get('/getUserApps')
       .success(function (data, status, headers, jwr) {
-        $scope.applications = data;
+        $scope.applications = data.apps;
+        $scope.components = data.components;
       })
       .error(function (data, status, headers, jwr) {
         toastr.error('Couldn\'t load applications', 'Error')
       })
   };
 
-  getApps();
-
-  io.socket.on('componentReady', function(component) {
-    for (var i = 0; i < $scope.components.length; i++) {
-      if ($scope.components[i].id = component.id) {
-        $scope.components[i] = component;
+  // TODO: Sockets don't work yet
+  $sails.on('component', function(message) {
+    console.log(message);
+    if (message.verb === 'created') {
+      console.log('SOCKET PUSH OF ', message.data);
+      $scope.components.push(message.data);
+    }
+    if (message.verb === 'updated') {
+      for (var i = 0; i < $scope.components.length; i++) {
+        if ($scope.components[i].id = message.data.id) {
+          $scope.components[i] = message.data;
+        }
       }
     }
-  })
-}])
-;
+  });
+
+  getApps();
+}]);

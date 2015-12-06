@@ -1,6 +1,6 @@
-angular.module('AppModule', ['toastr', 'compareTo'])
-  .run(function ($http, $rootScope) {
-    $http.get('/confirm-login')
+angular.module('AppModule', ['toastr', 'compareTo', 'ngSails'])
+  .run(function ($sails, $rootScope) {
+    $sails.get('/confirm-login')
       .success(function (body) {
         $rootScope.user = body.id;
       })

@@ -23,7 +23,7 @@ angular.module('AppModule').controller('SignupController', ['$scope', '$rootScop
 
         // Handle known error type(s).
         // If using sails-disk adpater -- Handle Duplicate Key
-        var emailAddressAlreadyInUse = sailsResponse.status == 409;
+        var emailAddressAlreadyInUse = sailsResponse.status == 400;
 
         if (emailAddressAlreadyInUse) {
           toastr.error('That email address has already been taken, please try again.', 'Error');
