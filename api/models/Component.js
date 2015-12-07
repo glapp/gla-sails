@@ -23,6 +23,9 @@ module.exports = {
     image: {
       type: 'string'
     },
+    imageId: {
+      type: 'string'
+    },
     environment: {
       type: 'array'
     },

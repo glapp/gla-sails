@@ -8,19 +8,10 @@
 var clone = require("nodegit").Clone.clone;
 var fs = require('fs');
 var rimraf = require('rimraf');
-var Docker = require('dockerode');
 var yaml = require('yamljs');
 var async = require('async');
 var tar = require('tar-fs');
 var _ = require('lodash');
-
-var docker = new Docker({
-  host: sails.config.SWARM_HOST || 'localhost',
-  port: sails.config.SWARM_PORT || 3376,
-  ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
-  cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
-  key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')
-});
 
 module.exports = {
   getUserApps: function (req, res) {
@@ -223,7 +214,10 @@ var createComponents = function(path, components, user_id) {
                 });
                 // Callback outside the build function to make it build in the background
                 finished();
-              });
+              })
+              .on('error', function(err) {
+                throw err;
+              })
           } else if (component.image && !component.build) {
             docker.pull(component.image, function (err, stream) {
               if (err) throw err;
@@ -236,10 +230,19 @@ var createComponents = function(path, components, user_id) {
 
               function onFinished(err, output) {
                 if (err) throw err;
-                // Sets the status to ready as soon as image is ready on docker swarm
-                Component.findOrCreate(component, component, function(err, result) {
-                  result.ready = true;
-                  result.save();
+
+                docker.getImage(component.image, function(err, image) {
+                  image.inspect(function(err, data) {
+                    if (err) throw err;
+
+                    Component.findOrCreate(component, component, function(err, result) {
+                      // Sets the status to ready as soon as image is ready on docker swarm
+                      result.ready = true;
+                      // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
+                      result.imageId = data.Id;
+                      result.save();
+                    });
+                  })
                 });
               }
             });
