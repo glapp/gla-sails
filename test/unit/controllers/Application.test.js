@@ -31,10 +31,10 @@ describe('ApplicationController', function () {
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
-          expect(res.body).to.have.length(2);
-          expect(res.body[0].name).to.equal('TestApplication');
-          expect(res.body[0].components).to.have.length(2);
-          expect(res.body[1].name).to.equal('TestApplication2');
+          expect(res.body.apps).to.have.length(2);
+          expect(res.body.apps[0].name).to.equal('TestApplication');
+          expect(res.body.apps[0].components).to.have.length(2);
+          expect(res.body.apps[1].name).to.equal('TestApplication2');
           done();
         })
     });
@@ -72,7 +72,7 @@ describe('ApplicationController', function () {
   describe('When an application is ready to deploy', function () {
 
     it('should deploy the application', function (done) {
-      console.warn('Your swarm will flooded with 2 containers and a new network in any case - don\'t forget to clean it!');
+      console.log('Your swarm will flooded with 2 containers and a new network in any case - don\'t forget to clean it!');
       agent
         .post('/deploy')
         .send({app_id: 1})
