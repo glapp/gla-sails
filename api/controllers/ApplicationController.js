@@ -64,7 +64,7 @@ module.exports = {
       })
       .then(function(components) {
         console.log(components);
-        return createComponents(path, components, user_id)
+        return createComponents(path, components, user_id, app_id)
       })
       .then(function(result) {
         res.ok(result);
@@ -182,14 +182,15 @@ var extractComponents = function (path, app_id) {
   });
 };
 
-var createComponents = function(path, components, user_id) {
+var createComponents = function(path, components, user_id, app_id) {
   return new Promise(function (resolve, reject) {
     var result = [];
     async.each(components, function (component, done) {
+      var tag = user_id + '/' + app_id + '/' + component.name;
       async.series([
         function(finished) {
           if (!component.image && component.build) {
-            component.image = 'local/' + component.name;
+            component.image = tag;
             var buildpath = require('path').join(path, component.build);
             // Make tar
             tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
@@ -207,6 +208,7 @@ var createComponents = function(path, components, user_id) {
                     if (err) throw err;
                     // Sets the status to ready as soon as image is ready on docker swarm
                     Component.findOrCreate(component, component, function(err, result) {
+                      if (err) throw err;
                       result.ready = true;
                       result.save();
                     });
@@ -219,7 +221,8 @@ var createComponents = function(path, components, user_id) {
                 throw err;
               })
           } else if (component.image && !component.build) {
-            docker.pull(component.image, function (err, stream) {
+            // TODO: direct tagging doesn't work this way
+            docker.pull(component.image, {tag: tag}, function (err, stream) {
               if (err) throw err;
 
               docker.modem.followProgress(stream, onFinished, onProgress);
@@ -231,19 +234,21 @@ var createComponents = function(path, components, user_id) {
               function onFinished(err, output) {
                 if (err) throw err;
 
-                docker.getImage(component.image, function(err, image) {
+                /*docker.getImage(component.image, function(err, image) {
+                  if (err) throw err;
                   image.inspect(function(err, data) {
-                    if (err) throw err;
+                    if (err) throw err;*/
 
                     Component.findOrCreate(component, component, function(err, result) {
+                      if (err) throw err;
                       // Sets the status to ready as soon as image is ready on docker swarm
                       result.ready = true;
                       // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
-                      result.imageId = data.Id;
+                      // result.imageId = data.Id;
                       result.save();
                     });
-                  })
-                });
+                  /*})
+                });*/
               }
             });
             // Callback outside the pull function to make it pull in the background
@@ -263,7 +268,6 @@ var createComponents = function(path, components, user_id) {
         if (err) throw err;
         done();
       });
-
     }, function (err) {
       if (err) reject(err);
       else resolve(result);
