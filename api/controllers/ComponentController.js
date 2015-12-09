@@ -7,18 +7,82 @@
 
 var clone = require("nodegit").Clone.clone;
 var fs = require('fs');
-var Docker = require('dockerode');
 var tar = require('tar-fs');
 var rimraf = require('rimraf');
 
 var debug = 1;
 
-var docker = new Docker({
-  host: sails.config.DOCKER_HOST || 'localhost',
-  port: sails.config.DOCKER_PORT || 4243,
-});
-
 module.exports = {
+
+  move: function(req, res) {
+    var component_id = req.param('component_id');
+    var goal_node = req.param('goal_node');
+
+    Component.findOne({id: component_id}, function(err, component) {
+      if (err) throw err;
+      if (component.node == goal_node) {
+        res.badRequest('goal node is identical to current node!');
+        return;
+      }
+      var exposed = {};
+      var portBindings = {};
+
+      if (component.ports) {
+        for (var i = 0; i < component.ports.length; i++) {
+          var split = component.ports[i].split(":");
+          exposed[split[1] + "/tcp"] = {};
+          portBindings[split[1] + "/tcp"] = [{
+            HostPort: split[0]
+          }];
+        }
+      }
+
+      if (component.environment) {
+        component.environment.push('constraint:node==' + goal_node);
+      } else {
+        component.environment = ['constraint:node==' + goal_node];
+      }
+
+      docker.createContainer({
+        Image: component.image,
+        name: component.name + '_temp',
+        Env: component.environment,
+        ExposedPorts: exposed,
+        HostConfig: {
+          PortBindings: portBindings,
+        }
+      }, function (err, container) {
+        if (err) throw err;
+        var old_name = docker.getContainer(component.name);
+        old_name.inspect(function(err, data) {
+          if (err) throw err;
+          console.log(JSON.stringify(data));
+          container.start(function(err) {
+            if (err) throw err;
+            var old = docker.getContainer(data.Id);
+            old.rename({name: component.name + '_old'}, function(err) {
+              if (err) throw err;
+              container.rename({name: component.name}, function(err) {
+                if (err) throw err;
+                old.remove({force: true}, function(err) {
+                  if (err) throw err;
+                  container.inspect(function(err, data) {
+                    if (err) throw err;
+                    Component.update({id: component.id}, {node: data.Node.Name}, function(err, result) {
+                      if (err) throw err;
+                      res.ok(result);
+                    });
+                  });
+                })
+              })
+            });
+          });
+        });
+      });
+    })
+  },
+
+  /*
   buildFromGitRepo: function (req, res) {
 
     var app_id = req.param('app_id');
@@ -120,7 +184,7 @@ var buildDockerImage = function (result) {
         console.log(event);
       }
     });
-  });
+  });*/
 };
 
 var cleanUp = function (path) {

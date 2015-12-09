@@ -20,8 +20,8 @@ module.exports = {
       .exec(function (err, apps) {
         if (err) res.notFound();
         var components = [];
-        _.each(apps, function(app) {
-          _.each(app.components, function(comp) {
+        _.each(apps, function (app) {
+          _.each(app.components, function (comp) {
             components.push(comp);
           })
         });
@@ -59,14 +59,14 @@ module.exports = {
 
     // Promisified process
     clone(gitUrl, path, null)
-      .then(function() {
+      .then(function () {
         return extractComponents(path, app_id);
       })
-      .then(function(components) {
+      .then(function (components) {
         console.log(components);
         return createComponents(path, components, user_id, app_id)
       })
-      .then(function(result) {
+      .then(function (result) {
         res.ok(result);
         cleanUp(path);
       })
@@ -79,68 +79,76 @@ module.exports = {
 
   deploy: function (req, res) {
     var app_id = req.param('app_id');
+    var user_id = req.session.me;
 
     Application.findOne({id: app_id}).populate('components').exec(function (err, app) {
-        docker.createNetwork({
-          Name: app.name
-        }, function (err, network) {
+      docker.createNetwork({
+        Name: user_id + '_' + app.id
+      }, function (err, network) {
+        if (err) {
+          res.serverError(err);
+          return;
+        }
+        var result = [];
+        async.each(app.components, function (component, done) {
+          var exposed = {};
+          var portBindings = {};
+
+          if (component.ports) {
+            for (var i = 0; i < component.ports.length; i++) {
+              var split = component.ports[i].split(":");
+              exposed[split[1] + "/tcp"] = {};
+              portBindings[split[1] + "/tcp"] = [{
+                HostPort: split[0]
+              }];
+            }
+          }
+
+          docker.createContainer({
+            Image: component.image,
+            name: component.name,
+            Env: component.environment,
+            ExposedPorts: exposed,
+            HostConfig: {
+              PortBindings: portBindings,
+            }
+          }, function (err, container) {
+            if (err) throw err;
+            else {
+              container.inspect(function (err, inspectData) {
+                if (err) throw err;
+                Component.update({id: component.id}, {node: inspectData.Node.Name}, function (err, updated) {
+                  if (err) throw err;
+                  result.push(updated);
+                  container.start(function (err) {
+                    if (err) throw err;
+                    // network.connect({           // Docker swarm issue: https://github.com/docker/swarm/issues/1402
+                    //  container: container.id    // TODO: Uncomment as soon as docker swarm bug is fixed
+                    //}, function (err, data) {
+                    //  if (err) throw err;
+                    done();
+                    //});
+                  })
+                })
+              });
+            }
+          });
+        }, function (err) {
           if (err) {
             res.serverError(err);
             return;
           }
-          var components = app.components;
-          async.each(components, function (component, done) {
-            var env = [];
-            var exposed = {};
-            var portBindings = {};
-
-            if (component.ports) {
-              for (var i = 0; i < component.ports.length; i++) {
-                var split = component.ports[i].split(":");
-                exposed[split[1] + "/tcp"] = {};
-                portBindings[split[1] + "/tcp"] = [{
-                  HostPort: split[0]
-                }];
-              }
-            }
-
-            docker.createContainer({
-              Image: component.image,
-              name: component.name,
-              Env: component.environment,
-              ExposedPorts: exposed,
-              HostConfig: {
-                PortBindings: portBindings,
-              }
-            }, function (err, container) {
-              if (err) throw err;
-              else {
-                container.start(function (err, data) {
-                  if (err) throw err;
-                  // network.connect({           // Docker swarm issue: https://github.com/docker/swarm/issues/1402
-                  //  container: container.id    // TODO: Uncomment as soon as docker swarm bug is fixed
-                  //}, function (err, data) {
-                  //  if (err) throw err;
-                    done();
-                  //});
-                })
-              }
-            });
-          }, function (err) {
+          network.inspect(function (err, data) {
+            console.log(JSON.stringify(data));
             if (err) {
               res.serverError(err);
               return;
             }
-            network.inspect(function (err, data) {
-              if (err) {
-                res.serverError(err);
-                return;
-              }
-              res.ok(data.Containers);
-            });
-          })
+            res.ok(result);
+          });
         })
-      });
+      })
+    });
   }
 };
 
@@ -151,7 +159,7 @@ var cleanUp = function (path) {
 };
 
 var extractComponents = function (path, app_id) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     console.log('Cloning finished.');
     fs.stat(path + '/docker-compose.yml', function (err, stat) {
       if (err == null) {
@@ -182,13 +190,13 @@ var extractComponents = function (path, app_id) {
   });
 };
 
-var createComponents = function(path, components, user_id, app_id) {
+var createComponents = function (path, components, user_id, app_id) {
   return new Promise(function (resolve, reject) {
     var result = [];
     async.each(components, function (component, done) {
       var tag = user_id + '/' + app_id + '/' + component.name;
       async.series([
-        function(finished) {
+        function (finished) {
           if (!component.image && component.build) {
             component.image = tag;
             var buildpath = require('path').join(path, component.build);
@@ -207,7 +215,7 @@ var createComponents = function(path, components, user_id, app_id) {
                   function onFinished(err, output) {
                     if (err) throw err;
                     // Sets the status to ready as soon as image is ready on docker swarm
-                    Component.findOrCreate(component, component, function(err, result) {
+                    Component.findOrCreate(component, component, function (err, result) {
                       if (err) throw err;
                       result.ready = true;
                       result.save();
@@ -217,54 +225,83 @@ var createComponents = function(path, components, user_id, app_id) {
                 // Callback outside the build function to make it build in the background
                 finished();
               })
-              .on('error', function(err) {
+              .on('error', function (err) {
                 throw err;
               })
           } else if (component.image && !component.build) {
-            // TODO: direct tagging doesn't work this way
-            docker.pull(component.image, {tag: tag}, function (err, stream) {
-              if (err) throw err;
-
-              docker.modem.followProgress(stream, onFinished, onProgress);
-
-              function onProgress(event) {
-                console.log(_.values(event));
-              }
-
-              function onFinished(err, output) {
-                if (err) throw err;
-
-                /*docker.getImage(component.image, function(err, image) {
+            var image = docker.getImage(component.image);
+            image.inspect(function (err, inspectData) {
+              if (err && err.statusCode != 404) throw err;
+              if (err && err.statusCode == 404) {
+                docker.pull(component.image, function (err, stream) {
                   if (err) throw err;
-                  image.inspect(function(err, data) {
-                    if (err) throw err;*/
 
-                    Component.findOrCreate(component, component, function(err, result) {
+                  docker.modem.followProgress(stream, onFinished, onProgress);
+
+                  function onProgress(event) {
+                    console.log(_.values(event));
+                  }
+
+                  function onFinished(err, output) {
+                    if (err) throw err;
+
+                    console.log(JSON.stringify(output));
+                    var newImage = docker.getImage(component.image);
+                    newImage.inspect(function (err, inspectData) {
                       if (err) throw err;
-                      // Sets the status to ready as soon as image is ready on docker swarm
-                      result.ready = true;
-                      // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
-                      // result.imageId = data.Id;
-                      result.save();
+                      console.log('--> Inspect data:', inspectData);
+                      // No tagging neccessary
+                      /*newImage.tag({repo: tag}, function (err, tagData) {
+                       if (err) throw err;
+                       console.log('--> Tag Data', tagData);*/
+
+                      Component.findOrCreate(component, component, function (err, result) {
+                        if (err) throw err;
+                        // Sets the status to ready as soon as image is ready on docker swarm
+                        result.ready = true;
+                        // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
+                        // result.imageId = data.Id;
+                        result.save();
+                      });
+                      // });
                     });
-                  /*})
-                });*/
+                  }
+                });
+                // Callback outside the pull function to make it pull in the background
+                finished();
+              } else {
+                console.log(JSON.stringify('--> Inspect Data', inspectData));
+                //image.tag({repo: tag}, function (err, data) {
+                //if (err) throw err;
+                //image.inspect(function (err, data) {
+                //if (err) throw err;
+
+                Component.findOrCreate(component, component, function (err, result) {
+                  if (err) throw err;
+                  // Sets the status to ready as soon as image is ready on docker swarm
+                  result.ready = true;
+                  // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
+                  // result.imageId = data.Id;
+                  result.save();
+                  finished();
+                });
+                //})
+                //});
               }
             });
-            // Callback outside the pull function to make it pull in the background
-            finished();
+
           } else {
             throw 'Build / Image attributes not valid';
           }
         },
-        function(finished) {
-          Component.findOrCreate({id: component.id}, component, function (err, created) {
+        function (finished) {
+          Component.findOrCreate(component, component, function (err, created) {
             if (err) throw err;
             result.push(created);
             finished();
           })
         }
-      ], function(err, results) {
+      ], function (err, results) {
         if (err) throw err;
         done();
       });

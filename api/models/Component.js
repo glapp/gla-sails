@@ -23,7 +23,7 @@ module.exports = {
     image: {
       type: 'string'
     },
-    imageId: {
+    node_name: {
       type: 'string'
     },
     environment: {

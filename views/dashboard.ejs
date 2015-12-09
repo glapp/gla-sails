@@ -15,7 +15,7 @@
         <!--<h1 class="page-header">Dashboard</h1>-->
 
         <div class="row">
-          <div class="col-md-4" ng-repeat="app in applications">
+          <div class="col-md-8" ng-repeat="app in applications">
             <div class="panel panel-info">
 
               <div class="panel-heading">{{app.name}}</div>
@@ -23,7 +23,7 @@
                 <!--<img src="/images/cloud.jpg" class="img-responsive" alt="Generic placeholder thumbnail">-->
 
 
-                <form ng-submit="registerComponents(app)" id="add-component" class="form-signin" name="add-component">
+                <form ng-hide="app.components.length > 0" ng-submit="registerComponents(app)" id="add-component" class="form-signin" name="add-component">
                   <div class="row">
                     <div class="input-group">
                       <input type="text" class="form-control" placeholder="git URL" name="git"
@@ -45,22 +45,34 @@
                 </form>
 
                 <div ng-repeat="component in components | filter:{application_id: app.id}">
-                  <p>{{component.name}}</p>
-                  <ul class="list-group">
-                    <li class="list-group-item">Image: {{component.image}}</li>
-                    <li class="list-group-item" ng-show="component.environment">Environment:
-                      <ul>
-                        <li ng-repeat="env in component.environment">{{env}}</li>
+                  <div class="panel" ng-class="component.node ? 'panel-success' : 'panel-warning'">
+                    <div class="panel-heading">{{component.name}}:
+                      <span class="pull-right">
+                        <div class="btn-group-sm" role="group" aria-label="...">
+                          <button type="button" class="btn btn-sm btn-default" ng-class="{active: component.node == 'swarm-master'}" ng-click="move(component, 'swarm-master')">swarm-master</button>
+                          <button type="button" class="btn btn-sm btn-default" ng-class="{active: component.node == 'swarm-agent-00'}" ng-click="move(component, 'swarm-agent-00')">swarm-agent-00</button>
+                          <button type="button" class="btn btn-sm btn-default" ng-class="{active: component.node == 'swarm-agent-01'}" ng-click="move(component, 'swarm-agent-01')">swarm-agent-01</button>
+                        </div>
+                      </span>
+                    </div>
+                    <div class="panel-body">
+                      <ul class="list-group">
+                        <li class="list-group-item">Image: {{component.image}}</li>
+                        <li class="list-group-item" ng-show="component.environment">Environment:
+                          <ul>
+                            <li ng-repeat="env in component.environment">{{env}}</li>
+                          </ul>
+                        </li>
+                        <li class="list-group-item" ng-show="component.ports">Ports:
+                          <ul>
+                            <li ng-repeat="port in component.ports">{{port}}</li>
+                          </ul>
+                        </li>
+                        <span class="label label-warning" ng-hide="component.ready">Making it ready...</span>
+                        <span class="label label-success" ng-show="component.ready">Ready</span>
                       </ul>
-                    </li>
-                    <li class="list-group-item" ng-show="component.ports">Ports:
-                      <ul>
-                        <li ng-repeat="port in component.ports">{{port}}</li>
-                      </ul>
-                    </li>
-                    <span class="label label-warning" ng-hide="component.ready">Making it ready...</span>
-                    <span class="label label-success" ng-show="component.ready">Ready</span>
-                  </ul>
+                    </div>
+                  </div>
                 </div>
                 <button class="btn btn-primary btn-lg btn-block" ng-click="deploy(app)">Deploy</button>
               </div>
