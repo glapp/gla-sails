@@ -22,13 +22,16 @@ module.exports = {
       // required: true
     },
     minimize: {
-      type: 'String',
+      type: 'string',
       // enum: ['blah1', 'blah2']
       // required: true
     },
     constraints: {
       collection: 'Constraint',
       via: 'application_id'
+    },
+    networkId: {
+      type: 'string'
     }
   }
 };

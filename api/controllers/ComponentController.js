@@ -59,23 +59,32 @@ module.exports = {
           console.log(JSON.stringify(data));
           container.start(function(err) {
             if (err) throw err;
-            var old = docker.getContainer(data.Id);
-            old.rename({name: component.name + '_old'}, function(err) {
+            Application.findOne({id: component.application_id}, function(err, app) {
               if (err) throw err;
-              container.rename({name: component.name}, function(err) {
+              var network = docker.getNetwork(app.networkId);
+              network.connect({
+                container: container.id
+              }, function (err) {
                 if (err) throw err;
-                old.remove({force: true}, function(err) {
+                var old = docker.getContainer(data.Id);
+                old.rename({name: component.name + '_old'}, function(err) {
                   if (err) throw err;
-                  container.inspect(function(err, data) {
+                  container.rename({name: component.name}, function(err) {
                     if (err) throw err;
-                    Component.update({id: component.id}, {node: data.Node.Name}, function(err, result) {
+                    old.remove({force: true}, function(err) {
                       if (err) throw err;
-                      res.ok(result);
-                    });
-                  });
-                })
-              })
-            });
+                      container.inspect(function(err, data) {
+                        if (err) throw err;
+                        Component.update({id: component.id}, {node: data.Node.Name}, function(err, result) {
+                          if (err) throw err;
+                          res.ok(result);
+                        });
+                      });
+                    })
+                  })
+                });
+              });
+            })
           });
         });
       });

@@ -89,6 +89,8 @@ module.exports = {
           res.serverError(err);
           return;
         }
+        app.networkId = network.id;
+        app.save();
         var result = [];
         async.each(app.components, function (component, done) {
           var exposed = {};
@@ -115,6 +117,8 @@ module.exports = {
           }, function (err, container) {
             if (err) throw err;
             else {
+              console.log('CONTAINER', container);
+
               container.inspect(function (err, inspectData) {
                 if (err) throw err;
                 Component.update({id: component.id}, {node: inspectData.Node.Name}, function (err, updated) {
@@ -122,12 +126,12 @@ module.exports = {
                   result.push(updated);
                   container.start(function (err) {
                     if (err) throw err;
-                    // network.connect({           // Docker swarm issue: https://github.com/docker/swarm/issues/1402
-                    //  container: container.id    // TODO: Uncomment as soon as docker swarm bug is fixed
-                    //}, function (err, data) {
-                    //  if (err) throw err;
-                    done();
-                    //});
+                    network.connect({           // Docker swarm issue: https://github.com/docker/swarm/issues/1402
+                      container: container.id    // TODO: Uncomment as soon as docker swarm bug is fixed
+                    }, function (err) {
+                      if (err) throw err;
+                      done();
+                    });
                   })
                 })
               });
@@ -138,14 +142,7 @@ module.exports = {
             res.serverError(err);
             return;
           }
-          network.inspect(function (err, data) {
-            console.log(JSON.stringify(data));
-            if (err) {
-              res.serverError(err);
-              return;
-            }
-            res.ok(result);
-          });
+          res.ok(result);
         })
       })
     });
