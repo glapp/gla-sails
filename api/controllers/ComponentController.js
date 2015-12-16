@@ -30,10 +30,14 @@ module.exports = {
       if (component.ports) {
         for (var i = 0; i < component.ports.length; i++) {
           var split = component.ports[i].split(":");
-          exposed[split[1] + "/tcp"] = {};
-          portBindings[split[1] + "/tcp"] = [{
-            HostPort: split[0]
-          }];
+          if (split[1]) {
+            exposed[split[1] + "/tcp"] = {};
+            portBindings[split[1] + "/tcp"] = [{
+              HostPort: split[0]
+            }];
+          } else {
+            exposed[split[0] + "/tcp"] = {};
+          }
         }
       }
 

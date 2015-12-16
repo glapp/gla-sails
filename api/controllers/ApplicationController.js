@@ -82,69 +82,78 @@ module.exports = {
     var user_id = req.session.me;
 
     Application.findOne({id: app_id}).populate('components').exec(function (err, app) {
-      docker.createNetwork({
-        Name: user_id + '_' + app.id
-      }, function (err, network) {
-        if (err) {
-          res.serverError(err);
-          return;
-        }
-        app.networkId = network.id;
-        app.save();
-        var result = [];
-        async.each(app.components, function (component, done) {
-          var exposed = {};
-          var portBindings = {};
-
-          if (component.ports) {
-            for (var i = 0; i < component.ports.length; i++) {
-              var split = component.ports[i].split(":");
-              exposed[split[1] + "/tcp"] = {};
-              portBindings[split[1] + "/tcp"] = [{
-                HostPort: split[0]
-              }];
-            }
-          }
-
-          docker.createContainer({
-            Image: component.image,
-            name: component.name,
-            Env: component.environment,
-            ExposedPorts: exposed,
-            HostConfig: {
-              PortBindings: portBindings,
-            }
-          }, function (err, container) {
-            if (err) throw err;
-            else {
-              console.log('CONTAINER', container);
-
-              container.inspect(function (err, inspectData) {
-                if (err) throw err;
-                Component.update({id: component.id}, {node: inspectData.Node.Name}, function (err, updated) {
-                  if (err) throw err;
-                  result.push(updated);
-                  container.start(function (err) {
-                    if (err) throw err;
-                    network.connect({           // Docker swarm issue: https://github.com/docker/swarm/issues/1402
-                      container: container.id    // TODO: Uncomment as soon as docker swarm bug is fixed
-                    }, function (err) {
-                      if (err) throw err;
-                      done();
-                    });
-                  })
-                })
-              });
-            }
-          });
-        }, function (err) {
+      var notReady = _.some(app.components, {ready: false});
+      if (notReady) {
+        res.badRequest('At least one component is not ready yet.')
+      } else {
+        docker.createNetwork({
+          Name: user_id + '_' + app.id
+        }, function (err, network) {
           if (err) {
             res.serverError(err);
             return;
           }
-          res.ok(result);
+          app.networkId = network.id;
+          app.save();
+          var result = [];
+          async.each(app.components, function (component, done) {
+            var exposed = {};
+            var portBindings = {};
+
+            if (component.ports) {
+              for (var i = 0; i < component.ports.length; i++) {
+                var split = component.ports[i].split(":");
+                if (split[1]) {
+                  exposed[split[1] + "/tcp"] = {};
+                  portBindings[split[1] + "/tcp"] = [{
+                    HostPort: split[0]
+                  }];
+                } else {
+                  exposed[split[0] + "/tcp"] = {};
+                }
+              }
+            }
+
+            docker.createContainer({
+              Image: component.image,
+              name: component.name,
+              Env: component.environment,
+              ExposedPorts: exposed,
+              HostConfig: {
+                PortBindings: portBindings,
+              }
+            }, function (err, container) {
+              if (err) throw err;
+              else {
+                console.log('CONTAINER', container);
+
+                container.inspect(function (err, inspectData) {
+                  if (err) throw err;
+                  Component.update({id: component.id}, {node: inspectData.Node.Name}, function (err, updated) {
+                    if (err) throw err;
+                    result.push(updated);
+                    container.start(function (err) {
+                      if (err) throw err;
+                      network.connect({           // Docker swarm issue: https://github.com/docker/swarm/issues/1402
+                        container: container.id    // TODO: Uncomment as soon as docker swarm bug is fixed
+                      }, function (err) {
+                        if (err) throw err;
+                        done();
+                      });
+                    })
+                  })
+                });
+              }
+            });
+          }, function (err) {
+            if (err) {
+              res.serverError(err);
+              return;
+            }
+            res.ok(result);
+          })
         })
-      })
+      }
     });
   }
 };

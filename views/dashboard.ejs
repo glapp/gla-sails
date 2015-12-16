@@ -74,7 +74,7 @@
                     </div>
                   </div>
                 </div>
-                <button class="btn btn-primary btn-lg btn-block" ng-click="deploy(app)">Deploy</button>
+                <button class="btn btn-primary btn-lg btn-block" ng-hide="app.components.length == 0" ng-click="deploy(app)">Deploy</button>
               </div>
             </div>
           </div>
