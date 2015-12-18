@@ -47,7 +47,7 @@ module.exports = {
         component.environment = ['constraint:node==' + goal_node];
       }
 
-      docker.createContainer({
+      DockerService.docker.createContainer({
         Image: component.image,
         name: component.name + '_temp',
         Env: component.environment,
@@ -57,7 +57,7 @@ module.exports = {
         }
       }, function (err, container) {
         if (err) throw err;
-        var old_name = docker.getContainer(component.name);
+        var old_name = DockerService.docker.getContainer(component.name);
         old_name.inspect(function(err, data) {
           if (err) throw err;
           console.log(JSON.stringify(data));
@@ -65,12 +65,12 @@ module.exports = {
             if (err) throw err;
             Application.findOne({id: component.application_id}, function(err, app) {
               if (err) throw err;
-              var network = docker.getNetwork(app.networkId);
+              var network = DockerService.docker.getNetwork(app.networkId);
               network.connect({
                 container: container.id
               }, function (err) {
                 if (err) throw err;
-                var old = docker.getContainer(data.Id);
+                var old = DockerService.docker.getContainer(data.Id);
                 old.rename({name: component.name + '_old'}, function(err) {
                   if (err) throw err;
                   container.rename({name: component.name}, function(err) {
