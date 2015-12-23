@@ -27,14 +27,23 @@ module.exports = {
       type: 'string'
     },
     environment: {
-      type: 'array'
+      type: 'array',
+      defaultsTo: []
     },
     ports: {
-      type: 'array'
+      type: 'array',
+      defaultsTo: []
+    },
+    expose: {
+      type: 'array',
+      defaultsTo: []
+    },
+    labels: {
+      type: 'array',
+      defaultsTo: []
     },
     ready: {
       type: 'boolean',
-      required: true,
       defaultsTo: false
     }
   }
