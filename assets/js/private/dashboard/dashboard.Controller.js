@@ -75,6 +75,7 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$sails
         }
       })
       .catch(function onError(sailsResponse) {
+        toastr.error(sailsResponse.data);
         console.log(sailsResponse);
       })
       .finally(function eitherWay() {
@@ -83,15 +84,33 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$sails
       })
   };
 
-
-
   $scope.deploy = function (app) {
     $sails.post('/deploy', {app_id: app.id})
       .then(function onSuccess(sailsResponse) {
+        _.each(sailsResponse.data, function(entry) {
+          var index = _.indexOf($scope.components, _.find($scope.components, {id: entry.id}));
+          $scope.components.splice(index, 1, entry);
+        });
         toastr.success('Deployed!');
       })
       .catch(function onError(sailsResponse) {
-        toastr.error('Error while deploying:', sailsResponse);
+        toastr.error(sailsResponse.data);
+      })
+      .finally(function eitherWay() {
+
+      })
+  };
+
+  $scope.move = function(component, goal_node) {
+    $sails.post('/move', {component_id: component.id, goal_node: goal_node})
+      .then(function onSuccess(sailsResponse) {
+        _.each(sailsResponse.data, function(entry) {
+          var index = _.indexOf($scope.components, _.find($scope.components, {id: entry.id}));
+          $scope.components.splice(index, 1, entry);
+        });
+      })
+      .catch(function onError(sailsResponse) {
+        toastr.error(sailsResponse.data);
       })
       .finally(function eitherWay() {
 
