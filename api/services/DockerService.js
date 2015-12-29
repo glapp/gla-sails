@@ -40,21 +40,26 @@ module.exports = {
         var components = yaml.load(path + '/docker-compose.yml');
         console.log(JSON.stringify(components));
 
+        var regex = {};
+
         for (var c in components) {
           components[c].originalName = c;
           components[c].name = app_id + "_" + c;
           components[c].application_id = app_id;
+          regex[components[c].name] = new RegExp("=" + escapeRegExp(c) + "$");
         }
 
-        _.each(components, function(component) {
-          var regex = new RegExp("=" + component.originalName + "$");
-          _.each(components, function(comp) {
-            _.map(comp.environment, function(env) {
-              var newValue = env.replace(regex, "=" + component.name);
-              return newValue;
-            })
-          })
-        })
+        _.map(components, function (component) {
+          var newEnvironment = [];
+          _.forEach(component.environment, function (env) {
+            for (var newName in regex) {
+              env = env.replace(regex[newName], "=" + newName)
+            }
+            newEnvironment.push(env);
+          });
+          component.environment = newEnvironment;
+          return component;
+        });
 
         resolve(components);
       });
@@ -76,27 +81,27 @@ module.exports = {
               tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
                 .on('finish', function () {
                   /* TODO: build(buildpath + '.tar', {t: component.image}, function() {
-                  *
-                  *   }
-                  */
+                   *
+                   *   }
+                   */
                   DockerService.docker.buildImage(buildpath + '.tar', {t: component.image}, function (err, stream) {
                     if (err) return finished(err);
 
                     DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
 
-                      function onProgress(event) {
-                        console.log(_.values(event));
-                      }
+                    function onProgress(event) {
+                      console.log(_.values(event));
+                    }
 
-                      function onFinished(err, output) {
+                    function onFinished(err, output) {
+                      if (err) return finished(err);
+                      // Sets the status to ready as soon as image is ready on docker swarm
+                      Component.findOrCreate(component, component, function (err, result) {
                         if (err) return finished(err);
-                        // Sets the status to ready as soon as image is ready on docker swarm
-                        Component.findOrCreate(component, component, function (err, result) {
-                          if (err) return finished(err);
-                          result.ready = true;
-                          result.save();
-                          // TODO: return finished()
-                        });
+                        result.ready = true;
+                        result.save();
+                        // TODO: return finished()
+                      });
                     }
                   });
                   // Callback outside the build function to make it build in the background
@@ -192,7 +197,7 @@ module.exports = {
         reject('At least one component is not ready yet.');
       } else {
         DockerService.docker.createNetwork({
-          Name: app.owner + '_' + app.id
+          Name: app.id
         }, function (err, network) {
           if (err) {
             reject(err);
@@ -319,7 +324,7 @@ module.exports = {
                 container: newContainer.id
               }, function (err) {
                 if (err) return reject(err);
-                DockerService.docker.getContainer(component.name).inspect(function(err, data) {
+                DockerService.docker.getContainer(component.name).inspect(function (err, data) {
                   if (err) return reject(err);
                   var old = DockerService.docker.getContainer(data.Id);
                   old.rename({name: component.name + '_old'}, function (err) {
@@ -349,3 +354,7 @@ module.exports = {
     });
   }
 };
+
+function escapeRegExp(str) {
+  return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
