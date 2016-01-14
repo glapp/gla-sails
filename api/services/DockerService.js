@@ -36,19 +36,27 @@ module.exports = {
           return;
         }
 
-        // docker-compose
+        // Read docker-compose file
         var components = yaml.load(path + '/docker-compose.yml');
         console.log(JSON.stringify(components));
 
         var regex = {};
 
+        // Adjust metadata of components
         for (var c in components) {
           components[c].originalName = c;
           components[c].name = app_id + "_" + c;
           components[c].application_id = app_id;
           regex[components[c].name] = new RegExp("=" + escapeRegExp(c) + "$");
+
+          // Stringify environment variables
+          components[c].environment = stringifyObjects(components[c].environment);
+
+          // Stringify labels
+          components[c].labels = stringifyObjects(components[c].labels);
         }
 
+        // Replace the name environment variables of all components
         _.map(components, function (component) {
           var newEnvironment = [];
           _.forEach(component.environment, function (env) {
@@ -237,6 +245,10 @@ module.exports = {
                 })
               })
             });
+          })
+          .catch(function(err) {
+            console.log(err);
+            done(err);
           });
       }, function (err) {
         if (err) {
@@ -253,40 +265,50 @@ module.exports = {
       var exposed = {};
       var portBindings = {};
 
-      var singlePort = /^([0-9]+\w)/;
-      var portRange = /^([0-9]+\w)-([0-9]+\w)/;
-      var portAssignment = /^([0-9]+\w):([0-9]+\w)/;
-      var portRangeAssignment = /^([0-9]+\w)-([0-9]+\w):([0-9]+\w)-([0-9]+\w)/;
+      var singlePort = /^([0-9]+\w)$/;
+      var portRange = /^([0-9]+\w)-([0-9]+\w)$/;
+      var portAssignment = /^([0-9]+\w):([0-9]+\w)$/;
+      var portRangeAssignment = /^([0-9]+\w)-([0-9]+\w):([0-9]+\w)-([0-9]+\w)$/;
 
       // Add exposed ports
       _.each(component.expose, function (port) {
         exposed[port + "/tcp"] = {};
       });
 
+
+
       // Add published ports, assign them to random host port
       _.each(component.ports, function (port) {
         if (singlePort.test(port) || portAssignment.test(port)) {
           var portSplit = port.split(':');
           port = portSplit[1] ? portSplit[1] : portSplit[0];
-          var host = portSplit[1] ? portSplit[0] : null; // TODO: Figure out how to assign random port as with "-P"
+          // var host = portSplit[1] ? portSplit[0] : null;
           portBindings[port + "/tcp"] = [{
-            HostPort: host
+            HostPort: null
           }];
+          exposed[port + "/tcp"] = {};
         } else if (portRange.test(port) || portRangeAssignment.test(port)) {
-          reject(new Error('port ranges are not supported yet'));
+          console.warn('port ranges are not supported yet');
         } else {
-          reject(new Error('port format is not supported'));
+          console.warn('port format is not supported');
         }
       });
+
+      console.log('portBindings', portBindings);
+      console.log('exposed', exposed);
+
+      var objectifiedLabels = objectifyStrings(component.labels);
 
       DockerService.docker.createContainer({
         Image: component.image,
         name: component.name,
         Env: component.environment,
+        Labels: objectifiedLabels,
         ExposedPorts: exposed,
         HostConfig: {
           PortBindings: portBindings,
-        }
+          // PublishAllPorts: true
+        },
       }, function (err, container) {
         if (err) reject(err);
         else resolve(container);
@@ -357,4 +379,33 @@ module.exports = {
 
 function escapeRegExp(str) {
   return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
+
+function stringifyObjects(element) {
+  if ((typeof element === "object") && !Array.isArray(element) && (element !== null)) {
+    var adjustedElement = [];
+    for (var e in element) {
+      if (element[e] == null || element[e] === "") {
+        adjustedElement.push(e);
+      } else {
+        adjustedElement.push(e + "=" + element[e]);
+      }
+    }
+    return adjustedElement;
+  } else {
+    return element;
+  }
+}
+
+function objectifyStrings(element) {
+  if ((Array.isArray(element)) && (element !== null)) {
+    var adjustedElement = {};
+    _.forEach(element, function(e) {
+      var split = e.split('=');
+      adjustedElement[split[0]] = split[1] ? split[1] : null;
+    });
+    return adjustedElement;
+  } else {
+    return element;
+  }
 }

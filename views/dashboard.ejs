@@ -63,9 +63,19 @@
                             <li ng-repeat="env in component.environment">{{env}}</li>
                           </ul>
                         </li>
-                        <li class="list-group-item" ng-show="component.ports">Ports:
+                        <li class="list-group-item" ng-show="component.labels">Labels:
+                          <ul>
+                            <li ng-repeat="label in component.labels">{{label}}</li>
+                          </ul>
+                        </li>
+                        <li class="list-group-item" ng-show="component.ports">Published ports:
                           <ul>
                             <li ng-repeat="port in component.ports">{{port}}</li>
+                          </ul>
+                        </li>
+                        <li class="list-group-item" ng-show="component.expose">Exposed ports:
+                          <ul>
+                            <li ng-repeat="exposedPort in component.expose">{{exposedPort}}</li>
                           </ul>
                         </li>
                         <span class="label label-warning" ng-hide="component.ready">Making it ready...</span>
