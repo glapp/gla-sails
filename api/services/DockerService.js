@@ -79,118 +79,93 @@ module.exports = {
       var result = [];
       async.each(components, function (component, done) {
         var tag = user_id + '/' + app_id + '/' + component.name;
-        async.series([
-          function (finished) {
-            // If we have to build the image first
-            if (!component.image && component.build) {
-              component.image = tag;
-              var buildpath = require('path').join(path, component.build);
-              // Make tar
-              tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
-                .on('finish', function () {
-                  /* TODO: build(buildpath + '.tar', {t: component.image}, function() {
-                   *
-                   *   }
-                   */
-                  DockerService.docker.buildImage(buildpath + '.tar', {t: component.image}, function (err, stream) {
-                    if (err) return finished(err);
+        var changed = false;
+        if (!component.image) {
+          component.image = tag;
+          changed = true;
+        }
 
-                    DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
+        // Create database entry
+        Component.create(component, component, function (err, created) {
+          if (err) return done(err);
 
-                    function onProgress(event) {
-                      console.log(_.values(event));
-                    }
+          // If we have to build the image first
+          if (changed && component.build) {
+            var buildpath = require('path').join(path, component.build);
+            // Make tar
+            tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
+              .on('finish', function () {
+                DockerService.docker.buildImage(buildpath + '.tar', {t: component.image}, function (err, stream) {
+                  if (err) return done(err);
 
-                    function onFinished(err, output) {
-                      if (err) return finished(err);
-                      // Sets the status to ready as soon as image is ready on docker swarm
-                      Component.findOrCreate(component, component, function (err, result) {
-                        if (err) return finished(err);
-                        result.ready = true;
-                        result.save();
-                        // TODO: return finished()
-                      });
-                    }
-                  });
-                  // Callback outside the build function to make it build in the background
-                  finished();
-                })
-                .on('error', function (err) {
-                  return finished(err);
-                });
-              // If the image has to be pulled
-            } else if (component.image && !component.build) {
-              var image = DockerService.docker.getImage(component.image);
-              image.inspect(function (err, inspectData) {
-                if (err && err.statusCode != 404) return finished(err);
-                if (err && err.statusCode == 404) {  // Image is not pulled yet -> Pull
-                  /* TODO: pull(component.image, function() {
-                   *
-                   *   }
-                   */
+                  DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
 
-                  DockerService.docker.pull(component.image, function (err, stream) {
-                    if (err) return finished(err);
+                  function onProgress(event) {
+                    console.log(_.values(event));
+                  }
 
-                    DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
-
-                    function onProgress(event) {
-                      console.log(_.values(event));
-                    }
-
-                    function onFinished(err, output) {
-                      if (err) return finished(err);
-
-                      var newImage = DockerService.docker.getImage(component.image);
-                      newImage.inspect(function (err, inspectData) {
-                        if (err) return finished(err);
-                        console.log('--> Inspect data:', inspectData);
-
-                        Component.findOrCreate(component, component, function (err, result) {
-                          if (err) return finished(err);
-                          // Sets the status to ready as soon as image is ready on docker swarm
-                          result.ready = true;
-                          // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
-                          // result.imageId = data.Id;
-                          result.save();
-                        });
-                      });
-                    }
-                  });
-                  // Callback outside the pull function to make it pull in the background
-                  finished();
-                } else { // Image is already pulled
-                  console.log(JSON.stringify('--> Inspect Data', inspectData));
-
-                  Component.findOrCreate(component, component, function (err, result) {
-                    if (err) return finished(err);
+                  function onFinished(err, output) {
+                    if (err) return done(err);
                     // Sets the status to ready as soon as image is ready on docker swarm
-                    result.ready = true;
-                    // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
-                    // result.imageId = data.Id;
-                    result.save();
-                    finished(null, result);
-                  });
-                }
-              });
-
-            } else {
-              finished(new Error("Build / Image attributes not valid"))
-            }
-          },
-          function (finished) {
-            Component.findOrCreate(component, component, function (err, created) {
-              if (err) finished(err);
-              else {
+                    created.ready = true;
+                    created.save();
+                  }
+                });
+                // Callback outside the build function to make it build in the background
                 result.push(created);
-                finished(null, created);
+                done();
+              })
+              .on('error', function (err) {
+                return done(err);
+              });
+            // If the image has to be pulled
+          } else if (component.image && !component.build) {
+            var image = DockerService.docker.getImage(component.image);
+            image.inspect(function (err, inspectData) {
+              if (err && err.statusCode != 404) return done(err);
+              if (err && err.statusCode == 404) {  // Image is not pulled yet -> Pull
+                DockerService.docker.pull(component.image, function (err, stream) {
+                  if (err) return done(err);
+
+                  DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
+
+                  function onProgress(event) {
+                    console.log(_.values(event));
+                  }
+
+                  function onFinished(err, output) {
+                    if (err) return done(err);
+
+                    var newImage = DockerService.docker.getImage(component.image);
+                    newImage.inspect(function (err, inspectData) {
+                      if (err) return done(err);
+                      console.log('--> Inspect data:', inspectData);
+                      // Sets the status to ready as soon as image is ready on docker swarm
+                      created.ready = true;
+                      // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
+                      // created.imageId = data.Id;
+                      created.save();
+                    });
+                  }
+                });
+                // Callback outside the pull function to make it pull in the background
+                result.push(created);
+                done();
+              } else { // Image is already pulled
+                // Sets the status to ready as soon as image is ready on docker swarm
+                created.ready = true;
+                // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
+                // created.imageId = data.Id;
+                created.save();
+                result.push(created);
+                done();
               }
-            })
+            });
+
+          } else {
+            done(new Error("Build / Image attributes not valid"))
           }
-        ], function (err, results) {
-          if (err) done(err);
-          else done(null, results);
-        });
+        })
       }, function (err) {
         if (err) reject(err);
         else resolve(result);
@@ -230,7 +205,9 @@ module.exports = {
 
             container.inspect(function (err, inspectData) {
               if (err) throw err;
-              // TODO: Add relevant information (e.g. exposed ports)
+
+              console.log('---------------> Inspect data:\n', inspectData);
+
               Component.update({id: component.id}, {node: inspectData.Node.Name}, function (err, updated) {
                 if (err) throw err;
                 result.push(updated);
@@ -275,8 +252,6 @@ module.exports = {
         exposed[port + "/tcp"] = {};
       });
 
-
-
       // Add published ports, assign them to random host port
       _.each(component.ports, function (port) {
         if (singlePort.test(port) || portAssignment.test(port)) {
@@ -293,9 +268,6 @@ module.exports = {
           console.warn('port format is not supported');
         }
       });
-
-      console.log('portBindings', portBindings);
-      console.log('exposed', exposed);
 
       var objectifiedLabels = objectifyStrings(component.labels);
 
@@ -408,4 +380,50 @@ function objectifyStrings(element) {
   } else {
     return element;
   }
+}
+
+function completeParameters(component) {
+  var newImage = DockerService.docker.getImage(component.image);
+  newImage.inspect(function (err, inspectData) {
+    // TODO: look for not yet recognized ports that are exposed/published, environments or labels
+  })
+}
+
+// TODO: Extend this conceptual idea of reverse proxies
+function addReverseProxy(component) {
+  return new Promise(function (resolve, reject) {
+    var dir = require('path').join('/tmp', component.name);
+
+    if (!fs.existsSync(dir)){
+      fs.mkdirSync(dir);
+    }
+
+    fs.writeFile(require('path').join(dir, 'nginx.conf'),
+      'http {\n' +
+        'upstream proxy-' + component.name + '{\n' +
+          'server ' + component.name + ':80;\n' +
+        '}\n' +
+
+        'server {\n' +
+          'listen 80;\n' +
+
+          'location / {\n' +
+            "proxy_pass http://proxiedweb;\n" +
+            "proxy_http_version 1.1;\n" +
+            "proxy_set_header Upgrade $http_upgrade;\n" +
+            "proxy_set_header Connection 'upgrade';\n" +
+            "proxy_set_header Host $host;\n" +
+            "proxy_cache_bypass $http_upgrade;\n" +
+          '}\n' +
+        '}\n' +
+      '}\n'
+      , function(err) {
+      if (err) {
+        return reject(err);
+      }
+
+      console.log("The file was saved!");
+    });
+
+  })
 }
