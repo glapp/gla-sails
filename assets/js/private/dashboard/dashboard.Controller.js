@@ -5,6 +5,11 @@ angular.module('AppModule').controller('DashboardController', ['$scope', '$sails
 
   $scope.components = [];
 
+  $scope.nodes = [
+    'swarm-master',
+    'swarm-agent-00'
+  ];
+
   $scope.addAppForm = {
     loading: false
   };

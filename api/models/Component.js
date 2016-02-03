@@ -29,6 +29,9 @@ module.exports = {
     node_name: {
       type: 'string'
     },
+    node_ip: {
+      type: 'string'
+    },
     environment: {
       type: 'array',
       defaultsTo: []

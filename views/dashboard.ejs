@@ -45,13 +45,11 @@
                 </form>
 
                 <div ng-repeat="component in components | filter:{application_id: app.id}">
-                  <div class="panel" ng-class="component.node ? 'panel-success' : 'panel-warning'">
+                  <div class="panel" ng-class="component.node_name ? 'panel-success' : 'panel-warning'">
                     <div class="panel-heading">{{component.name}}:
                       <span class="pull-right">
                         <div class="btn-group-sm" role="group" aria-label="...">
-                          <button type="button" class="btn btn-sm btn-default" ng-class="{active: component.node == 'swarm-master'}" ng-click="move(component, 'swarm-master')">swarm-master</button>
-                          <button type="button" class="btn btn-sm btn-default" ng-class="{active: component.node == 'swarm-agent-00'}" ng-click="move(component, 'swarm-agent-00')">swarm-agent-00</button>
-                          <button type="button" class="btn btn-sm btn-default" ng-class="{active: component.node == 'swarm-agent-01'}" ng-click="move(component, 'swarm-agent-01')">swarm-agent-01</button>
+                          <button ng-repeat="node in nodes" type="button" class="btn btn-sm btn-default" ng-class="{active: component.node_name == node}" ng-click="move(component, node)">{{node}}</button>
                         </div>
                       </span>
                     </div>
@@ -70,7 +68,11 @@
                         </li>
                         <li class="list-group-item" ng-show="component.ports">Published ports:
                           <ul>
-                            <li ng-repeat="port in component.ports">{{port}}</li>
+                            <li ng-repeat="port in component.ports">
+                              <!--<a href="http://{{component.node_ip}}:{{component.port_bindings[port + '/tcp']}}">-->
+                                {{port}}
+                              <!--</a>-->
+                            </li>
                           </ul>
                         </li>
                         <li class="list-group-item" ng-show="component.expose">Exposed ports:

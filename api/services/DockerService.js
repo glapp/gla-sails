@@ -231,7 +231,7 @@ module.exports = {
 
               console.log('---------------> Inspect data:\n', inspectData);
 
-              Component.update({id: component.id}, {node: inspectData.Node.Name}, function (err, updated) {
+              Component.update({id: component.id}, {node_name: inspectData.Node.Name, node_ip: inspectData.Node.IP}, function (err, updated) {
                 if (err) throw err;
                 result.push(updated);
                 container.start(function (err) {
@@ -337,7 +337,7 @@ module.exports = {
                         if (err) return reject(err);
                         DockerService.docker.getContainer(component.name).inspect(function (err, data) {
                           if (err) return reject(err);
-                          Component.update({id: component.id}, {node: data.Node.Name}, function (err, result) {
+                          Component.update({id: component.id}, {node_name: data.Node.Name, node_ip: data.Node.IP}, function (err, result) {
                             if (err) return reject(err);
                             resolve(result);
                           });
