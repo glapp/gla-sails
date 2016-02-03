@@ -106,14 +106,19 @@ module.exports = {
 
                   function onFinished(err, output) {
                     if (err) return done(err);
-                    // Sets the status to ready as soon as image is ready on docker swarm
-                    created.ready = true;
-                    created.save();
+                    completeParameters(created)
+                      .then(function(completed) {
+                        result.push(completed);
+                        done();
+                      })
+                      .catch(function(err) {
+                        done(err);
+                      });
                   }
                 });
                 // Callback outside the build function to make it build in the background
-                result.push(created);
-                done();
+                // result.push(created);
+                // done();
               })
               .on('error', function (err) {
                 return done(err);
@@ -135,30 +140,28 @@ module.exports = {
 
                   function onFinished(err, output) {
                     if (err) return done(err);
-
-                    var newImage = DockerService.docker.getImage(component.image);
-                    newImage.inspect(function (err, inspectData) {
-                      if (err) return done(err);
-                      console.log('--> Inspect data:', inspectData);
-                      // Sets the status to ready as soon as image is ready on docker swarm
-                      created.ready = true;
-                      // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
-                      // created.imageId = data.Id;
-                      created.save();
-                    });
+                    completeParameters(created)
+                      .then(function(completed) {
+                        result.push(completed);
+                        done();
+                      })
+                      .catch(function(err) {
+                        done(err);
+                      });
                   }
                 });
                 // Callback outside the pull function to make it pull in the background
-                result.push(created);
-                done();
+                // result.push(created);
+                // done();
               } else { // Image is already pulled
-                // Sets the status to ready as soon as image is ready on docker swarm
-                created.ready = true;
-                // TODO: Set properties based on the image information (e.g., exposed ports, used volumes, etc.)
-                // created.imageId = data.Id;
-                created.save();
-                result.push(created);
-                done();
+                completeParameters(created)
+                  .then(function(completed) {
+                    result.push(completed);
+                    done();
+                  })
+                  .catch(function(err) {
+                    done(err);
+                  });
               }
             });
 
@@ -259,7 +262,7 @@ module.exports = {
           port = portSplit[1] ? portSplit[1] : portSplit[0];
           // var host = portSplit[1] ? portSplit[0] : null;
           portBindings[port + "/tcp"] = [{
-            HostPort: null
+            HostPort: null // to get random port
           }];
           exposed[port + "/tcp"] = {};
         } else if (portRange.test(port) || portRangeAssignment.test(port)) {
@@ -279,7 +282,6 @@ module.exports = {
         ExposedPorts: exposed,
         HostConfig: {
           PortBindings: portBindings,
-          // PublishAllPorts: true
         },
       }, function (err, container) {
         if (err) reject(err);
@@ -383,10 +385,22 @@ function objectifyStrings(element) {
 }
 
 function completeParameters(component) {
-  var newImage = DockerService.docker.getImage(component.image);
-  newImage.inspect(function (err, inspectData) {
-    // TODO: look for not yet recognized ports that are exposed/published, environments or labels
-  })
+  return new Promise(function(resolve, reject) {
+    var newImage = DockerService.docker.getImage(component.image);
+    newImage.inspect(function (err, inspectData) {
+      if (err) reject(err);
+      // TODO: look for not yet recognized ports that are exposed/published, environments or labels
+      //if (!component.expose) component.expose = [];
+      //_.component.expose.push()
+
+      console.log('Inspect data of image:');
+      console.log(inspectData);
+      // Sets the status to ready as soon as image is ready on docker swarm
+      component.ready = true;
+      component.save();
+      resolve(component);
+    })
+  });
 }
 
 // TODO: Extend this conceptual idea of reverse proxies
