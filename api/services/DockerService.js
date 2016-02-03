@@ -54,6 +54,26 @@ module.exports = {
 
           // Stringify labels
           components[c].labels = stringifyObjects(components[c].labels);
+
+          var singlePort = /^([0-9]+\w)$/;
+          var portRange = /^([0-9]+\w)-([0-9]+\w)$/;
+          var portAssignment = /^([0-9]+\w):([0-9]+\w)$/;
+          var portRangeAssignment = /^([0-9]+\w)-([0-9]+\w):([0-9]+\w)-([0-9]+\w)$/;
+
+          // Add published ports, assign them to random host port
+          var ports = [];
+          _.forEach(components[c].ports, function (port) {
+            if (singlePort.test(port) || portAssignment.test(port)) {
+              var portSplit = port.split(':');
+              port = portSplit[1] ? portSplit[1] : portSplit[0];
+              ports.push(port);
+            } else if (portRange.test(port) || portRangeAssignment.test(port)) {
+              console.warn('port ranges are not supported yet');
+            } else {
+              console.warn('port format is not supported');
+            }
+          });
+          components[c].ports = ports;
         }
 
         // Replace the name environment variables of all components
@@ -245,31 +265,17 @@ module.exports = {
       var exposed = {};
       var portBindings = {};
 
-      var singlePort = /^([0-9]+\w)$/;
-      var portRange = /^([0-9]+\w)-([0-9]+\w)$/;
-      var portAssignment = /^([0-9]+\w):([0-9]+\w)$/;
-      var portRangeAssignment = /^([0-9]+\w)-([0-9]+\w):([0-9]+\w)-([0-9]+\w)$/;
-
       // Add exposed ports
-      _.each(component.expose, function (port) {
+      _.forEach(component.expose, function (port) {
         exposed[port + "/tcp"] = {};
       });
 
       // Add published ports, assign them to random host port
-      _.each(component.ports, function (port) {
-        if (singlePort.test(port) || portAssignment.test(port)) {
-          var portSplit = port.split(':');
-          port = portSplit[1] ? portSplit[1] : portSplit[0];
-          // var host = portSplit[1] ? portSplit[0] : null;
+      _.forEach(component.ports, function (port) {
           portBindings[port + "/tcp"] = [{
             HostPort: null // to get random port
           }];
           exposed[port + "/tcp"] = {};
-        } else if (portRange.test(port) || portRangeAssignment.test(port)) {
-          console.warn('port ranges are not supported yet');
-        } else {
-          console.warn('port format is not supported');
-        }
       });
 
       var objectifiedLabels = objectifyStrings(component.labels);
