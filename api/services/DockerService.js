@@ -44,8 +44,13 @@ module.exports = {
 
         // Adjust metadata of components
         for (var c in components) {
-          components[c].originalName = c;
-          components[c].name = app_id + "_" + c;
+          if (components[c].container_name) {
+            components[c].originalName = components[c].container_name;
+            components[c].name = app_id + "_" + components[c].container_name;
+          } else {
+            components[c].originalName = c;
+            components[c].name = app_id + "_" + c;
+          }
           components[c].application_id = app_id;
           regex[components[c].name] = new RegExp("=" + escapeRegExp(c) + "$");
 
@@ -98,7 +103,7 @@ module.exports = {
     return new Promise(function (resolve, reject) {
       var result = [];
       async.each(components, function (component, done) {
-        var tag = user_id + '/' + app_id + '/' + component.name;
+        var tag = app_id + '/' + component.name;
         var changed = false;
         if (!component.image) {
           component.image = tag;
@@ -279,6 +284,8 @@ module.exports = {
       });
 
       var objectifiedLabels = objectifyStrings(component.labels);
+
+      // TODO: Create volumes
 
       DockerService.docker.createContainer({
         Image: component.image,

@@ -48,6 +48,14 @@ module.exports = {
       type: 'array',
       defaultsTo: []
     },
+    volumes: {
+      type: 'array',
+      defaultsTo: []
+    },
+    volumes_from: {
+      type: 'array',
+      defaultsTo: []
+    },
     ready: {
       type: 'boolean',
       defaultsTo: false

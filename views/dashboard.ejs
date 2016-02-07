@@ -75,6 +75,11 @@
                             </li>
                           </ul>
                         </li>
+                        <li class="list-group-item" ng-show="component.volumes">Volumes:
+                          <ul>
+                            <li ng-repeat="volume in component.volumes">{{volume}}</li>
+                          </ul>
+                        </li>
                         <li class="list-group-item" ng-show="component.expose">Exposed ports:
                           <ul>
                             <li ng-repeat="exposedPort in component.expose">{{exposedPort}}</li>
