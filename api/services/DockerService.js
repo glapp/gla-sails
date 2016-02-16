@@ -40,6 +40,11 @@ module.exports = {
         var components = yaml.load(path + '/docker-compose.yml');
         console.log(JSON.stringify(components));
 
+        if (components.version && components.version == '2') {
+          // Replaces components array with 'services' array of the new version
+          components = components.services;
+        }
+
         var regex = {};
 
         // Adjust metadata of components
