@@ -108,7 +108,7 @@ module.exports = {
     return new Promise(function (resolve, reject) {
       var result = [];
       async.each(components, function (component, done) {
-        var tag = app_id + '/' + component.name;
+        var tag = component.name;
         var changed = false;
         if (!component.image) {
           component.image = tag;
