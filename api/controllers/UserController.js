@@ -11,12 +11,13 @@ module.exports = {
    * match a real user in the database, sign in.
    */
   confirmLogin: function(req, res) {
-    console.log(req.session);
     if (req.session && req.session.me) {
-      res.ok({id: req.session.me});
+      res.json({
+        id: req.session.me,
+        name: req.session.name
+      });
     } else {
       res.ok();
-
     }
   },
 
@@ -49,11 +50,15 @@ module.exports = {
         success: function (){
 
           // Store user id in the user session
-          if (req.session) req.session.me = user.id;
+          if (req.session) {
+            req.session.me = user.id;
+            req.session.name = user.name;
+          }
 
           // All done- let the client know that everything worked.
           return res.json({
-            id: user.id
+            id: user.id,
+            name: user.name
           });
         }
       });
@@ -112,11 +117,15 @@ module.exports = {
               }
 
               // Log user in
-              if (req.session) req.session.me = newUser.id;
+              if (req.session) {
+                req.session.me = newUser.id;
+                req.session.name = newUser.name;
+              }
 
               // Send back the id of the new user
               return res.json({
-                id: newUser.id
+                id: newUser.id,
+                name: newUser.name
               });
             });
           }

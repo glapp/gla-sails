@@ -50,11 +50,10 @@ module.exports.routes = {
   'GET /user/confirm-login': 'UserController.confirmLogin',
 
   // Application query
-  'GET /getUserApps': 'ApplicationController.getUserApps',
+  'GET /application/getUserApps': 'ApplicationController.getUserApps',
 
   // Add stuff
-  'POST /app': 'ApplicationController.addApplication',
-  "POST /registerComponents": 'ApplicationController.registerComponents',
+  'POST /application/add': 'ApplicationController.addApplication',
   'POST /deploy': 'ApplicationController.deploy',
   'POST /move': 'ComponentController.move'
 

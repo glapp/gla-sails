@@ -12,65 +12,75 @@ var rimraf = require('rimraf');
 module.exports = {
   getUserApps: function (req, res) {
     Application.find({owner: req.session.me})
-      .populate('components')
+      //.populate('components')
       .exec(function (err, apps) {
         if (err) res.notFound();
-        var components = [];
-        _.each(apps, function (app) {
-          _.each(app.components, function (comp) {
-            components.push(comp);
-          })
-        });
-        res.json({
-          apps: apps,
-          components: components
-        });
+        else res.json({apps: apps});
       })
   },
 
   addApplication: function (req, res) {
-    Application.create({owner: req.session.me, name: req.param('name')}, function (err, created) {
-      if (err) res.badRequest(err);
-      res.ok(created);
-    })
-  },
-
-  registerComponents: function (req, res) {
-    var app_id = req.param('app');
     var gitUrl = req.param('gitUrl');
+    var name = req.param('name');
     var user_id = req.session.me;
 
-    console.log('---------> Starting git clone');
+    Application.create({owner: user_id, name: name, gitUrl: gitUrl, status: 'preparing'}, function (err, app) {
+      if (err) {
+        res.badRequest(err);
+        return;
+      }
 
-    var regex = /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?)(([\w\.@:\/\-~]+\/)+)([\w\.@:\/\-~]+)(\.git)(\/)?/;
-    var result = gitUrl.match(regex);
+      if (req.isSocket) {
+        Application.watch( req );
+        Application.subscribe(req, [app.id]);
+      }
 
-    if (!result || !result[9]) {
-      res.badRequest('invalid git url');
-      return;
-    }
-
-    var name = result[9];
-    var path = require("path").join('.tmp', name);
-
-    // Promisified process
-    clone(gitUrl, path, null)
-      .then(function () {
-        return DockerService.extractComponents(path, app_id);
-      })
-      .then(function (components) {
-        console.log(components);
-        return DockerService.createComponents(path, components, user_id, app_id)
-      })
-      .then(function (result) {
-        res.ok(result);
-        cleanUp(path);
-      })
-      .catch(function (err) {
-        console.log('--> ERROR', err);
-        res.serverError(err);
-        cleanUp(path);
+      res.json({
+        app: app
       });
+
+      console.log('---------> Starting git clone');
+
+      var regex = /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?)(([\w\.@:\/\-~]+\/)+)([\w\.@:\/\-~]+)(\.git)(\/)?/;
+      var result = gitUrl.match(regex);
+
+      if (!result || !result[9]) {
+        app.status = 'failed';
+        app.save();
+        res.badRequest('invalid git url');
+        return;
+      }
+
+      var name = result[9];
+      var path = require("path").join('.tmp', name);
+
+      // Promisified process
+      clone(gitUrl, path, null)
+        .then(function () {
+          return DockerService.extractComponents(path, app.id);
+        })
+        .then(function (components) {
+          console.log(components);
+          return DockerService.createComponents(path, components)
+        })
+        .then(function () {
+          app.status = 'ready';
+          app.save();
+
+          // TODO: Socket emit 'ready'
+
+          cleanUp(path);
+        })
+        .catch(function (err) {
+          console.log('--> ERROR', err);
+          app.status = 'failed';
+          app.save();
+
+          // TODO: Socket emit 'failed'
+
+          cleanUp(path);
+        });
+    })
   },
 
   deploy: function (req, res) {

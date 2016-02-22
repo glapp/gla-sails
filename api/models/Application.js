@@ -16,10 +16,16 @@ module.exports = {
       type: 'string',
       required: true
     },
+    gitUrl: {
+      type: 'string',
+    },
     components: {
       collection: 'Component',
       via: 'application_id',
       // required: true
+    },
+    status: {
+      type: 'string',
     },
     minimize: {
       type: 'string',

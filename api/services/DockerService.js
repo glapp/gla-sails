@@ -104,9 +104,8 @@ module.exports = {
     });
   },
 
-  createComponents: function (path, components, user_id, app_id) {
+  createComponents: function (path, components) {
     return new Promise(function (resolve, reject) {
-      var result = [];
       async.each(components, function (component, done) {
         var tag = component.name;
         var changed = false;
@@ -137,18 +136,12 @@ module.exports = {
                   function onFinished(err, output) {
                     if (err) return done(err);
                     completeParameters(created)
-                      .then(function(completed) {
-                        result.push(completed);
-                        done();
-                      })
+                      .then(done)
                       .catch(function(err) {
                         done(err);
                       });
                   }
                 });
-                // Callback outside the build function to make it build in the background
-                // result.push(created);
-                // done();
               })
               .on('error', function (err) {
                 return done(err);
@@ -171,24 +164,15 @@ module.exports = {
                   function onFinished(err, output) {
                     if (err) return done(err);
                     completeParameters(created)
-                      .then(function(completed) {
-                        result.push(completed);
-                        done();
-                      })
+                      .then(done)
                       .catch(function(err) {
                         done(err);
                       });
                   }
                 });
-                // Callback outside the pull function to make it pull in the background
-                // result.push(created);
-                // done();
               } else { // Image is already pulled
                 completeParameters(created)
-                  .then(function(completed) {
-                    result.push(completed);
-                    done();
-                  })
+                  .then(done)
                   .catch(function(err) {
                     done(err);
                   });
@@ -201,7 +185,7 @@ module.exports = {
         })
       }, function (err) {
         if (err) reject(err);
-        else resolve(result);
+        else resolve();
       });
     })
   },
@@ -407,7 +391,6 @@ function completeParameters(component) {
     var newImage = DockerService.docker.getImage(component.image);
     newImage.inspect(function (err, inspectData) {
       if (err) reject(err);
-      // TODO: look for not yet recognized ports that are exposed/published, environments or labels
       // Exposed ports
       if (!component.expose) component.expose = [];
       for(var attr in inspectData.Config.ExposedPorts) {
@@ -434,7 +417,7 @@ function completeParameters(component) {
       // Sets the status to ready as soon as image is ready on docker swarm
       component.ready = true;
       component.save();
-      resolve(component);
+      resolve();
     })
   });
 }
