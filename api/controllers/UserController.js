@@ -11,7 +11,8 @@ module.exports = {
    * match a real user in the database, sign in.
    */
   confirmLogin: function(req, res) {
-    if (req.session.me) {
+    console.log(req.session);
+    if (req.session && req.session.me) {
       res.ok({id: req.session.me});
     } else {
       res.ok();
@@ -48,7 +49,7 @@ module.exports = {
         success: function (){
 
           // Store user id in the user session
-          req.session.me = user.id;
+          if (req.session) req.session.me = user.id;
 
           // All done- let the client know that everything worked.
           return res.json({
@@ -111,7 +112,7 @@ module.exports = {
               }
 
               // Log user in
-              req.session.me = newUser.id;
+              if (req.session) req.session.me = newUser.id;
 
               // Send back the id of the new user
               return res.json({

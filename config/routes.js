@@ -44,10 +44,10 @@ module.exports.routes = {
   ***************************************************************************/
 
   // User enrollment + authentication
-  'POST /signup': 'UserController.signup',
-  'PUT /login': 'UserController.login',
-  'GET /logout': 'UserController.logout',
-  'GET /confirm-login': 'UserController.confirmLogin',
+  'POST /user/signup': 'UserController.signup',
+  'PUT /user/login': 'UserController.login',
+  'GET /user/logout': 'UserController.logout',
+  'GET /user/confirm-login': 'UserController.confirmLogin',
 
   // Application query
   'GET /getUserApps': 'ApplicationController.getUserApps',
