@@ -391,33 +391,35 @@ function completeParameters(component) {
     var newImage = DockerService.docker.getImage(component.image);
     newImage.inspect(function (err, inspectData) {
       if (err) reject(err);
-      // Exposed ports
-      if (!component.expose) component.expose = [];
-      for(var attr in inspectData.Config.ExposedPorts) {
-        var split = attr.split('/');
-        component.expose.push(split[0])
+      else {
+        // Exposed ports
+        if (!component.expose) component.expose = [];
+        for(var attr in inspectData.Config.ExposedPorts) {
+          var split = attr.split('/');
+          component.expose.push(split[0])
+        }
+
+        // Environment variables
+        if (!component.environment) component.environment = [];
+        var envVars = stringifyObjects(inspectData.Config.Env);
+        _.forEach(envVars, function(env) {
+          component.environment.push(env);
+        });
+
+        // Labels
+        if (!component.labels) component.labels = [];
+        var labels = stringifyObjects(inspectData.Config.Labels);
+        _.forEach(labels, function(lab) {
+          component.environment.push(lab);
+        });
+
+        console.log('Inspect data of image:');
+        console.log(inspectData);
+        // Sets the status to ready as soon as image is ready on docker swarm
+        component.ready = true;
+        component.save();
+        resolve();
       }
-
-      // Environment variables
-      if (!component.environment) component.environment = [];
-      var envVars = stringifyObjects(inspectData.Config.Env);
-      _.forEach(envVars, function(env) {
-        component.environment.push(env);
-      });
-
-      // Labels
-      if (!component.labels) component.labels = [];
-      var labels = stringifyObjects(inspectData.Config.Labels);
-      _.forEach(labels, function(lab) {
-        component.environment.push(lab);
-      });
-
-      console.log('Inspect data of image:');
-      console.log(inspectData);
-      // Sets the status to ready as soon as image is ready on docker swarm
-      component.ready = true;
-      component.save();
-      resolve();
     })
   });
 }
