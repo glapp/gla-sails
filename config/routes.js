@@ -51,6 +51,7 @@ module.exports.routes = {
 
   // Application query
   'GET /application/getUserApps': 'ApplicationController.getUserApps',
+  'GET /application/details': 'ApplicationController.getAppDetails',
 
   // Add stuff
   'POST /application/add': 'ApplicationController.addApplication',

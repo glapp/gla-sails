@@ -19,10 +19,38 @@ module.exports = {
       })
   },
 
+  getAppDetails: function(req, res) {
+    var user_id;
+
+    if (req.session.me) {
+      user_id = req.session.me;
+    } else {
+      res.forbidden();
+      return;
+    }
+
+    var app_id = req.param('app_id')
+
+    Application.findOne({id: app_id, owner: user_id})
+      .populate('components')
+      .exec(function (err, app) {
+        if (err) res.notFound();
+        else res.json({app: app});
+      })
+  },
+
   addApplication: function (req, res) {
+    var user_id;
+
+    if (req.session.me) {
+      user_id = req.session.me;
+    } else {
+      res.forbidden();
+      return;
+    }
+
     var gitUrl = req.param('gitUrl');
     var name = req.param('name');
-    var user_id = req.session.me;
 
     Application.create({owner: user_id, name: name, gitUrl: gitUrl, status: 'preparing'}, function (err, app) {
       if (err) {
@@ -84,10 +112,23 @@ module.exports = {
   },
 
   deploy: function (req, res) {
+    var user_id;
+
+    if (req.session.me) {
+      user_id = req.session.me;
+    } else {
+      res.forbidden();
+      return;
+    }
+
     var app_id = req.param('app_id');
 
-    Application.findOne({id: app_id}).populate('components').exec(function (err, app) {
-      if (err) throw err;
+    Application.findOne({id: app_id, owner: user_id}).populate('components').exec(function (err, app) {
+      if (err) {
+        res.serverError(err)
+        console.error(err);
+        return;
+      }
       DockerService.handleNetwork(app)
         .then(function (network) {
           return DockerService.deploy(app, network)
