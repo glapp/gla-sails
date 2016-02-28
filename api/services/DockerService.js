@@ -213,7 +213,6 @@ module.exports = {
 
   deploy: function (app, network) {
     return new Promise(function (resolve, reject) {
-      var result = [];
       async.each(app.components, function (component, done) {
 
         DockerService.createContainer(component)
@@ -227,7 +226,6 @@ module.exports = {
 
               Component.update({id: component.id}, {node_name: inspectData.Node.Name, node_ip: inspectData.Node.IP}, function (err, updated) {
                 if (err) throw err;
-                result.push(updated);
                 container.start(function (err) {
                   if (err) throw err;
                   network.connect({
@@ -249,7 +247,7 @@ module.exports = {
           reject(err);
           return;
         }
-        resolve(result);
+        resolve();
       })
     });
   },

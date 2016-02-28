@@ -75,7 +75,6 @@ module.exports = {
       if (!result || !result[9]) {
         app.status = 'failed';
         app.save();
-        res.badRequest('invalid git url');
         return;
       }
 
@@ -134,7 +133,10 @@ module.exports = {
           return DockerService.deploy(app, network)
         })
         .then(function (result) {
-          res.ok(result);
+          app.status = 'deployed';
+          app.save(function(err, saved) {
+            res.ok(saved);
+          });
         })
         .catch(function (err) {
           res.badRequest(err);
