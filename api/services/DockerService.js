@@ -137,7 +137,7 @@ module.exports = {
                     if (err) return done(err);
                     completeParameters(created)
                       .then(done)
-                      .catch(function(err) {
+                      .catch(function (err) {
                         done(err);
                       });
                   }
@@ -165,7 +165,7 @@ module.exports = {
                     if (err) return done(err);
                     completeParameters(created)
                       .then(done)
-                      .catch(function(err) {
+                      .catch(function (err) {
                         done(err);
                       });
                   }
@@ -173,7 +173,7 @@ module.exports = {
               } else { // Image is already pulled
                 completeParameters(created)
                   .then(done)
-                  .catch(function(err) {
+                  .catch(function (err) {
                     done(err);
                   });
               }
@@ -224,7 +224,10 @@ module.exports = {
 
               console.log('---------------> Inspect data:\n', inspectData);
 
-              Component.update({id: component.id}, {node_name: inspectData.Node.Name, node_ip: inspectData.Node.IP}, function (err, updated) {
+              Component.update({id: component.id}, {
+                node_name: inspectData.Node.Name,
+                node_ip: inspectData.Node.IP
+              }, function (err, updated) {
                 if (err) throw err;
                 container.start(function (err) {
                   if (err) throw err;
@@ -238,7 +241,7 @@ module.exports = {
               })
             });
           })
-          .catch(function(err) {
+          .catch(function (err) {
             console.log(err);
             done(err);
           });
@@ -264,10 +267,10 @@ module.exports = {
 
       // Add published ports, assign them to random host port
       _.forEach(component.ports, function (port) {
-          portBindings[port + "/tcp"] = [{
-            HostPort: null // to get random port
-          }];
-          exposed[port + "/tcp"] = {};
+        portBindings[port + "/tcp"] = [{
+          HostPort: null // to get random port
+        }];
+        exposed[port + "/tcp"] = {};
       });
 
       var objectifiedLabels = objectifyStrings(component.labels);
@@ -331,7 +334,10 @@ module.exports = {
                         if (err) return reject(err);
                         DockerService.docker.getContainer(component.name).inspect(function (err, data) {
                           if (err) return reject(err);
-                          Component.update({id: component.id}, {node_name: data.Node.Name, node_ip: data.Node.IP}, function (err, result) {
+                          Component.update({id: component.id}, {
+                            node_name: data.Node.Name,
+                            node_ip: data.Node.IP
+                          }, function (err, result) {
                             if (err) return reject(err);
                             resolve(result);
                           });
@@ -348,6 +354,48 @@ module.exports = {
           reject(err);
         })
     });
+  },
+
+  getNodeInfo: function () {
+    return new Promise(function (resolve, reject) {
+      DockerService.docker.info(function (err, data) {
+        if (err) reject(err);
+        else {
+          var systemStatus = {};
+          systemStatus.Hosts = [];
+          var current = 0;
+          for (var i = 0; i < data.SystemStatus.length; i++) {
+            console.log(systemStatus);
+            // Check for node name
+            var match_name = data.SystemStatus[i][0].match(/^ +([a-zA-Z0-9]+.+)/);
+            var match_attr = data.SystemStatus[i][0].match(/^ +└ +(.+)/);
+            if (match_name) {
+              current = systemStatus.Hosts.length;
+              systemStatus.Hosts.push({
+                Name: match_name[1],
+                Ip: data.SystemStatus[i][1]
+              });
+            } else if (match_attr) {
+              if (match_attr[1] == 'Labels') {
+                var split = data.SystemStatus[i][1].split(', ');
+                data.SystemStatus[i][1] = objectifyStrings(split)
+              }
+              if (systemStatus.Hosts[current]) {
+                systemStatus.Hosts[current][match_attr[1]] = data.SystemStatus[i][1];
+              } else {
+                systemStatus[match_attr[1]] = data.SystemStatus[i][1];
+              }
+            } else {
+              systemStatus[data.SystemStatus[i][0]] = data.SystemStatus[i][1];
+            }
+          }
+
+          data.SystemStatus = systemStatus;
+
+          resolve(data);
+        }
+      })
+    })
   }
 };
 
@@ -374,7 +422,7 @@ function stringifyObjects(element) {
 function objectifyStrings(element) {
   if ((Array.isArray(element)) && (element !== null)) {
     var adjustedElement = {};
-    _.forEach(element, function(e) {
+    _.forEach(element, function (e) {
       var split = e.split('=');
       adjustedElement[split[0]] = split[1] ? split[1] : null;
     });
@@ -385,14 +433,14 @@ function objectifyStrings(element) {
 }
 
 function completeParameters(component) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     var newImage = DockerService.docker.getImage(component.image);
     newImage.inspect(function (err, inspectData) {
       if (err) reject(err);
       else {
         // Exposed ports
         if (!component.expose) component.expose = [];
-        for(var attr in inspectData.Config.ExposedPorts) {
+        for (var attr in inspectData.Config.ExposedPorts) {
           var split = attr.split('/');
           component.expose.push(split[0])
         }
@@ -400,14 +448,14 @@ function completeParameters(component) {
         // Environment variables
         if (!component.environment) component.environment = [];
         var envVars = stringifyObjects(inspectData.Config.Env);
-        _.forEach(envVars, function(env) {
+        _.forEach(envVars, function (env) {
           component.environment.push(env);
         });
 
         // Labels
         if (!component.labels) component.labels = [];
         var labels = stringifyObjects(inspectData.Config.Labels);
-        _.forEach(labels, function(lab) {
+        _.forEach(labels, function (lab) {
           component.environment.push(lab);
         });
 
@@ -422,41 +470,42 @@ function completeParameters(component) {
   });
 }
 
+
 // TODO: Extend this conceptual idea of reverse proxies
 function addReverseProxy(component) {
   return new Promise(function (resolve, reject) {
     var dir = require('path').join('/tmp', component.name);
 
-    if (!fs.existsSync(dir)){
+    if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir);
     }
 
     fs.writeFile(require('path').join(dir, 'nginx.conf'),
       'http {\n' +
-        'upstream proxy-' + component.name + '{\n' +
-          'server ' + component.name + ':80;\n' +
-        '}\n' +
+      'upstream proxy-' + component.name + '{\n' +
+      'server ' + component.name + ':80;\n' +
+      '}\n' +
 
-        'server {\n' +
-          'listen 80;\n' +
+      'server {\n' +
+      'listen 80;\n' +
 
-          'location / {\n' +
-            "proxy_pass http://proxiedweb;\n" +
-            "proxy_http_version 1.1;\n" +
-            "proxy_set_header Upgrade $http_upgrade;\n" +
-            "proxy_set_header Connection 'upgrade';\n" +
-            "proxy_set_header Host $host;\n" +
-            "proxy_cache_bypass $http_upgrade;\n" +
-          '}\n' +
-        '}\n' +
+      'location / {\n' +
+      "proxy_pass http://proxiedweb;\n" +
+      "proxy_http_version 1.1;\n" +
+      "proxy_set_header Upgrade $http_upgrade;\n" +
+      "proxy_set_header Connection 'upgrade';\n" +
+      "proxy_set_header Host $host;\n" +
+      "proxy_cache_bypass $http_upgrade;\n" +
+      '}\n' +
+      '}\n' +
       '}\n'
-      , function(err) {
-      if (err) {
-        return reject(err);
-      }
+      , function (err) {
+        if (err) {
+          return reject(err);
+        }
 
-      console.log("The file was saved!");
-    });
+        console.log("The file was saved!");
+      });
 
   })
 }
