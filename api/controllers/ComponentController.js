@@ -16,10 +16,12 @@ module.exports = {
     var component_id = req.param('component_id');
     var goal_node = req.param('goal_node');
 
-    Component.findOne({id: component_id}, function (err, component) {
+    Component.findOne({id: component_id})
+      .populate('node')
+      .exec(function (err, component) {
       if (err) throw err;
-      if (component.node == goal_node) {
-        res.badRequest('goal node is identical to current node!');
+      if (component.node.name == goal_node) {
+        res.badRequest('Goal node is identical to current node!');
         return;
       }
 

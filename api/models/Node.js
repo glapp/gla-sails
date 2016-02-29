@@ -33,6 +33,10 @@ module.exports = {
     },
     error: {
       type: 'string'
+    },
+    components: {
+      collection: 'component',
+      via: 'node'
     }
   }
 };

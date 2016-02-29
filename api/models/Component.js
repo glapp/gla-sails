@@ -26,11 +26,8 @@ module.exports = {
     image: {
       type: 'string'
     },
-    node_name: {
-      type: 'string'
-    },
-    node_ip: {
-      type: 'string'
+    node: {
+      model: 'node'
     },
     environment: {
       type: 'array',

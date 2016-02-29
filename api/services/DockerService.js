@@ -335,8 +335,7 @@ module.exports = {
                         DockerService.docker.getContainer(component.name).inspect(function (err, data) {
                           if (err) return reject(err);
                           Component.update({id: component.id}, {
-                            node_name: data.Node.Name,
-                            node_ip: data.Node.IP
+                            node: {name: data.Node.Name}
                           }, function (err, result) {
                             if (err) return reject(err);
                             resolve(result);
