@@ -217,16 +217,14 @@ module.exports = {
 
         DockerService.createContainer(component)
           .then(function (container) {
-            console.log('CONTAINER', container);
 
             container.inspect(function (err, inspectData) {
               if (err) throw err;
 
-              console.log('---------------> Inspect data:\n', inspectData);
+              //console.log('---------------> Inspect data:\n', inspectData);
 
               Component.update({id: component.id}, {
-                node_name: inspectData.Node.Name,
-                node_ip: inspectData.Node.IP
+                node: inspectData.Node.Name
               }, function (err, updated) {
                 if (err) throw err;
                 container.start(function (err) {
@@ -296,8 +294,8 @@ module.exports = {
   moveContainer: function (component, opts) {
     return new Promise(function (resolve, reject) {
 
-      Node.findOne({name: component.node}, function(err, newNode) {
-        if(err) reject(err);
+      Node.findOne({name: component.node}, function (err, newNode) {
+        if (err) reject(err);
 
         // Add environment opts, delete previous ones
         _.each(opts.environment, function (optEnv) {
@@ -338,7 +336,7 @@ module.exports = {
                           DockerService.docker.getContainer(component.name).inspect(function (err, data) {
                             if (err) return reject(err);
                             Component.update({id: component.id}, {
-                              node: newNode.id
+                              node: data.Node.Name
                             }, function (err, result) {
                               if (err) return reject(err);
                               resolve(result);
@@ -367,10 +365,10 @@ module.exports = {
         else {
           data.SystemStatus = parseSystemStatus(data);
 
-          async.map(data.SystemStatus.Hosts, function(node, done) {
-            Node.update({name: node.name}, node, function(err, entry) {
+          async.map(data.SystemStatus.Hosts, function (node, done) {
+            Node.update({name: node.name}, node, function (err, entry) {
               if (err && err.status == 404) { // New node!
-                Node.create(node, function(err, newEntry) {
+                Node.create(node, function (err, newEntry) {
                   if (err) done(err);
                   else done(null, newEntry);
                 })
@@ -380,28 +378,38 @@ module.exports = {
                 done(null, entry[0])
               }
             });
-          }, function(err, result) {
+          }, function (err, result) {
             if (err) reject(err);
-            else resolve(result);
+            else {
+              var names = _.map(result, 'name');
+              Node.find({name: names})
+                .populate('components')
+                .then(function (result) {
+                  resolve(result);
+                })
+                .catch(function(err) {
+                  reject(err);
+                });
+            }
           })
         }
       })
     })
   },
 
-  initializeNodes: function() {
+  initializeNodes: function () {
     return new Promise(function (resolve, reject) {
       DockerService.docker.info(function (err, data) {
         if (err) reject(err);
         else {
           data.SystemStatus = parseSystemStatus(data);
 
-          async.map(data.SystemStatus.Hosts, function(node, done) {
-            Node.create(node, function(err, entry) {
+          async.map(data.SystemStatus.Hosts, function (node, done) {
+            Node.create(node, function (err, entry) {
               if (err) done(err);
               else done(null, entry)
             });
-          }, function(err, result) {
+          }, function (err, result) {
             if (err) reject(err);
             else resolve(result);
           })
@@ -508,8 +516,8 @@ function completeParameters(component) {
           component.environment.push(lab);
         });
 
-        console.log('Inspect data of image:');
-        console.log(inspectData);
+        //console.log('Inspect data of image:');
+        //console.log(inspectData);
         // Sets the status to ready as soon as image is ready on docker swarm
         component.ready = true;
         component.save();

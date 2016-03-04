@@ -29,14 +29,41 @@ module.exports = {
       return;
     }
 
-    var app_id = req.param('app_id')
+    var app_id = req.param('app_id');
 
-    Application.findOne({id: app_id, owner: user_id})
-      .populate('components')
-      .exec(function (err, app) {
-        if (err) res.notFound();
-        else res.json({app: app});
-      })
+    // TODO: With sails 0.11, it will be possible to nest populations. This is a quite efficient workaround until then.
+    async.auto({
+        app: function(cb) {
+          Application
+            .findOne({id: app_id, owner: user_id})
+            .populate('components')
+            .exec(cb);
+        },
+
+        componentNode: ['app', function(cb, results) {
+          console.log(results);
+          Node.find({name: _.pluck(results.app.components, 'node')}).exec(cb);
+        }],
+
+        map: ['componentNode', function(cb, results) {
+          // Index nodes by name
+          var componentNode = _.indexBy(results.componentNode, 'name');
+          console.log('Nodes: ', results.componentNode);
+          // Get a plain object version of app & components
+          var app = results.app.toObject();
+          // Map nodes onto components
+          app.components = app.components.map(function(component) {
+            component.node = componentNode[component.node];
+            return component;
+          });
+          return cb(null, app);
+        }]
+
+      }, function finish(err, results) {
+        if (err) {return res.serverError(err);}
+        return res.json(results.map);
+      }
+    );
   },
 
   addApplication: function (req, res) {
@@ -123,7 +150,7 @@ module.exports = {
 
     Application.findOne({id: app_id, owner: user_id}).populate('components').exec(function (err, app) {
       if (err) {
-        res.serverError(err)
+        res.serverError(err);
         console.error(err);
         return;
       }

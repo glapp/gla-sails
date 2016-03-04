@@ -7,10 +7,13 @@
 
 module.exports = {
 
+  autoPK: false,
+
   attributes: {
     name: {
       type: 'string',
-      required: true
+      primaryKey: true,
+      unique: true
     },
     ip: {
       type: 'string',
