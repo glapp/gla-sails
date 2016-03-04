@@ -87,7 +87,6 @@ module.exports = {
           return DockerService.extractComponents(path, app.id);
         })
         .then(function (components) {
-          console.log(components);
           return DockerService.createComponents(path, components)
         })
         .then(function () {
@@ -107,7 +106,7 @@ module.exports = {
 
           cleanUp(path);
         });
-    })
+    });
   },
 
   deploy: function (req, res) {

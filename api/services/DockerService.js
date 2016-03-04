@@ -359,48 +359,94 @@ module.exports = {
     });
   },
 
+  // TODO: clean old nodes
   getNodeInfo: function () {
     return new Promise(function (resolve, reject) {
       DockerService.docker.info(function (err, data) {
         if (err) reject(err);
         else {
-          var systemStatus = {};
-          systemStatus.Hosts = [];
-          var current = 0;
-          for (var i = 0; i < data.SystemStatus.length; i++) {
-            console.log(systemStatus);
-            // Check for node name
-            var match_name = data.SystemStatus[i][0].match(/^ +([a-zA-Z0-9]+.+)/);
-            var match_attr = data.SystemStatus[i][0].match(/^ +└ +(.+)/);
-            if (match_name) {
-              current = systemStatus.Hosts.length;
-              systemStatus.Hosts.push({
-                Name: match_name[1],
-                Ip: data.SystemStatus[i][1]
-              });
-            } else if (match_attr) {
-              if (match_attr[1] == 'Labels') {
-                var split = data.SystemStatus[i][1].split(', ');
-                data.SystemStatus[i][1] = objectifyStrings(split)
-              }
-              if (systemStatus.Hosts[current]) {
-                systemStatus.Hosts[current][match_attr[1]] = data.SystemStatus[i][1];
+          data.SystemStatus = parseSystemStatus(data);
+
+          async.map(data.SystemStatus.Hosts, function(node, done) {
+            Node.update({name: node.name}, node, function(err, entry) {
+              if (err && err.status == 404) { // New node!
+                Node.create(node, function(err, newEntry) {
+                  if (err) done(err);
+                  else done(null, newEntry);
+                })
+              } else if (err) {
+                done(err);
               } else {
-                systemStatus[match_attr[1]] = data.SystemStatus[i][1];
+                done(null, entry[0])
               }
-            } else {
-              systemStatus[data.SystemStatus[i][0]] = data.SystemStatus[i][1];
-            }
-          }
+            });
+          }, function(err, result) {
+            if (err) reject(err);
+            else resolve(result);
+          })
+        }
+      })
+    })
+  },
 
-          data.SystemStatus = systemStatus;
+  initializeNodes: function() {
+    return new Promise(function (resolve, reject) {
+      DockerService.docker.info(function (err, data) {
+        if (err) reject(err);
+        else {
+          data.SystemStatus = parseSystemStatus(data);
 
-          resolve(data);
+          async.map(data.SystemStatus.Hosts, function(node, done) {
+            Node.create(node, function(err, entry) {
+              if (err) done(err);
+              else done(null, entry)
+            });
+          }, function(err, result) {
+            if (err) reject(err);
+            else resolve(result);
+          })
         }
       })
     })
   }
 };
+
+function parseSystemStatus(data) {
+  var systemStatus = {};
+  systemStatus.Hosts = [];
+  var current = 0;
+  for (var i = 0; i < data.SystemStatus.length; i++) {
+    // Check for node name
+    var match_name = data.SystemStatus[i][0].match(/^ +([a-zA-Z0-9]+.+)/);
+    var match_attr = data.SystemStatus[i][0].match(/^ +└ +(.+)/);
+    if (match_name) {
+      current = systemStatus.Hosts.length;
+      systemStatus.Hosts.push({
+        name: match_name[1],
+        ip: data.SystemStatus[i][1]
+      });
+    } else if (match_attr) {
+      var key = normalizeKey(match_attr[1]);
+      if (match_attr[1] == 'Labels') {
+        var split = data.SystemStatus[i][1].split(', ');
+        data.SystemStatus[i][1] = objectifyStrings(split)
+      }
+      if (systemStatus.Hosts[current]) {
+        systemStatus.Hosts[current][key] = data.SystemStatus[i][1];
+      } else {
+        systemStatus[key] = data.SystemStatus[i][1];
+      }
+    } else {
+      var key = normalizeKey(data.SystemStatus[i][0]);
+      systemStatus[key] = data.SystemStatus[i][1];
+    }
+  }
+  return systemStatus;
+}
+
+function normalizeKey(str) {
+  return (str.substr(0, 1).toLowerCase() + str.substr(1)).replace(' ', '')
+}
 
 function escapeRegExp(str) {
   return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
