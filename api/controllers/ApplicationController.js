@@ -41,16 +41,16 @@ module.exports = {
         },
 
         componentNode: ['app', function(cb, results) {
-          console.log(results);
           Node.find({name: _.pluck(results.app.components, 'node')}).exec(cb);
         }],
 
         map: ['componentNode', function(cb, results) {
           // Index nodes by name
           var componentNode = _.indexBy(results.componentNode, 'name');
-          console.log('Nodes: ', results.componentNode);
+
           // Get a plain object version of app & components
           var app = results.app.toObject();
+
           // Map nodes onto components
           app.components = app.components.map(function(component) {
             component.node = componentNode[component.node];

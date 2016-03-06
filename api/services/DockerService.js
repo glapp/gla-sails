@@ -277,7 +277,7 @@ module.exports = {
                 else done();
               })
             })
-          }, function(err) {
+          }, function (err) {
             if (err) reject(err);
             else resolve();
           });
@@ -327,66 +327,83 @@ module.exports = {
   moveContainer: function (component, opts) {
     return new Promise(function (resolve, reject) {
 
-      Node.findOne({name: component.node}, function (err, newNode) {
-        if (err) reject(err);
-
-        // Add environment opts, delete previous ones
-        _.each(opts.environment, function (optEnv) {
-          var optSplit = optEnv.split('=');
-          _.remove(component.environment, function (compEnv) {
-            var compSplit = compEnv.split('=');
-            return compSplit[0] == optSplit[0];
-          });
-          component.environment.push(optEnv);
+      // Add environment opts, delete previous ones
+      _.forEach(opts.environment, function (optEnv) {
+        var optSplit = optEnv.split('=');
+        _.remove(component.environment, function (compEnv) {
+          var compSplit = compEnv.split('=');
+          return compSplit[0] == optSplit[0];
         });
+        component.environment.push(optEnv);
+      });
 
-        // Save component
-        component.save();
+      // Save component
+      component.save();
 
-        var copy = _.extend({}, component);
-        copy.name = component.name + "_temp";
+      var copy = _.extend({}, component);
+      copy.name = component.name + "_temp";
 
-        DockerService.createContainer(copy)
-          .then(function (newContainer) {
-            newContainer.start(function (err) {
+      DockerService.createContainer(copy)
+        .then(function (newContainer) {
+          newContainer.start(function (err) {
+            if (err) return reject(err);
+            Application.findOne({id: component.application_id}, function (err, app) {
               if (err) return reject(err);
-              Application.findOne({id: component.application_id}, function (err, app) {
+              var network = DockerService.docker.getNetwork(app.networkId);
+              network.connect({
+                container: newContainer.id
+              }, function (err) {
                 if (err) return reject(err);
-                var network = DockerService.docker.getNetwork(app.networkId);
-                network.connect({
-                  container: newContainer.id
-                }, function (err) {
+                DockerService.docker.getContainer(component.name).inspect(function (err, data) {
                   if (err) return reject(err);
-                  DockerService.docker.getContainer(component.name).inspect(function (err, data) {
+                  var old = DockerService.docker.getContainer(data.Id);
+                  old.rename({name: component.name + '_old'}, function (err) {
                     if (err) return reject(err);
-                    var old = DockerService.docker.getContainer(data.Id);
-                    old.rename({name: component.name + '_old'}, function (err) {
+                    newContainer.rename({name: component.name}, function (err) {
                       if (err) return reject(err);
-                      newContainer.rename({name: component.name}, function (err) {
+                      old.remove({force: true}, function (err) {
                         if (err) return reject(err);
-                        old.remove({force: true}, function (err) {
+                        DockerService.docker.getContainer(component.name).inspect(function (err, data) {
                           if (err) return reject(err);
-                          DockerService.docker.getContainer(component.name).inspect(function (err, data) {
-                            if (err) return reject(err);
-                            Component.update({id: component.id}, {
+
+                          DockerService.docker.listContainers(function (err, dockerInfo) {
+                            if (err) {
+                              reject(err);
+                              return;
+                            }
+
+                            // TODO: Make this more fault tolerant
+                            var ContainerInfo = _.find(dockerInfo, ['Id', data.Id]);
+
+                            // ToDo: Support multiple published ports
+                            var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
+
+                            var update = {
                               node: data.Node.Name
-                            }, function (err, result) {
+                            };
+
+                            if (publishedPort) {
+                              update.published_port = publishedPort;
+                            }
+
+                            // Update database entry with node and ip
+                            Component.update({id: component.id}, update, function (err, result) {
                               if (err) return reject(err);
                               resolve(result);
                             });
-                          });
-                        })
+                          })
+                        });
                       })
-                    });
+                    })
                   });
                 });
-              })
-            });
-          })
-          .catch(function (err) {
-            reject(err);
-          })
-      });
+              });
+            })
+          });
+        })
+        .catch(function (err) {
+          reject(err);
+        })
     });
   },
 
