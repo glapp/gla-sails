@@ -59,6 +59,8 @@ module.exports.routes = {
   'POST /move': 'ComponentController.move',
 
   // Node stuff
-  'GET /nodes/info': 'NodeController.getNodeInfo'
+  'GET /nodes/info': 'NodeController.getNodeInfo',
+
+  'GET /dockerinfo': 'NodeController.getDockerInfo'
 
 };

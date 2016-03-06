@@ -213,43 +213,76 @@ module.exports = {
 
   deploy: function (app, network) {
     return new Promise(function (resolve, reject) {
-      async.each(app.components, function (component, done) {
+      async.map(app.components, function (component, done) {
 
         DockerService.createContainer(component)
           .then(function (container) {
-
-            container.inspect(function (err, inspectData) {
-              if (err) throw err;
-
-              //console.log('---------------> Inspect data:\n', inspectData);
-
-              Component.update({id: component.id}, {
-                node: inspectData.Node.Name
-              }, function (err, updated) {
-                if (err) throw err;
-                container.start(function (err) {
-                  if (err) throw err;
-                  network.connect({
-                    container: container.id
-                  }, function (err) {
-                    if (err) throw err;
-                    done();
-                  });
-                })
-              })
-            });
+            container.start(function (err) {
+              if (err) done(err);
+              else {
+                network.connect({
+                  container: container.id
+                }, function (err) {
+                  if (err) done(err);
+                  else {
+                    container.component_id = component.id;
+                    done(null, container);
+                  }
+                });
+              }
+            })
           })
           .catch(function (err) {
             console.log(err);
             done(err);
           });
-      }, function (err) {
+      }, function (err, containersArray) {
         if (err) {
           reject(err);
           return;
         }
-        resolve();
-      })
+
+        DockerService.docker.listContainers(function (err, dockerInfo) {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          // Handle the created containers
+          async.each(containersArray, function (container, done) {
+            container.inspect(function (err, inspectData) {
+              if (err) {
+                done(err);
+                return;
+              }
+
+              console.log('---------------> Inspect data:\n', inspectData);
+
+              var ContainerInfo = _.find(dockerInfo, ['Id', container.id]);
+
+              // ToDo: Support multiple published ports
+              var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
+
+              var update = {
+                node: inspectData.Node.Name
+              };
+
+              if (publishedPort) {
+                update.published_port = publishedPort;
+              }
+
+              // Update database entry with node and ip
+              Component.update({id: container.component_id}, update, function (err, updated) {
+                if (err) done(err);
+                else done();
+              })
+            })
+          }, function(err) {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      });
     });
   },
 
@@ -387,7 +420,7 @@ module.exports = {
                 .then(function (result) {
                   resolve(result);
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                   reject(err);
                 });
             }
@@ -428,10 +461,12 @@ function parseSystemStatus(data) {
     var match_name = data.SystemStatus[i][0].match(/^ +([a-zA-Z0-9]+.+)/);
     var match_attr = data.SystemStatus[i][0].match(/^ +└ +(.+)/);
     if (match_name) {
+      var split = data.SystemStatus[i][1].split(':');
+
       current = systemStatus.Hosts.length;
       systemStatus.Hosts.push({
         name: match_name[1],
-        ip: data.SystemStatus[i][1]
+        ip: split[0]
       });
     } else if (match_attr) {
       var key = normalizeKey(match_attr[1]);

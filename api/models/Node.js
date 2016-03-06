@@ -8,6 +8,7 @@
 module.exports = {
 
   autoPK: false,
+  migrate: 'drop',
 
   attributes: {
     name: {

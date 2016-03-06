@@ -29,6 +29,9 @@ module.exports = {
     node: {
       model: 'node'
     },
+    published_port: {
+      type: 'string',
+    },
     environment: {
       type: 'array',
       defaultsTo: []
