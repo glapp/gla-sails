@@ -32,8 +32,8 @@ module.exports = {
       // enum: ['blah1', 'blah2']
       // required: true
     },
-    constraints: {
-      collection: 'Constraint',
+    rules: {
+      collection: 'Rule',
       via: 'application_id'
     },
     networkId: {
