@@ -397,7 +397,7 @@ module.exports = {
 
                             var update = {
                               node: data.Node.Name,
-                              container_id: container.id
+                              container_id: data.id
                             };
 
                             if (publishedPort) {
