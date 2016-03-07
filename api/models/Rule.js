@@ -15,16 +15,20 @@ module.exports = {
     identifier: {
       type: 'String',
       // enum: ['blah5', 'blah6'],
-      // required: true
+      required: true
     },
     operator: {
       type: 'String',
       // enum: ['blah7', 'blah8'],
       // required: true
     },
-    value: {
+    min: {
       type: 'float',
-      // required: true
+      required: true
+    },
+    max: {
+      type: 'float',
+      required: true
     }
   }
 };

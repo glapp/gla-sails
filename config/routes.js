@@ -61,6 +61,10 @@ module.exports.routes = {
   // Node stuff
   'GET /nodes/info': 'NodeController.getNodeInfo',
 
-  'GET /dockerinfo': 'NodeController.getDockerInfo'
+  'GET /dockerinfo': 'NodeController.getDockerInfo',
+
+  // Policy
+  'GET /policy': 'RuleController.getPolicy',
+  'POST /policy/set': 'RuleController.setPolicy'
 
 };
