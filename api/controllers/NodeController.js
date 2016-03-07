@@ -24,15 +24,5 @@ module.exports = {
       .catch(function (err) {
         res.serverError(err);
       })
-  },
-
-  getDockerInfo: function(req, res) {
-    DockerService.docker.listContainers(function(err, resp) {
-      if (err) {
-        res.serverError(err);
-        return;
-      }
-      res.ok(resp);
-    });
   }
 };
