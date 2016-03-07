@@ -12,14 +12,14 @@ var rimraf = require('rimraf');
 module.exports = {
   getUserApps: function (req, res) {
     Application.find({owner: req.session.me})
-      //.populate('components')
+      .populate('components')
       .exec(function (err, apps) {
         if (err) res.notFound();
         else res.json({apps: apps});
       })
   },
 
-  getAppDetails: function(req, res) {
+  getAppDetails: function (req, res) {
     var user_id;
 
     if (req.session.me) {
@@ -33,18 +33,18 @@ module.exports = {
 
     // TODO: With sails 0.11, it will be possible to nest populations. This is a quite efficient workaround until then.
     async.auto({
-        app: function(cb) {
+        app: function (cb) {
           Application
             .findOne({id: app_id, owner: user_id})
             .populate('components')
             .exec(cb);
         },
 
-        componentNode: ['app', function(cb, results) {
+        componentNode: ['app', function (cb, results) {
           Node.find({name: _.pluck(results.app.components, 'node')}).exec(cb);
         }],
 
-        map: ['componentNode', function(cb, results) {
+        map: ['componentNode', function (cb, results) {
           // Index nodes by name
           var componentNode = _.indexBy(results.componentNode, 'name');
 
@@ -52,7 +52,7 @@ module.exports = {
           var app = results.app.toObject();
 
           // Map nodes onto components
-          app.components = app.components.map(function(component) {
+          app.components = app.components.map(function (component) {
             component.node = componentNode[component.node];
             return component;
           });
@@ -60,7 +60,9 @@ module.exports = {
         }]
 
       }, function finish(err, results) {
-        if (err) {return res.serverError(err);}
+        if (err) {
+          return res.serverError(err);
+        }
         return res.json(results.map);
       }
     );
@@ -86,13 +88,9 @@ module.exports = {
       }
 
       if (req.isSocket) {
-        Application.watch( req );
+        Application.watch(req);
         Application.subscribe(req, [app.id]);
       }
-
-      res.json({
-        app: app
-      });
 
       console.log('---------> Starting git clone');
 
@@ -113,8 +111,11 @@ module.exports = {
         .then(function () {
           return DockerService.extractComponents(path, app.id);
         })
-        .then(function (components) {
-          return DockerService.createComponents(path, components)
+        .then(function (updatedApp) {
+          res.ok({
+            app: updatedApp
+          });
+          return DockerService.createComponents(path, updatedApp.components)
         })
         .then(function () {
           app.status = 'ready';

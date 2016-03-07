@@ -38,7 +38,6 @@ module.exports = {
 
         // Read docker-compose file
         var components = yaml.load(path + '/docker-compose.yml');
-        console.log(JSON.stringify(components));
 
         if (components.version && components.version == '2') {
           // Replaces components array with 'services' array of the new version
@@ -99,7 +98,23 @@ module.exports = {
           return component;
         });
 
-        resolve(components);
+        // Already create the components so the user can be informed
+        async.each(components, function (component, done) {
+          Component.create(component, function (err, created) {
+            if (err) return done(err);
+            else done();
+          });
+        }, function (err) {
+          if (err) reject(err);
+          else {
+            Application.findOne({id: app_id})
+              .populate('components')
+              .exec(function (err, app) {
+                if (err) reject(err);
+                else resolve(app);
+              })
+          }
+        })
       });
     });
   },
@@ -114,10 +129,11 @@ module.exports = {
           changed = true;
         }
 
-        // Create database entry
-        Component.create(component, component, function (err, created) {
+        // Find database entry
+        Component.findOne({id: component.id}, function (err, found) {
           if (err) return done(err);
 
+          console.log(found);
           // If we have to build the image first
           if (changed && component.build) {
             var buildpath = require('path').join(path, component.build);
@@ -135,7 +151,7 @@ module.exports = {
 
                   function onFinished(err, output) {
                     if (err) return done(err);
-                    completeParameters(created)
+                    completeParameters(found)
                       .then(done)
                       .catch(function (err) {
                         done(err);
@@ -163,7 +179,7 @@ module.exports = {
 
                   function onFinished(err, output) {
                     if (err) return done(err);
-                    completeParameters(created)
+                    completeParameters(found)
                       .then(done)
                       .catch(function (err) {
                         done(err);
@@ -171,7 +187,7 @@ module.exports = {
                   }
                 });
               } else { // Image is already pulled
-                completeParameters(created)
+                completeParameters(found)
                   .then(done)
                   .catch(function (err) {
                     done(err);
@@ -264,7 +280,8 @@ module.exports = {
               var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
 
               var update = {
-                node: inspectData.Node.Name
+                node: inspectData.Node.Name,
+                container_id: container.id
               };
 
               if (publishedPort) {
@@ -379,7 +396,8 @@ module.exports = {
                             var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
 
                             var update = {
-                              node: data.Node.Name
+                              node: data.Node.Name,
+                              container_id: container.id
                             };
 
                             if (publishedPort) {

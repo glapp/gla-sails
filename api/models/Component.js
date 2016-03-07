@@ -59,6 +59,9 @@ module.exports = {
     ready: {
       type: 'boolean',
       defaultsTo: false
+    },
+    container_id: {
+      type: 'string'
     }
   }
 };
