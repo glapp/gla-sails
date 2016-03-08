@@ -332,8 +332,8 @@ module.exports = {
         Labels: objectifiedLabels,
         ExposedPorts: exposed,
         HostConfig: {
-          PortBindings: portBindings,
-        },
+          PortBindings: portBindings
+        }
       }, function (err, container) {
         if (err) reject(err);
         else resolve(container);
@@ -344,13 +344,14 @@ module.exports = {
   moveContainer: function (component, opts) {
     return new Promise(function (resolve, reject) {
 
-      // Add environment opts, delete previous ones
+      // delete previous constraints
+      _.remove(component.environment, function (compEnv) {
+        var re = /^constraint:.+=/g;
+        return re.test(compEnv);
+      });
+
+      // Add environment opts
       _.forEach(opts.environment, function (optEnv) {
-        var optSplit = optEnv.split('=');
-        _.remove(component.environment, function (compEnv) {
-          var compSplit = compEnv.split('=');
-          return compSplit[0] == optSplit[0];
-        });
         component.environment.push(optEnv);
       });
 
