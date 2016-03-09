@@ -37,7 +37,7 @@ module.exports = {
           Application
             .findOne({id: app_id, owner: user_id})
             .populate('log', {sort: 'createdAt DESC'})
-            .populate('components')
+            .populate('components', {sort: 'originalName DESC'})
             .exec(cb);
         },
 
