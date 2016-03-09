@@ -24,6 +24,9 @@ module.exports = {
       via: 'application_id',
       // required: true
     },
+    networkId: {
+      type: 'string'
+    },
     status: {
       type: 'string',
     },
@@ -36,8 +39,9 @@ module.exports = {
       collection: 'Rule',
       via: 'application_id'
     },
-    networkId: {
-      type: 'string'
+    log: {
+      collection: 'AppLog',
+      via: 'application_id'
     }
   }
 };

@@ -22,10 +22,10 @@ module.exports = {
       console.log('Cloning finished.');
       fs.stat(path + '/docker-compose.yml', function (err, stat) {
         if (err == null) {
-          console.log('File exists');
+          console.log('Found docker-compose.yml!');
         } else if (err.code == 'ENOENT') {
           // Doesn't exist yet
-          console.log('No compose file');
+          console.log('No docker-compose file!');
           cleanUp(path);
           reject();
           return;
@@ -63,6 +63,19 @@ module.exports = {
 
           // Stringify labels
           components[c].labels = stringifyObjects(components[c].labels);
+
+          // Make sure the ports are in string format
+          if (components[c].ports) {
+            components[c].ports = _.map(components[c].ports, function(port) {
+              return port.toString();
+            });
+          }
+
+          if (components[c].expose) {
+            components[c].expose = _.map(components[c].expose, function(port) {
+              return port.toString();
+            });
+          }
 
           var singlePort = /^([0-9]+\w)$/;
           var portRange = /^([0-9]+\w)-([0-9]+\w)$/;
@@ -133,7 +146,6 @@ module.exports = {
         Component.findOne({id: component.id}, function (err, found) {
           if (err) return done(err);
 
-          console.log(found);
           // If we have to build the image first
           if (changed && component.build) {
             var buildpath = require('path').join(path, component.build);
@@ -272,8 +284,6 @@ module.exports = {
                 return;
               }
 
-              console.log('---------------> Inspect data:\n', inspectData);
-
               var ContainerInfo = _.find(dockerInfo, ['Id', container.id]);
 
               // ToDo: Support multiple published ports
@@ -408,7 +418,7 @@ module.exports = {
                             // Update database entry with node and ip
                             Component.update({id: component.id}, update, function (err, result) {
                               if (err) return reject(err);
-                              resolve(result);
+                              resolve(result[0]);
                             });
                           })
                         });
@@ -570,7 +580,10 @@ function completeParameters(component) {
         if (!component.expose) component.expose = [];
         for (var attr in inspectData.Config.ExposedPorts) {
           var split = attr.split('/');
-          component.expose.push(split[0])
+          var exists = _.some(component.expose, function(port) {
+            return port == split[0];
+          });
+          if (!exists) component.expose.push(split[0])
         }
 
         // Environment variables
@@ -587,8 +600,6 @@ function completeParameters(component) {
           component.environment.push(lab);
         });
 
-        //console.log('Inspect data of image:');
-        //console.log(inspectData);
         // Sets the status to ready as soon as image is ready on docker swarm
         component.ready = true;
         component.save();

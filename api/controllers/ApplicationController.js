@@ -36,6 +36,7 @@ module.exports = {
         app: function (cb) {
           Application
             .findOne({id: app_id, owner: user_id})
+            .populate('log', {sort: 'createdAt DESC'})
             .populate('components')
             .exec(cb);
         },
@@ -87,6 +88,13 @@ module.exports = {
         return;
       }
 
+      AppLog.create({
+        application_id: app.id,
+        content: 'Application initialized.'
+      }).exec(function (err) {
+        if (err) console.error('Couldn\'t create log! ', err)
+      });
+
       if (req.isSocket) {
         Application.watch(req);
         Application.subscribe(req, [app.id]);
@@ -120,19 +128,31 @@ module.exports = {
         .then(function () {
           app.status = 'ready';
           app.save();
-
-          // TODO: Socket emit 'ready'
-
           cleanUp(path);
+
+          AppLog.create({
+            application_id: app.id,
+            content: 'Application ready to be deployed.'
+          }).exec(function (err, created) {
+            if (err) console.error('Couldn\'t create log! ', err);
+            // TODO: Socket emit 'ready'
+            res.ok();
+          })
         })
         .catch(function (err) {
           console.log('--> ERROR', err);
           app.status = 'failed';
           app.save();
-
-          // TODO: Socket emit 'failed'
-
           cleanUp(path);
+
+          AppLog.create({
+            application_id: app.id,
+            content: 'Creation failed!'
+          }).exec(function (err, created) {
+            if (err) console.error('Couldn\'t create log! ', newErr);
+            // TODO: Socket emit 'failed'
+            res.serverError(err);
+          });
         });
     });
   },
@@ -161,9 +181,16 @@ module.exports = {
         })
         .then(function (result) {
           app.status = 'deployed';
-          app.save(function(err, saved) {
-            res.ok(saved);
-          });
+          AppLog.create({
+            application_id: app_id,
+            content: 'Deployed!'
+          }).exec(function (err, created) {
+            if (err) console.error('Couldn\'t create log! ', err);
+            app.save(function (err) {
+              if (err) res.serverError(err);
+              else res.ok();
+            });
+          })
         })
         .catch(function (err) {
           res.badRequest(err);

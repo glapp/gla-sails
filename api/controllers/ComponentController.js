@@ -22,13 +22,28 @@ module.exports = {
         //  return;
         //}
 
+        var oldNode = component.node ? component.node.name : 'NoOldNodeFound!';
+
+        // If hard requirement of node is given
         if (opts.node) {
-          DockerService.moveContainer(component, {environment: ['constraint:node==' + goal_node]})
+          DockerService.moveContainer(component, {environment: ['constraint:node==' + opts.node]})
             .then(function (result) {
-              res.ok(result);
+              AppLog.create({
+                application_id: component.application_id,
+                content: 'Moved ' + component.originalName + ' from ' + oldNode + ' to ' + opts.node + '.'
+              }).exec(function (err, created) {
+                if (err) console.error('Couldn\'t create log! ', err);
+                res.ok(result);
+              })
             })
             .catch(function (err) {
-              res.serverError(err.json);
+              AppLog.create({
+                application_id: component.application_id,
+                content: 'Failed to move ' + component.originalName + '.'
+              }).exec(function (err, created) {
+                if (err) console.error('Couldn\'t create log! ', err);
+                res.serverError(err);
+              })
             });
         } else {
           var environment = [];
@@ -43,10 +58,17 @@ module.exports = {
           // Move
           DockerService.moveContainer(component, {environment: environment})
             .then(function (result) {
-              res.ok(result);
+              var newNode = result.node;
+              AppLog.create({
+                application_id: component.application_id,
+                content: 'Moved ' + component.originalName + ' from ' + oldNode + ' to ' + newNode + '.'
+              }).exec(function (err, created) {
+                if (err) console.error('Couldn\'t create log! ', err);
+                res.ok(result);
+              })
             })
             .catch(function (err) {
-              res.serverError(err.json);
+              res.serverError(err);
             });
         }
       });
