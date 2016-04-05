@@ -38,8 +38,8 @@ module.exports = {
     error: {
       type: 'string'
     },
-    components: {
-      collection: 'component',
+    cells: {
+      collection: 'cell',
       via: 'node'
     }
   }

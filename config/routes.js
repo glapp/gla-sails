@@ -56,7 +56,7 @@ module.exports.routes = {
   // Add stuff
   'POST /application/add': 'ApplicationController.addApplication',
   'POST /application/deploy': 'ApplicationController.deploy',
-  'POST /move': 'ComponentController.move',
+  'POST /move': 'CellController.move',
 
   // Node stuff
   'GET /nodes/info': 'NodeController.getNodeInfo',

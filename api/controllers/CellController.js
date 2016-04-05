@@ -1,7 +1,7 @@
 /**
- * ComponentController
+ * CellController
  *
- * @description :: Server-side logic for managing Components
+ * @description :: Server-side logic for managing cells
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
@@ -10,27 +10,27 @@ var _ = require('lodash');
 module.exports = {
 
   move: function (req, res) {
-    var component_id = req.param('component_id');
+    var cell_id = req.param('component_id');
     var opts = req.param('options');
 
-    Component.findOne({id: component_id})
+    Cell.findOne({id: cell_id})
       .populate('node')
-      .exec(function (err, component) {
+      .exec(function (err, cell) {
         if (err) throw err;
         //if (component.node.name == goal_node) {
         //  res.badRequest('Goal node is identical to current node!');
         //  return;
         //}
 
-        var oldNode = component.node ? component.node.name : 'NoOldNodeFound!';
+        var oldNode = cell.node ? cell.node.name : 'NoOldNodeFound!';
 
         // If hard requirement of node is given
         if (opts.node) {
-          DockerService.moveContainer(component, {environment: ['constraint:node==' + opts.node]})
+          DockerService.moveContainer(cell, {environment: ['constraint:node==' + opts.node]})
             .then(function (result) {
               AppLog.create({
-                application_id: component.application_id,
-                content: 'Moved ' + component.originalName + ' from ' + oldNode + ' to ' + opts.node + '.'
+                application_id: cell.application_id,
+                content: 'Moved ' + cell.originalName + ' from ' + oldNode + ' to ' + opts.node + '.'
               }).exec(function (err, created) {
                 if (err) console.error('Couldn\'t create log! ', err);
                 res.ok(result);
@@ -38,8 +38,8 @@ module.exports = {
             })
             .catch(function (err) {
               AppLog.create({
-                application_id: component.application_id,
-                content: 'Failed to move ' + component.originalName + '.'
+                application_id: cell.application_id,
+                content: 'Failed to move ' + cell.originalName + '.'
               }).exec(function (err, created) {
                 if (err) console.error('Couldn\'t create log! ', err);
                 res.serverError(err);
@@ -56,12 +56,12 @@ module.exports = {
           });
 
           // Move
-          DockerService.moveContainer(component, {environment: environment})
+          DockerService.moveContainer(cell, {environment: environment})
             .then(function (result) {
               var newNode = result.node;
               AppLog.create({
-                application_id: component.application_id,
-                content: 'Moved ' + component.originalName + ' from ' + oldNode + ' to ' + newNode + '.'
+                application_id: cell.application_id,
+                content: 'Moved ' + cell.originalName + ' from ' + oldNode + ' to ' + newNode + '.'
               }).exec(function (err, created) {
                 if (err) console.error('Couldn\'t create log! ', err);
                 res.ok(result);
@@ -73,4 +73,6 @@ module.exports = {
         }
       });
   }
+  
 };
+

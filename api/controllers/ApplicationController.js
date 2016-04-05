@@ -12,7 +12,7 @@ var rimraf = require('rimraf');
 module.exports = {
   getUserApps: function (req, res) {
     Application.find({owner: req.session.me})
-      .populate('components')
+      .populate('organs')
       .exec(function (err, apps) {
         if (err) res.notFound();
         else res.json({apps: apps});
@@ -31,42 +31,56 @@ module.exports = {
 
     var app_id = req.param('app_id');
 
-    // TODO: With sails 0.11, it will be possible to nest populations. This is a quite efficient workaround until then.
-    async.auto({
-        app: function (cb) {
-          Application
-            .findOne({id: app_id, owner: user_id})
-            .populate('log', {sort: 'createdAt DESC'})
-            .populate('components', {sort: 'originalName DESC'})
-            .exec(cb);
-        },
+    Application
+      .findOne({id: app_id, owner: user_id})
+      .populate('log', {sort: 'createdAt DESC'})
+      .populate('organs', {sort: 'originalName DESC'})
+      .exec(function (err, app) {
 
-        componentNode: ['app', function (cb, results) {
-          Node.find({name: _.pluck(results.app.components, 'node')}).exec(cb);
-        }],
+        // TODO: With a future sails version, it will be possible to nest populations. This is a quite efficient workaround until then.
 
-        map: ['componentNode', function (cb, results) {
-          // Index nodes by name
-          var componentNode = _.indexBy(results.componentNode, 'name');
+        async.auto({
+            organCells: function (cb) {
+              Cell.find({id: _.pluck(app.organs, 'cells')}).exec(cb);
+            },
 
-          // Get a plain object version of app & components
-          var app = results.app.toObject();
+            organs: ['organCells', function (cb, results) {
+              var organCells = _.indexBy(results.organCells, 'id');
 
-          // Map nodes onto components
-          app.components = app.components.map(function (component) {
-            component.node = componentNode[component.node];
-            return component;
-          });
-          return cb(null, app);
-        }]
+              var organs = app.organs.toObject();
 
-      }, function finish(err, results) {
-        if (err) {
-          return res.serverError(err);
-        }
-        return res.json(results.map);
-      }
-    );
+              organs = organs.map(function (organ) {
+                organ.cells = organCells[organ.cells];
+                return organ;
+              });
+              return cb(null, organs);
+            }],
+
+            componentHost: ['organs', function (cb, results) {
+              async.map(results.organs, function (organ, done) {
+                Host.find({name: _.pluck(organ.cells, 'host')}).exec(function (err, hosts) {
+                  if (err) done(err);
+                  var cellHosts = _.indexBy(hosts, 'name');
+
+                  organ.cells = organ.cells.map(function (cell) {
+                    cell.host = cellHosts[cell.host];
+                    return cell;
+                  });
+
+                  return done(null, organ);
+                });
+              }, function (err, organs) {
+                if (err) return cb(err);
+                app.organs = organs;
+                return cb(null, app)
+              });
+            }]
+          }, function finish(err, results) {
+            if (err) return res.serverError(err);
+            return res.json(results.map);
+          }
+        );
+      });
   },
 
   addApplication: function (req, res) {
@@ -169,7 +183,7 @@ module.exports = {
 
     var app_id = req.param('app_id');
 
-    Application.findOne({id: app_id, owner: user_id}).populate('components').exec(function (err, app) {
+    Application.findOne({id: app_id, owner: user_id}).populate('organs').exec(function (err, app) {
       if (err) {
         res.serverError(err);
         console.error(err);

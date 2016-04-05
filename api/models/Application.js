@@ -19,8 +19,8 @@ module.exports = {
     gitUrl: {
       type: 'string',
     },
-    components: {
-      collection: 'Component',
+    organs: {
+      collection: 'Organ',
       via: 'application_id',
       // required: true
     },
