@@ -6,7 +6,7 @@
  */
 
 module.exports = {
-  getNodeInfo: function (req, res) {
+  getHostInfo: function (req, res) {
     var user_id;
 
     if (req.session.me) {
@@ -17,7 +17,7 @@ module.exports = {
     }
 
 
-    DockerService.getNodeInfo()
+    DockerService.getHostInfo()
       .then(function (data) {
         res.ok(data);
       })

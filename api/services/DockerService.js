@@ -66,13 +66,13 @@ module.exports = {
 
           // Make sure the ports are in string format
           if (components[c].ports) {
-            components[c].ports = _.map(components[c].ports, function(port) {
+            components[c].ports = _.map(components[c].ports, function (port) {
               return port.toString();
             });
           }
 
           if (components[c].expose) {
-            components[c].expose = _.map(components[c].expose, function(port) {
+            components[c].expose = _.map(components[c].expose, function (port) {
               return port.toString();
             });
           }
@@ -113,7 +113,7 @@ module.exports = {
 
         // Already create the components so the user can be informed
         async.each(components, function (component, done) {
-          Component.create(component, function (err, created) {
+          Organ.create(component, function (err, created) {
             if (err) return done(err);
             else done();
           });
@@ -121,7 +121,7 @@ module.exports = {
           if (err) reject(err);
           else {
             Application.findOne({id: app_id})
-              .populate('components')
+              .populate('organs')
               .exec(function (err, app) {
                 if (err) reject(err);
                 else resolve(app);
@@ -132,27 +132,31 @@ module.exports = {
     });
   },
 
-  createComponents: function (path, components) {
+  createComponents: function (path, app) {
     return new Promise(function (resolve, reject) {
-      async.each(components, function (component, done) {
-        var tag = component.name;
+
+      // TODO Create reverse proxy cell
+
+
+      async.each(app.organs, function (organ, done) {
+        var tag = organ.name;
         var changed = false;
-        if (!component.image) {
-          component.image = tag;
+        if (!organ.image) {
+          organ.image = tag;
           changed = true;
         }
 
         // Find database entry
-        Component.findOne({id: component.id}, function (err, found) {
+        Organ.findOne({id: organ.id}, function (err, found) {
           if (err) return done(err);
 
           // If we have to build the image first
-          if (changed && component.build) {
-            var buildpath = require('path').join(path, component.build);
+          if (changed && organ.build) {
+            var buildpath = require('path').join(path, organ.build);
             // Make tar
             tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
               .on('finish', function () {
-                DockerService.docker.buildImage(buildpath + '.tar', {t: component.image}, function (err, stream) {
+                DockerService.docker.buildImage(buildpath + '.tar', {t: organ.image}, function (err, stream) {
                   if (err) return done(err);
 
                   DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
@@ -175,12 +179,12 @@ module.exports = {
                 return done(err);
               });
             // If the image has to be pulled
-          } else if (component.image && !component.build) {
-            var image = DockerService.docker.getImage(component.image);
+          } else if (organ.image && !organ.build) {
+            var image = DockerService.docker.getImage(organ.image);
             image.inspect(function (err, inspectData) {
               if (err && err.statusCode != 404) return done(err);
               if (err && err.statusCode == 404) {  // Image is not pulled yet -> Pull
-                DockerService.docker.pull(component.image, function (err, stream) {
+                DockerService.docker.pull(organ.image, function (err, stream) {
                   if (err) return done(err);
 
                   DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
@@ -220,7 +224,7 @@ module.exports = {
 
   handleNetwork: function (app) {
     return new Promise(function (resolve, reject) {
-      var notReady = _.some(app.components, {ready: false});
+      var notReady = _.some(app.organs, {ready: false});
       if (notReady) {
         reject('At least one component is not ready yet.');
       } else {
@@ -241,29 +245,36 @@ module.exports = {
 
   deploy: function (app, network) {
     return new Promise(function (resolve, reject) {
-      async.map(app.components, function (component, done) {
+      async.map(app.organs, function (organ, done) {
 
-        DockerService.createContainer(component)
-          .then(function (container) {
-            container.start(function (err) {
-              if (err) done(err);
-              else {
+        // Create cell database entry
+        Cell.create({organ_id: organ.id}, function (err, cell) {
+          if (err) return done(err);
+
+          // Create the container on the swarm
+          DockerService.createContainer(organ)
+            .then(function (container) {
+
+              // start the container
+              container.start(function (err) {
+                if (err) return done(err);
                 network.connect({
                   container: container.id
                 }, function (err) {
                   if (err) done(err);
                   else {
-                    container.component_id = component.id;
+                    // Keep the information about the corresponding cell
+                    container.cell_id = cell.id;
                     done(null, container);
                   }
                 });
-              }
+              })
             })
-          })
-          .catch(function (err) {
-            console.log(err);
-            done(err);
-          });
+            .catch(function (err) {
+              console.log(err);
+              done(err);
+            });
+        })
       }, function (err, containersArray) {
         if (err) {
           reject(err);
@@ -278,32 +289,13 @@ module.exports = {
 
           // Handle the created containers
           async.each(containersArray, function (container, done) {
-            container.inspect(function (err, inspectData) {
-              if (err) {
-                done(err);
-                return;
-              }
-
-              var ContainerInfo = _.find(dockerInfo, ['Id', container.id]);
-
-              // ToDo: Support multiple published ports
-              var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
-
-              var update = {
-                node: inspectData.Node.Name,
-                container_id: container.id
-              };
-
-              if (publishedPort) {
-                update.published_port = publishedPort;
-              }
-
-              // Update database entry with node and ip
-              Component.update({id: container.component_id}, update, function (err, updated) {
-                if (err) done(err);
-                else done();
+            completeCell(container, dockerInfo)
+              .then(function (result) {
+                done();
               })
-            })
+              .catch(function (err) {
+                done(err);
+              });
           }, function (err) {
             if (err) reject(err);
             else resolve();
@@ -313,32 +305,32 @@ module.exports = {
     });
   },
 
-  createContainer: function (component) {
+  createContainer: function (organ) {
     return new Promise(function (resolve, reject) {
       var exposed = {};
       var portBindings = {};
 
       // Add exposed ports
-      _.forEach(component.expose, function (port) {
+      _.forEach(organ.expose, function (port) {
         exposed[port + "/tcp"] = {};
       });
 
       // Add published ports, assign them to random host port
-      _.forEach(component.ports, function (port) {
+      _.forEach(organ.ports, function (port) {
         portBindings[port + "/tcp"] = [{
           HostPort: null // to get random port
         }];
         exposed[port + "/tcp"] = {};
       });
 
-      var objectifiedLabels = objectifyStrings(component.labels);
+      var objectifiedLabels = objectifyStrings(organ.labels);
 
       // TODO: Create volumes
 
       DockerService.docker.createContainer({
-        Image: component.image,
-        name: component.name,
-        Env: component.environment,
+        Image: organ.image,
+        name: organ.name,
+        Env: organ.environment,
         Labels: objectifiedLabels,
         ExposedPorts: exposed,
         HostConfig: {
@@ -391,36 +383,19 @@ module.exports = {
                       if (err) return reject(err);
                       old.remove({force: true}, function (err) {
                         if (err) return reject(err);
-                        DockerService.docker.getContainer(component.name).inspect(function (err, data) {
+
+                        DockerService.docker.listContainers(function (err, dockerInfo) {
+                          if (err) {
+                            reject(err);
+                            return;
+                          }
+
+                          var created = DockerService.docker.getContainer(component.name);
                           if (err) return reject(err);
 
-                          DockerService.docker.listContainers(function (err, dockerInfo) {
-                            if (err) {
-                              reject(err);
-                              return;
-                            }
-
-                            // TODO: Make this more fault tolerant
-                            var ContainerInfo = _.find(dockerInfo, ['Id', data.Id]);
-
-                            // ToDo: Support multiple published ports
-                            var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
-
-                            var update = {
-                              node: data.Node.Name,
-                              container_id: data.id
-                            };
-
-                            if (publishedPort) {
-                              update.published_port = publishedPort;
-                            }
-
-                            // Update database entry with node and ip
-                            Component.update({id: component.id}, update, function (err, result) {
-                              if (err) return reject(err);
-                              resolve(result[0]);
-                            });
-                          })
+                          completeCell(created, dockerInfo)
+                            .then(resolve)
+                            .catch(reject);
                         });
                       })
                     })
@@ -437,17 +412,17 @@ module.exports = {
   },
 
   // TODO: clean old nodes
-  getNodeInfo: function () {
+  getHostInfo: function () {
     return new Promise(function (resolve, reject) {
       DockerService.docker.info(function (err, data) {
         if (err) reject(err);
         else {
           data.SystemStatus = parseSystemStatus(data);
 
-          async.map(data.SystemStatus.Hosts, function (node, done) {
-            Node.update({name: node.name}, node, function (err, entry) {
+          async.map(data.SystemStatus.Hosts, function (host, done) {
+            Host.update({name: host.name}, host, function (err, entry) {
               if (err && err.status == 404) { // New node!
-                Node.create(node, function (err, newEntry) {
+                Host.create(host, function (err, newEntry) {
                   if (err) done(err);
                   else done(null, newEntry);
                 })
@@ -461,8 +436,8 @@ module.exports = {
             if (err) reject(err);
             else {
               var names = _.map(result, 'name');
-              Node.find({name: names})
-                .populate('components')
+              Host.find({name: names})
+                .populate('cells')
                 .then(function (result) {
                   resolve(result);
                 })
@@ -483,8 +458,8 @@ module.exports = {
         else {
           data.SystemStatus = parseSystemStatus(data);
 
-          async.map(data.SystemStatus.Hosts, function (node, done) {
-            Node.create(node, function (err, entry) {
+          async.map(data.SystemStatus.Hosts, function (host, done) {
+            Host.create(host, function (err, entry) {
               if (err) done(err);
               else done(null, entry)
             });
@@ -497,6 +472,37 @@ module.exports = {
     })
   }
 };
+
+function completeCell(container, dockerInfo) {
+  return new Promise(function (resolve, reject) {
+    container.inspect(function (err, inspectData) {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      var ContainerInfo = _.find(dockerInfo, ['Id', container.id]);
+
+      // ToDo: Support multiple published ports
+      var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
+
+      var update = {
+        host: inspectData.Node.Name,
+        container_id: container.id
+      };
+
+      if (publishedPort) {
+        update.published_port = publishedPort;
+      }
+
+      // Update database entry with node and ip
+      Cell.update({id: container.cell_id}, update, function (err, updated) {
+        if (err) reject(err);
+        else resolve(updated[0]);
+      })
+    })
+  });
+}
 
 function parseSystemStatus(data) {
   var systemStatus = {};
@@ -570,39 +576,39 @@ function objectifyStrings(element) {
   }
 }
 
-function completeParameters(component) {
+function completeParameters(organ) {
   return new Promise(function (resolve, reject) {
-    var newImage = DockerService.docker.getImage(component.image);
+    var newImage = DockerService.docker.getImage(organ.image);
     newImage.inspect(function (err, inspectData) {
       if (err) reject(err);
       else {
         // Exposed ports
-        if (!component.expose) component.expose = [];
+        if (!organ.expose) organ.expose = [];
         for (var attr in inspectData.Config.ExposedPorts) {
           var split = attr.split('/');
-          var exists = _.some(component.expose, function(port) {
+          var exists = _.some(organ.expose, function (port) {
             return port == split[0];
           });
-          if (!exists) component.expose.push(split[0])
+          if (!exists) organ.expose.push(split[0])
         }
 
         // Environment variables
-        if (!component.environment) component.environment = [];
+        if (!organ.environment) organ.environment = [];
         var envVars = stringifyObjects(inspectData.Config.Env);
         _.forEach(envVars, function (env) {
-          component.environment.push(env);
+          organ.environment.push(env);
         });
 
         // Labels
-        if (!component.labels) component.labels = [];
+        if (!organ.labels) organ.labels = [];
         var labels = stringifyObjects(inspectData.Config.Labels);
         _.forEach(labels, function (lab) {
-          component.environment.push(lab);
+          organ.environment.push(lab);
         });
 
         // Sets the status to ready as soon as image is ready on docker swarm
-        component.ready = true;
-        component.save();
+        organ.ready = true;
+        organ.save();
         resolve();
       }
     })

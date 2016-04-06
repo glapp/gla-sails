@@ -17,7 +17,10 @@ module.exports = {
     },
     host: {
       model: 'host'
-    }
+    },
+    published_port: {
+      type: 'string'
+    },
   }
 };
 

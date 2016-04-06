@@ -40,7 +40,7 @@ module.exports = {
     },
     cells: {
       collection: 'cell',
-      via: 'node'
+      via: 'host'
     }
   }
 };

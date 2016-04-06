@@ -59,7 +59,7 @@ module.exports.routes = {
   'POST /move': 'CellController.move',
 
   // Node stuff
-  'GET /nodes/info': 'NodeController.getNodeInfo',
+  'GET /host/info': 'HostController.getHostInfo',
 
   // Policy
   'GET /policy': 'RuleController.getPolicy',

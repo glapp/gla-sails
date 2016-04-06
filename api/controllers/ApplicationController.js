@@ -36,50 +36,62 @@ module.exports = {
       .populate('log', {sort: 'createdAt DESC'})
       .populate('organs', {sort: 'originalName DESC'})
       .exec(function (err, app) {
+        if (err) return res.serverError(err);
 
         // TODO: With a future sails version, it will be possible to nest populations. This is a quite efficient workaround until then.
 
-        async.auto({
-            organCells: function (cb) {
-              Cell.find({id: _.pluck(app.organs, 'cells')}).exec(cb);
-            },
+        console.log(app.organs);
 
-            organs: ['organCells', function (cb, results) {
-              var organCells = _.indexBy(results.organCells, 'id');
+        // TODO Find a way to have the cells here
+        var cellsAvailable = _.every(app.organs, function(organ) {
+          return organ.cells && organ.cells != undefined && organ.cells.length > 0;
+        });
+        console.log(cellsAvailable);
 
-              var organs = app.organs.toObject();
+        if (cellsAvailable) {
+          async.auto({
+              organCells: function (cb) {
+                Cell.find({id: _.map(app.organs, 'cells')}).exec(cb);
+              },
 
-              organs = organs.map(function (organ) {
-                organ.cells = organCells[organ.cells];
-                return organ;
-              });
-              return cb(null, organs);
-            }],
+              organs: ['organCells', function (cb, results) {
+                var organCells = _.indexBy(results.organCells, 'id');
 
-            componentHost: ['organs', function (cb, results) {
-              async.map(results.organs, function (organ, done) {
-                Host.find({name: _.pluck(organ.cells, 'host')}).exec(function (err, hosts) {
-                  if (err) done(err);
-                  var cellHosts = _.indexBy(hosts, 'name');
-
-                  organ.cells = organ.cells.map(function (cell) {
-                    cell.host = cellHosts[cell.host];
-                    return cell;
-                  });
-
-                  return done(null, organ);
+                var organs = app.organs.map(function (organ) {
+                  organ.cells = organCells[organ.cells];
+                  return organ;
                 });
-              }, function (err, organs) {
-                if (err) return cb(err);
-                app.organs = organs;
-                return cb(null, app)
-              });
-            }]
-          }, function finish(err, results) {
-            if (err) return res.serverError(err);
-            return res.json(results.map);
-          }
-        );
+                return cb(null, organs);
+              }],
+
+              cellHost: ['organs', function (cb, results) {
+                async.map(results.organs, function (organ, done) {
+                  Host.find({name: _.pluck(organ.cells, 'host')}).exec(function (err, hosts) {
+                    if (err) done(err);
+                    var cellHosts = _.indexBy(hosts, 'name');
+
+                    organ.cells = organ.cells.map(function (cell) {
+                      cell.host = cellHosts[cell.host];
+                      return cell;
+                    });
+
+                    return done(null, organ);
+                  });
+                }, function (err, organs) {
+                  if (err) return cb(err);
+                  app.organs = organs;
+                  return cb(null, app)
+                });
+              }]
+            }, function finish(err, results) {
+              if (err) return res.serverError(err);
+              return res.json(results.cellHost);
+            }
+          );
+        } else {
+          res.ok(app)
+        }
+
       });
   },
 
@@ -137,7 +149,7 @@ module.exports = {
           res.ok({
             app: updatedApp
           });
-          return DockerService.createComponents(path, updatedApp.components)
+          return DockerService.createComponents(path, updatedApp)
         })
         .then(function () {
           app.status = 'ready';

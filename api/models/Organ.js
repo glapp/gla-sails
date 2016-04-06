@@ -26,9 +26,6 @@ module.exports = {
     image: {
       type: 'string'
     },
-    published_port: {
-      type: 'string',
-    },
     environment: {
       type: 'array',
       defaultsTo: []
