@@ -12,7 +12,7 @@ module.exports = {
       model: 'Application',
       required: true
     },
-    identifier: {
+    metric: {
       type: 'String',
       // enum: ['blah5', 'blah6'],
       required: true
@@ -20,15 +20,22 @@ module.exports = {
     operator: {
       type: 'String',
       // enum: ['blah7', 'blah8'],
-      // required: true
+      //required: true
+    },
+    value: {
+      type: 'String',
+      //required: true
+    },
+    components: {
+      type: 'Array'
     },
     min: {
       type: 'float',
-      required: true
+      required: false
     },
     max: {
       type: 'float',
-      required: true
+      required: false
     }
   }
 };

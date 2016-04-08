@@ -62,7 +62,7 @@ module.exports.routes = {
   'GET /nodes/info': 'NodeController.getNodeInfo',
 
   // Policy
-  'GET /policy': 'RuleController.getPolicy',
-  'POST /policy/set': 'RuleController.setPolicy'
+  'GET /policy': 'RuleController.getRules',
+  'POST /policy/set': 'RuleController.setRules'
 
 };

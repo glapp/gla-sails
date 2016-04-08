@@ -8,8 +8,8 @@
 var async = require('async');
 
 module.exports = {
-  // function to get the policy
-  getPolicy: function (req, res) {
+  // function to get the rules of a specific application
+  getRules: function (req, res) {
     var application_id = req.param('app_id');
 
     Rule.find({application_id: application_id})
@@ -20,18 +20,24 @@ module.exports = {
       })
   },
 
-  // function to set the policy
-  setPolicy: function (req, res) {
+  // function to set the rules of a specific application
+  setRules: function (req, res) {
     var application_id = req.param('app_id');
     var policy = req.param('policy');
 
     async.each(policy, function (rule, done) {
-      Rule.findOrCreate({application_id: application_id, identifier: rule.metric})
+      Rule.findOrCreate({application_id: application_id, metric: rule.metric})
         .exec(function (err, entry) {
           if (err) done(err);
           else {
-            entry.min = rule.min;
-            entry.max = rule.max;
+            entry.operator = rule.operator;
+            entry.value = rule.value;
+
+            rule.components.forEach(function (component) {
+              console.log(component.component_id);
+              //entry.components.add(component.component_id);
+            })
+
             entry.save(function (err) {
               done(err);
             });
