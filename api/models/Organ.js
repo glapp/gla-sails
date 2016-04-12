@@ -56,7 +56,7 @@ module.exports = {
     },
     cells: {
       collection: 'Cell',
-      via: 'organ_id',
+      via: 'organ_id'
     }
   }
 };
