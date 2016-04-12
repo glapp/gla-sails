@@ -47,8 +47,7 @@ module.exports = {
           .exec(function (err, organs) {
             if (err) return res.serverError(err);
 
-            // TODO This is a workaround because somehow to send app directly doesn't include the cells of the organs
-
+            // TODO This is inefficient since it's querying the db for every organ -> nested population should fix this
             async.map(organs, function (organ, done) {
               Cell
                 .find({id: _.map(organ.cells, 'id')})
@@ -56,6 +55,7 @@ module.exports = {
                 .exec(function (err, cells) {
                   if (err) return done(err);
 
+                  // TODO This is a workaround because somehow to send organ directly doesn't include the hosts of the cells
                   var newOrgan = _.extend({}, organ);
                   newOrgan.cells = cells;
 
@@ -64,6 +64,7 @@ module.exports = {
             }, function(err, newOrgans) {
               if (err) return res.serverError(err);
 
+              // TODO This is a workaround because somehow to send app directly doesn't include the cells of the organs
               var newApp = _.extend({}, app);
               newApp.organs = newOrgans;
               res.ok(newApp);

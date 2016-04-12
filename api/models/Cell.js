@@ -21,6 +21,10 @@ module.exports = {
     published_port: {
       type: 'string'
     },
+    environment: {
+      type: 'array',
+      defaultsTo: []
+    }
   }
 };
 

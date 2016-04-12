@@ -261,19 +261,18 @@ module.exports = {
                 network.connect({
                   container: container.id
                 }, function (err) {
-                  if (err) done(err);
-                  else {
-                    // Keep the information about the corresponding cell
-                    container.cell_id = cell.id;
-                    done(null, container);
-                  }
+                  if (err) return done(err);
+
+                  // Keep the information about the corresponding cell
+                  container.cell_id = cell.id;
+                  done(null, container);
                 });
               })
             })
             .catch(function (err) {
               console.log(err);
               done(err);
-            });
+            })
         })
       }, function (err, containersArray) {
         if (err) {
@@ -343,70 +342,92 @@ module.exports = {
     })
   },
 
-  moveContainer: function (component, opts) {
+  moveContainer: function (cell, opts) {
     return new Promise(function (resolve, reject) {
 
-      // delete previous constraints
-      _.remove(component.environment, function (compEnv) {
-        var re = /^constraint:.+=/g;
-        return re.test(compEnv);
-      });
+      Organ
+        .findOne({id: cell.organ_id})
+        .exec(function (err, organ) {
+          if (err) return res.serverError(err);
 
-      // Add environment opts
-      _.forEach(opts.environment, function (optEnv) {
-        component.environment.push(optEnv);
-      });
+          // delete previous constraints
+          _.remove(cell.environment, function (compEnv) {
+            var re = /^constraint:.+=/g;
+            return re.test(compEnv);
+          });
 
-      // Save component
-      component.save();
+          // Add environment opts
+          _.forEach(opts.environment, function (optEnv) {
+            cell.environment.push(optEnv);
+          });
 
-      var copy = _.extend({}, component);
-      copy.name = component.name + "_temp";
+          // Save cell
+          cell.save();
 
-      DockerService.createContainer(copy)
-        .then(function (newContainer) {
-          newContainer.start(function (err) {
-            if (err) return reject(err);
-            Application.findOne({id: component.application_id}, function (err, app) {
-              if (err) return reject(err);
-              var network = DockerService.docker.getNetwork(app.networkId);
-              network.connect({
-                container: newContainer.id
-              }, function (err) {
+          var old_id = cell.container_id;
+
+          var copy = _.extend({}, organ);
+
+          copy.name = organ.name + "_temp";
+          copy.environment = _.extend(cell.environment, organ.environment);
+
+          // Create the new container
+          DockerService.createContainer(copy)
+            .then(function (newContainer) {
+
+              // Start the new container
+              newContainer.start(function (err) {
                 if (err) return reject(err);
-                DockerService.docker.getContainer(component.name).inspect(function (err, data) {
+
+                // Find network
+                Application.findOne({id: organ.application_id}, function (err, app) {
                   if (err) return reject(err);
-                  var old = DockerService.docker.getContainer(data.Id);
-                  old.rename({name: component.name + '_old'}, function (err) {
+                  var network = DockerService.docker.getNetwork(app.networkId);
+
+                  // Connect new container to network
+                  network.connect({
+                    container: newContainer.id
+                  }, function (err) {
                     if (err) return reject(err);
-                    newContainer.rename({name: component.name}, function (err) {
+
+                    // Get old container
+                    var old = DockerService.docker.getContainer(old_id);
+
+                    // Rename old container
+                    old.rename({name: organ.name + '_old'}, function (err) {
                       if (err) return reject(err);
-                      old.remove({force: true}, function (err) {
+
+                      // Rename new container to original name
+                      newContainer.rename({name: organ.name}, function (err) {
                         if (err) return reject(err);
 
-                        DockerService.docker.listContainers(function (err, dockerInfo) {
-                          if (err) {
-                            reject(err);
-                            return;
-                          }
-
-                          var created = DockerService.docker.getContainer(component.name);
+                        // Remove old container
+                        old.remove({force: true}, function (err) {
                           if (err) return reject(err);
 
-                          completeCell(created, dockerInfo)
-                            .then(resolve)
-                            .catch(reject);
-                        });
+                          // Docker info for additional information
+                          DockerService.docker.listContainers(function (err, dockerInfo) {
+                            if (err) return reject(err);
+
+                            var created = DockerService.docker.getContainer(newContainer.id);
+                            if (err) return reject(err);
+
+                            created.cell_id = cell.id;
+                            // Complete cell information
+                            completeCell(created, dockerInfo)
+                              .then(resolve)
+                              .catch(reject);
+                          });
+                        })
                       })
-                    })
+                    });
                   });
-                });
+                })
               });
             })
-          });
-        })
-        .catch(function (err) {
-          reject(err);
+            .catch(function (err) {
+              reject(err);
+            })
         })
     });
   },
@@ -476,10 +497,7 @@ module.exports = {
 function completeCell(container, dockerInfo) {
   return new Promise(function (resolve, reject) {
     container.inspect(function (err, inspectData) {
-      if (err) {
-        reject(err);
-        return;
-      }
+      if (err) return reject(err);
 
       var ContainerInfo = _.find(dockerInfo, ['Id', container.id]);
 

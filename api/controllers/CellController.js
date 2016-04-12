@@ -10,11 +10,11 @@ var _ = require('lodash');
 module.exports = {
 
   move: function (req, res) {
-    var cell_id = req.param('component_id');
+    var cell_id = req.param('cell_id');
     var opts = req.param('options');
 
     Cell.findOne({id: cell_id})
-      .populate('node')
+      .populate('host')
       .exec(function (err, cell) {
         if (err) throw err;
         //if (component.node.name == goal_node) {
@@ -22,57 +22,67 @@ module.exports = {
         //  return;
         //}
 
-        var oldNode = cell.node ? cell.node.name : 'NoOldNodeFound!';
+        Organ.findOne({id: cell.organ_id}).exec(function (err, organ) {
+          if (err) return res.serverError(err);
 
-        // If hard requirement of node is given
-        if (opts.node) {
-          DockerService.moveContainer(cell, {environment: ['constraint:node==' + opts.node]})
-            .then(function (result) {
-              AppLog.create({
-                application_id: cell.application_id,
-                content: 'Moved ' + cell.originalName + ' from ' + oldNode + ' to ' + opts.node + '.'
-              }).exec(function (err, created) {
-                if (err) console.error('Couldn\'t create log! ', err);
-                res.ok(result);
-              })
-            })
-            .catch(function (err) {
-              AppLog.create({
-                application_id: cell.application_id,
-                content: 'Failed to move ' + cell.originalName + '.'
-              }).exec(function (err, created) {
-                if (err) console.error('Couldn\'t create log! ', err);
-                res.serverError(err);
-              })
+          var oldNode = cell.host ? cell.host.name : 'NoOldNodeFound!';
+
+          // If hard requirement of node is given
+          // if (opts.host) {
+            // DockerService.moveContainer(cell, {environment: ['constraint:node==' + opts.node]})
+            //   .then(function (result) {
+            //     AppLog.create({
+            //       application_id: organ.application_id,
+            //       content: 'Moved ' + organ.originalName + ' from ' + oldNode + ' to ' + opts.node + '.'
+            //     }).exec(function (err, created) {
+            //       if (err) console.error('Couldn\'t create log! ', err);
+            //       res.ok(result);
+            //     })
+            //   })
+            //   .catch(function (err) {
+            //     AppLog.create({
+            //       application_id: organ.application_id,
+            //       content: 'Failed to move ' + organ.originalName + '.'
+            //     }).exec(function (logErr, created) {
+            //       if (logErr) console.error('Couldn\'t create log! ', logErr);
+            //       res.serverError(err);
+            //     })
+            //   });
+          // } else {
+            var environment = [];
+
+            // Add constraints
+            _.forEach(opts, function (value, key) {
+              if (value != '') {
+                environment.push('constraint:' + key + '==' + value);
+              }
             });
-        } else {
-          var environment = [];
 
-          // Add constraints
-          _.forEach(opts, function (value, key) {
-            if (value != '') {
-              environment.push('constraint:' + key + '==' + value);
-            }
-          });
-
-          // Move
-          DockerService.moveContainer(cell, {environment: environment})
-            .then(function (result) {
-              var newNode = result.node;
-              AppLog.create({
-                application_id: cell.application_id,
-                content: 'Moved ' + cell.originalName + ' from ' + oldNode + ' to ' + newNode + '.'
-              }).exec(function (err, created) {
-                if (err) console.error('Couldn\'t create log! ', err);
-                res.ok(result);
+            // Move
+            DockerService.moveContainer(cell, {environment: environment})
+              .then(function (result) {
+                var newNode = result.host;
+                AppLog.create({
+                  application_id: organ.application_id,
+                  content: 'Moved ' + organ.originalName + ' from ' + oldNode + ' to ' + newNode + '.'
+                }).exec(function (err, created) {
+                  if (err) console.error('Couldn\'t create log! ', err);
+                  res.ok(result);
+                })
               })
-            })
-            .catch(function (err) {
-              res.serverError(err);
-            });
-        }
+              .catch(function (err) {
+                AppLog.create({
+                  application_id: organ.application_id,
+                  content: 'Failed to move ' + organ.originalName + '.'
+                }).exec(function (logErr, created) {
+                  if (logErr) console.error('Couldn\'t create log! ', logErr);
+                  res.serverError(err);
+                })
+              });
+          // }
+        })
       });
   }
-  
+
 };
 
