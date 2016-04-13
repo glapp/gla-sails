@@ -62,6 +62,10 @@ module.exports = {
     },
     container_id: {
       type: 'string'
+    },
+    rules: {
+      collection: 'Rule',
+      via: 'components'
     }
   }
 };

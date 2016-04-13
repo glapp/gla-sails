@@ -27,7 +27,9 @@ module.exports = {
       //required: true
     },
     components: {
-      type: 'Array'
+      collection: 'Component',
+      via: 'rules',
+      dominant: true
     },
     min: {
       type: 'float',

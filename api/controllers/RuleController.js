@@ -23,7 +23,7 @@ module.exports = {
   // function to set the rules of a specific application
   setRules: function (req, res) {
     var application_id = req.param('app_id');
-    var policy = req.param('policy');
+    var policy = req.param('rules');
 
     async.each(policy, function (rule, done) {
       Rule.findOrCreate({application_id: application_id, metric: rule.metric})
