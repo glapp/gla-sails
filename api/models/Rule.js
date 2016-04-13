@@ -27,7 +27,7 @@ module.exports = {
       //required: true
     },
     components: {
-      collection: 'Component',
+      collection: 'Organ',
       via: 'rules',
       dominant: true
     },
