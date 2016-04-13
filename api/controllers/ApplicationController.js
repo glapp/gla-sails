@@ -12,7 +12,7 @@ var rimraf = require('rimraf');
 module.exports = {
   getUserApps: function (req, res) {
     Application.find({owner: req.session.me})
-      .populate('components')
+      .populate('organs')
       .exec(function (err, apps) {
         if (err) res.notFound();
         else res.json({apps: apps});
@@ -31,42 +31,48 @@ module.exports = {
 
     var app_id = req.param('app_id');
 
-    // TODO: With sails 0.11, it will be possible to nest populations. This is a quite efficient workaround until then.
-    async.auto({
-        app: function (cb) {
-          Application
-            .findOne({id: app_id, owner: user_id})
-            .populate('log', {sort: 'createdAt DESC'})
-            .populate('components', {sort: 'originalName DESC'})
-            .exec(cb);
-        },
 
-        componentNode: ['app', function (cb, results) {
-          Node.find({name: _.pluck(results.app.components, 'node')}).exec(cb);
-        }],
+    Application
+      .findOne({id: app_id, owner: user_id})
+      .populate('log', {sort: 'createdAt DESC'})
+      .populate('organs')
+      .exec(function (err, app) {
+        if (err) return res.serverError(err);
 
-        map: ['componentNode', function (cb, results) {
-          // Index nodes by name
-          var componentNode = _.indexBy(results.componentNode, 'name');
+        // TODO: With a future sails version, it will be possible to nest populations. This is a quite efficient workaround until then.
 
-          // Get a plain object version of app & components
-          var app = results.app.toObject();
+        Organ
+          .find({id: _.map(app.organs, 'id')})
+          .populate('cells')
+          .exec(function (err, organs) {
+            if (err) return res.serverError(err);
 
-          // Map nodes onto components
-          app.components = app.components.map(function (component) {
-            component.node = componentNode[component.node];
-            return component;
+            // TODO This is inefficient since it's querying the db for every organ -> nested population should fix this
+            async.map(organs, function (organ, done) {
+              Cell
+                .find({id: _.map(organ.cells, 'id')})
+                .populate('host')
+                .exec(function (err, cells) {
+                  if (err) return done(err);
+
+                  // TODO This is a workaround because somehow to send organ directly doesn't include the hosts of the cells
+                  var newOrgan = _.extend({}, organ);
+                  newOrgan.cells = cells;
+
+                  done(null, newOrgan);
+                })
+            }, function(err, newOrgans) {
+              if (err) return res.serverError(err);
+
+              // TODO This is a workaround because somehow to send app directly doesn't include the cells of the organs
+              var newApp = _.extend({}, app);
+              newApp.organs = newOrgans;
+              res.ok(newApp);
+            });
+
+
           });
-          return cb(null, app);
-        }]
-
-      }, function finish(err, results) {
-        if (err) {
-          return res.serverError(err);
-        }
-        return res.json(results.map);
-      }
-    );
+      });
   },
 
   addApplication: function (req, res) {
@@ -123,7 +129,7 @@ module.exports = {
           res.ok({
             app: updatedApp
           });
-          return DockerService.createComponents(path, updatedApp.components)
+          return DockerService.createComponents(path, updatedApp)
         })
         .then(function () {
           app.status = 'ready';
@@ -169,7 +175,7 @@ module.exports = {
 
     var app_id = req.param('app_id');
 
-    Application.findOne({id: app_id, owner: user_id}).populate('components').exec(function (err, app) {
+    Application.findOne({id: app_id, owner: user_id}).populate('organs').exec(function (err, app) {
       if (err) {
         res.serverError(err);
         console.error(err);

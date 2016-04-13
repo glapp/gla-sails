@@ -38,9 +38,9 @@ module.exports = {
     error: {
       type: 'string'
     },
-    components: {
-      collection: 'component',
-      via: 'node'
+    cells: {
+      collection: 'cell',
+      via: 'host'
     }
   }
 };

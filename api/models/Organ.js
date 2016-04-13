@@ -1,7 +1,7 @@
 /**
-* Component.js
+* Organ.js
 *
-* @description :: Contains data about the components
+* @description :: Contains data about the organs
 * @docs        :: http://sailsjs.org/#!documentation/models
 */
 
@@ -25,12 +25,6 @@ module.exports = {
     },
     image: {
       type: 'string'
-    },
-    node: {
-      model: 'node'
-    },
-    published_port: {
-      type: 'string',
     },
     environment: {
       type: 'array',
@@ -60,9 +54,9 @@ module.exports = {
       type: 'boolean',
       defaultsTo: false
     },
-    container_id: {
-      type: 'string'
-    },
+    cells: {
+      collection: 'Cell',
+      via: 'organ_id',
     rules: {
       collection: 'Rule',
       via: 'components'

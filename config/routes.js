@@ -49,17 +49,17 @@ module.exports.routes = {
   'GET /user/logout': 'UserController.logout',
   'GET /user/confirm-login': 'UserController.confirmLogin',
 
-  // Application query
+  // Application
   'GET /application/getUserApps': 'ApplicationController.getUserApps',
   'GET /application/details': 'ApplicationController.getAppDetails',
-
-  // Add stuff
   'POST /application/add': 'ApplicationController.addApplication',
   'POST /application/deploy': 'ApplicationController.deploy',
-  'POST /move': 'ComponentController.move',
 
-  // Node stuff
-  'GET /nodes/info': 'NodeController.getNodeInfo',
+  // Cell
+  'POST /cell/move': 'CellController.move',
+
+  // Host
+  'GET /host/info': 'HostController.getHostInfo',
 
   // Policy
   'GET /policy': 'RuleController.getRules',
