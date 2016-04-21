@@ -44,6 +44,7 @@ module.exports = {
         Organ
           .find({id: _.map(app.organs, 'id')})
           .populate('cells')
+          .populate('dependent_on')
           .exec(function (err, organs) {
             if (err) return res.serverError(err);
 

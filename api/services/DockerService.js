@@ -99,11 +99,17 @@ module.exports = {
         }
 
         // Replace the name environment variables of all components
+        var connections = {};
         _.map(components, function (component) {
+          connections[component.name] = [];
           var newEnvironment = [];
           _.forEach(component.environment, function (env) {
             for (var newName in regex) {
-              env = env.replace(regex[newName], "=" + newName)
+              if (regex[newName].test(env)) {
+                // fill array with dependent_on names
+                connections[component.name].push(newName);
+                env = env.replace(regex[newName], "=" + newName)
+              }
             }
             newEnvironment.push(env);
           });
@@ -112,20 +118,38 @@ module.exports = {
         });
 
         // Already create the components so the user can be informed
-        async.each(components, function (component, done) {
+        async.map(components, function (component, done) {
           Organ.create(component, function (err, created) {
             if (err) return done(err);
-            else done();
+            else done(null, created);
           });
-        }, function (err) {
+        }, function (err, organs) {
           if (err) reject(err);
           else {
-            Application.findOne({id: app_id})
-              .populate('organs')
-              .exec(function (err, app) {
-                if (err) reject(err);
-                else resolve(app);
-              })
+            //Application.findOne({id: app_id})
+              //.populate('organs')
+              //.exec(function (err, app) {
+                //if (err) return reject(err);
+
+                async.each(organs, function(organ, done) {
+                  //Organ.findOne(organ.id).exec(function(err, org) {
+                    Organ.find({name: connections[organ.name]})
+                      .populate('dependent_on')
+                      .exec(function(err, conns) {
+                      organ.dependent_on.add(_.map(conns, 'id'));
+                      organ.save(done);
+                    });
+                  //});
+                }, function(err) {
+                  if (err) return reject(err);
+                  Application.findOne({id: app_id})
+                    .populate('organs')
+                    .exec(function (err, completeApp) {
+                      if (err) return reject(err);
+                      resolve(completeApp);
+                    })
+                });
+              //})
           }
         })
       });
@@ -438,6 +462,7 @@ module.exports = {
       DockerService.docker.info(function (err, data) {
         if (err) reject(err);
         else {
+          console.log(data);
           data.SystemStatus = parseSystemStatus(data);
 
           async.map(data.SystemStatus.Hosts, function (host, done) {
