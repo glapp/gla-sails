@@ -26,7 +26,7 @@ module.exports = {
       type: 'String',
       //required: true
     },
-    organs: {
+    components: {
       collection: 'Organ',
       via: 'rules',
       dominant: true

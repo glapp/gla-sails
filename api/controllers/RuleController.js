@@ -27,19 +27,15 @@ module.exports = {
 
     async.each(policy, function (rule, done) {
       Rule.findOrCreate({application_id: application_id, metric: rule.metric})
-        .populate('organs')
         .exec(function (err, entry) {
           if (err) done(err);
           else {
-            //console.log(entry);
-
             entry.operator = rule.operator;
             entry.value = rule.value;
 
-            // For each organ ID, add the corresponding organ to the association
-            rule.organs.forEach(function (organ) {
-              console.log(organ.organ_id);
-              entry.organ.add(organ.organ_id);
+            rule.components.forEach(function (component) {
+              console.log(component.component_id);
+              //entry.components.add(component.component_id);
             })
 
             entry.save(function (err) {
