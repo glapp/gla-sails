@@ -60,15 +60,7 @@ module.exports = {
     },
     rules: {
       collection: 'Rule',
-      via: 'components'
-    },
-    depending_upon: {
-      collection: 'Organ',
-      via: 'dependent_on'
-    },
-    dependent_on: {
-      collection: 'Organ',
-      via: 'depending_upon'
+      via: 'organs'
     }
   }
 };
