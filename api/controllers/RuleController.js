@@ -33,10 +33,10 @@ module.exports = {
             entry.operator = rule.operator;
             entry.value = rule.value;
 
-            rule.components.forEach(function (component) {
-              console.log(component.component_id);
-              //entry.components.add(component.component_id);
-            })
+            rule.organs.forEach(function (organ) {
+              console.log(organ.organ_id);
+              //entry.organs.add(organ.organ_id);
+            });
 
             entry.save(function (err) {
               done(err);
