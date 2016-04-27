@@ -8,6 +8,9 @@ var async = require('async');
 var tar = require('tar-fs');
 var _ = require('lodash');
 
+var proxy_image = 'clabs/haproxylb';
+var proxy_image_tag = '0.7';
+
 module.exports = {
   docker: new Docker({
     host: sails.config.SWARM_HOST || 'localhost',
@@ -126,30 +129,22 @@ module.exports = {
         }, function (err, organs) {
           if (err) reject(err);
           else {
-            //Application.findOne({id: app_id})
-              //.populate('organs')
-              //.exec(function (err, app) {
-                //if (err) return reject(err);
-
-                async.each(organs, function(organ, done) {
-                  //Organ.findOne(organ.id).exec(function(err, org) {
-                    Organ.find({name: connections[organ.name]})
-                      .populate('dependent_on')
-                      .exec(function(err, conns) {
-                      organ.dependent_on.add(_.map(conns, 'id'));
-                      organ.save(done);
-                    });
-                  //});
-                }, function(err) {
-                  if (err) return reject(err);
-                  Application.findOne({id: app_id})
-                    .populate('organs')
-                    .exec(function (err, completeApp) {
-                      if (err) return reject(err);
-                      resolve(completeApp);
-                    })
+            async.each(organs, function (organ, done) {
+              Organ.find({name: connections[organ.name]})
+                .populate('dependent_on')
+                .exec(function (err, conns) {
+                  organ.dependent_on.add(_.map(conns, 'id'));
+                  organ.save(done);
                 });
-              //})
+            }, function (err) {
+              if (err) return reject(err);
+              Application.findOne({id: app_id})
+                .populate('organs')
+                .exec(function (err, completeApp) {
+                  if (err) return reject(err);
+                  resolve(completeApp);
+                })
+            });
           }
         })
       });
@@ -160,7 +155,6 @@ module.exports = {
     return new Promise(function (resolve, reject) {
 
       // TODO Create reverse proxy cell
-
 
       async.each(app.organs, function (organ, done) {
         var tag = organ.name;
@@ -267,9 +261,10 @@ module.exports = {
     });
   },
 
-  deploy: function (app, network) {
+  deploy: function (app) {
     return new Promise(function (resolve, reject) {
-      async.map(app.organs, function (organ, done) {
+      var createdContainers = [];
+      async.each(app.organs, function (organ, done) {
 
         // Create cell database entry
         Cell.create({organ_id: organ.id}, function (err, cell) {
@@ -282,53 +277,104 @@ module.exports = {
               // start the container
               container.start(function (err) {
                 if (err) return done(err);
-                network.connect({
-                  container: container.id
-                }, function (err) {
-                  if (err) return done(err);
+
+
+                if (organ.expose || organ.ports) {
+                  Cell.create({organ_id: organ.id}, function (err, cell) {
+                    if (err) return done(err);
+
+                    DockerService.createProxyContainer(organ)
+                      .then(function (newProxy) {
+                        newProxy.start(function (err) {
+                          if (err) return done(err);
+
+                          // Keep the information about the corresponding cell
+                          newProxy.cell_id = cell.id;
+                          createdContainers.push(newProxy);
+                          createdContainers.push(container);
+                          done();
+                        })
+                      })
+                      .catch(function (err) {
+                        done(err);
+                      });
+                  })
+
+                } else {
 
                   // Keep the information about the corresponding cell
-                  container.cell_id = cell.id;
-                  done(null, container);
-                });
+                  newProxy.cell_id = cell.id;
+                  createdContainers.push(container);
+                  done();
+                }
               })
             })
             .catch(function (err) {
-              console.log(err);
+              console.error(err);
               done(err);
             })
         })
-      }, function (err, containersArray) {
+      }, function (err) {
         if (err) {
-          reject(err);
-          return;
+          console.error(err);
+          return reject(err);
         }
 
-        DockerService.docker.listContainers(function (err, dockerInfo) {
-          if (err) {
+        // TODO: Complete the cells correctly
+        // Handle the created proxies
+        completeCells(createdContainers)
+          .then(function (result) {
+            resolve();
+          })
+          .catch(function (err) {
             reject(err);
-            return;
-          }
-
-          // Handle the created containers
-          async.each(containersArray, function (container, done) {
-            completeCell(container, dockerInfo)
-              .then(function (result) {
-                done();
-              })
-              .catch(function (err) {
-                done(err);
-              });
-          }, function (err) {
-            if (err) reject(err);
-            else resolve();
           });
-        });
       });
     });
   },
 
   createContainer: function (organ) {
+    return new Promise(function (resolve, reject) {
+      var exposed = {};
+      //var portBindings = {};
+
+      // Add exposed ports
+      _.forEach(organ.expose, function (port) {
+        exposed[port + "/tcp"] = {};
+      });
+
+      // Add published ports, assign them to random host port
+      _.forEach(organ.ports, function (port) {
+        // portBindings[port + "/tcp"] = [{
+        //   HostPort: null // to get random port
+        // }];
+        exposed[port + "/tcp"] = {};
+      });
+
+      var objectifiedLabels = objectifyStrings(organ.labels);
+
+      // TODO: Create volumes
+
+      organ.environment.push('SERVICE_NAME=' + organ.id);
+
+      DockerService.docker.createContainer({
+        Image: organ.image,
+        //name: organ.name,
+        Env: organ.environment,
+        Labels: objectifiedLabels,
+        ExposedPorts: exposed,
+        HostConfig: {
+          //PortBindings: portBindings,
+          NetworkMode: organ.application_id
+        }
+      }, function (err, container) {
+        if (err) reject(err);
+        else resolve(container);
+      });
+    })
+  },
+
+  createProxyContainer: function (organ) {
     return new Promise(function (resolve, reject) {
       var exposed = {};
       var portBindings = {};
@@ -346,18 +392,21 @@ module.exports = {
         exposed[port + "/tcp"] = {};
       });
 
-      var objectifiedLabels = objectifyStrings(organ.labels);
-
-      // TODO: Create volumes
+      // Environment
+      var environment = [
+        'APP_NAME=' + organ.id,
+        'CONSUL_URL=' + sails.config.CONSUL_URL,
+        'PORT_NUMBER=' + organ.expose[0]
+      ];
 
       DockerService.docker.createContainer({
-        Image: organ.image,
+        Image: proxy_image + ':' + proxy_image_tag,
         name: organ.name,
-        Env: organ.environment,
-        Labels: objectifiedLabels,
+        Env: environment,
         ExposedPorts: exposed,
         HostConfig: {
-          PortBindings: portBindings
+          PortBindings: portBindings,
+          NetworkMode: organ.application_id
         }
       }, function (err, container) {
         if (err) reject(err);
@@ -438,7 +487,7 @@ module.exports = {
 
                             created.cell_id = cell.id;
                             // Complete cell information
-                            completeCell(created, dockerInfo)
+                            completeCells(created, dockerInfo)
                               .then(resolve)
                               .catch(reject);
                           });
@@ -519,31 +568,42 @@ module.exports = {
   }
 };
 
-function completeCell(container, dockerInfo) {
+function completeCells(containersArray) {
   return new Promise(function (resolve, reject) {
-    container.inspect(function (err, inspectData) {
+
+    DockerService.docker.listContainers(function (err, dockerInfo) {
+      if (err) return done(err);
+
+      async.each(containersArray, function (container, done) {
+
+        container.inspect(function (err, inspectData) {
+          if (err) return done(err);
+
+          var ContainerInfo = _.find(dockerInfo, ['Id', container.id]);
+
+          // ToDo: Support multiple published ports
+          var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
+
+          var update = {
+            host: inspectData.Node.Name,
+            container_id: container.id
+          };
+
+          if (publishedPort) {
+            update.published_port = publishedPort;
+          }
+
+          // Update database entry with node and ip
+          Cell.update({id: container.cell_id}, update, function (err, updated) {
+            if (err) done(err);
+            else done();
+          })
+        })
+      });
+    }, function (err) {
       if (err) return reject(err);
-
-      var ContainerInfo = _.find(dockerInfo, ['Id', container.id]);
-
-      // ToDo: Support multiple published ports
-      var publishedPort = ContainerInfo.Ports[0] ? ContainerInfo.Ports[0].PublicPort : null;
-
-      var update = {
-        host: inspectData.Node.Name,
-        container_id: container.id
-      };
-
-      if (publishedPort) {
-        update.published_port = publishedPort;
-      }
-
-      // Update database entry with node and ip
-      Cell.update({id: container.cell_id}, update, function (err, updated) {
-        if (err) reject(err);
-        else resolve(updated[0]);
-      })
-    })
+      resolve();
+    });
   });
 }
 
@@ -660,40 +720,49 @@ function completeParameters(organ) {
 
 
 // TODO: Extend this conceptual idea of reverse proxies
-function addReverseProxy(component) {
+function addReverseProxy(organ) {
   return new Promise(function (resolve, reject) {
-    var dir = require('path').join('/tmp', component.name);
 
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
+    /*  TODO: Create hanzel/load-balancing-swarm container
+     *       - env APP_NAME & CONSUL_IP
+     *
+     *   TODO:
+     *
+     */
 
-    fs.writeFile(require('path').join(dir, 'nginx.conf'),
-      'http {\n' +
-      'upstream proxy-' + component.name + '{\n' +
-      'server ' + component.name + ':80;\n' +
-      '}\n' +
 
-      'server {\n' +
-      'listen 80;\n' +
-
-      'location / {\n' +
-      "proxy_pass http://proxiedweb;\n" +
-      "proxy_http_version 1.1;\n" +
-      "proxy_set_header Upgrade $http_upgrade;\n" +
-      "proxy_set_header Connection 'upgrade';\n" +
-      "proxy_set_header Host $host;\n" +
-      "proxy_cache_bypass $http_upgrade;\n" +
-      '}\n' +
-      '}\n' +
-      '}\n'
-      , function (err) {
-        if (err) {
-          return reject(err);
-        }
-
-        console.log("The file was saved!");
-      });
+    // var dir = require('path').join('/tmp', component.name);
+    //
+    // if (!fs.existsSync(dir)) {
+    //   fs.mkdirSync(dir);
+    // }
+    //
+    // fs.writeFile(require('path').join(dir, 'nginx.conf'),
+    //   'http {\n' +
+    //   'upstream proxy-' + component.name + '{\n' +
+    //   'server ' + component.name + ':80;\n' +
+    //   '}\n' +
+    //
+    //   'server {\n' +
+    //   'listen 80;\n' +
+    //
+    //   'location / {\n' +
+    //   "proxy_pass http://proxiedweb;\n" +
+    //   "proxy_http_version 1.1;\n" +
+    //   "proxy_set_header Upgrade $http_upgrade;\n" +
+    //   "proxy_set_header Connection 'upgrade';\n" +
+    //   "proxy_set_header Host $host;\n" +
+    //   "proxy_cache_bypass $http_upgrade;\n" +
+    //   '}\n' +
+    //   '}\n' +
+    //   '}\n'
+    //   , function (err) {
+    //     if (err) {
+    //       return reject(err);
+    //     }
+    //
+    //     console.log("The file was saved!");
+    //   });
 
   })
 }
