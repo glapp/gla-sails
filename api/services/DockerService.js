@@ -278,9 +278,11 @@ module.exports = {
               container.start(function (err) {
                 if (err) return done(err);
 
+                container.cell_id = cell.id;
+                createdContainers.push(container);
 
                 if (organ.expose || organ.ports) {
-                  Cell.create({organ_id: organ.id}, function (err, cell) {
+                  Cell.create({organ_id: organ.id}, function (err, proxyCell) {
                     if (err) return done(err);
 
                     DockerService.createProxyContainer(organ)
@@ -289,9 +291,8 @@ module.exports = {
                           if (err) return done(err);
 
                           // Keep the information about the corresponding cell
-                          newProxy.cell_id = cell.id;
+                          newProxy.cell_id = proxyCell.id;
                           createdContainers.push(newProxy);
-                          createdContainers.push(container);
                           done();
                         })
                       })
@@ -301,10 +302,6 @@ module.exports = {
                   })
 
                 } else {
-
-                  // Keep the information about the corresponding cell
-                  newProxy.cell_id = cell.id;
-                  createdContainers.push(container);
                   done();
                 }
               })
@@ -572,7 +569,7 @@ function completeCells(containersArray) {
   return new Promise(function (resolve, reject) {
 
     DockerService.docker.listContainers(function (err, dockerInfo) {
-      if (err) return done(err);
+      if (err) return reject(err);
 
       async.each(containersArray, function (container, done) {
 
@@ -599,10 +596,10 @@ function completeCells(containersArray) {
             else done();
           })
         })
+      }, function (err) {
+        if (err) return reject(err);
+        resolve();
       });
-    }, function (err) {
-      if (err) return reject(err);
-      resolve();
     });
   });
 }
