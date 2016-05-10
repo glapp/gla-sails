@@ -54,6 +54,7 @@ module.exports.routes = {
   'GET /application/details': 'ApplicationController.getAppDetails',
   'POST /application/add': 'ApplicationController.addApplication',
   'POST /application/deploy': 'ApplicationController.deploy',
+  'GET /application/getInfo': 'ApplicationController.getInfo',
 
   // Cell
   'POST /cell/move': 'CellController.move',

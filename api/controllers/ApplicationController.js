@@ -10,6 +10,16 @@ var fs = require('fs');
 var rimraf = require('rimraf');
 
 module.exports = {
+
+  getInfo: function (req, res) {
+    Application.find()
+      //.populate('organs')
+      .exec(function (err, apps) {
+        if (err) res.notFound();
+        else res.json({apps: apps});
+      })
+  },
+
   getUserApps: function (req, res) {
     Application.find({owner: req.session.me})
       .populate('organs')
