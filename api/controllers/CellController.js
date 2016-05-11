@@ -60,14 +60,15 @@ module.exports = {
 
             // Move
             DockerService.moveContainer(cell, {environment: environment})
-              .then(function (result) {
-                var newNode = result.host;
+              .then(function (cellArray) {
+                var newCell = _.find(cellArray, {id: cell.id});
+                var newNode = newCell.host;
                 AppLog.create({
                   application_id: organ.application_id,
                   content: 'Moved ' + organ.originalName + ' from ' + oldNode + ' to ' + newNode + '.'
                 }).exec(function (err, created) {
                   if (err) console.error('Couldn\'t create log! ', err);
-                  res.ok(result);
+                  res.ok(newCell);
                 })
               })
               .catch(function (err) {

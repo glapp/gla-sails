@@ -282,7 +282,7 @@ module.exports = {
                 createdContainers.push(container);
 
                 if (organ.expose || organ.ports) {
-                  Cell.create({organ_id: organ.id}, function (err, proxyCell) {
+                  Cell.create({organ_id: organ.id, isProxy: true}, function (err, proxyCell) {
                     if (err) return done(err);
 
                     DockerService.createProxyContainer(organ)
@@ -317,7 +317,6 @@ module.exports = {
           return reject(err);
         }
 
-        // TODO: Complete the cells correctly
         // Handle the created proxies
         completeCells(createdContainers)
           .then(function (result) {
@@ -438,7 +437,7 @@ module.exports = {
 
           var copy = _.extend({}, organ);
 
-          copy.name = organ.name + "_temp";
+          //copy.name = organ.name + "_temp";
           copy.environment = _.extend(cell.environment, organ.environment);
 
           // Create the new container
@@ -449,50 +448,51 @@ module.exports = {
               newContainer.start(function (err) {
                 if (err) return reject(err);
 
-                // Find network
-                Application.findOne({id: organ.application_id}, function (err, app) {
-                  if (err) return reject(err);
-                  var network = DockerService.docker.getNetwork(app.networkId);
+                // // Find network
+                // Application.findOne({id: organ.application_id}, function (err, app) {
+                //   if (err) return reject(err);
+                //   var network = DockerService.docker.getNetwork(app.networkId);
 
-                  // Connect new container to network
-                  network.connect({
-                    container: newContainer.id
-                  }, function (err) {
-                    if (err) return reject(err);
+                // // Connect new container to network
+                // network.connect({
+                //   container: newContainer.id
+                // }, function (err) {
+                //   if (err) return reject(err);
 
-                    // Get old container
-                    var old = DockerService.docker.getContainer(old_id);
+                // Get old container
+                var old = DockerService.docker.getContainer(old_id);
 
-                    // Rename old container
-                    old.rename({name: organ.name + '_old'}, function (err) {
+                // // Rename old container
+                // old.rename({name: organ.name + '_old'}, function (err) {
+                //   if (err) return reject(err);
+                //
+                //   // Rename new container to original name
+                //   newContainer.rename({name: organ.name}, function (err) {
+                //     if (err) return reject(err);
+
+                    // Remove old container
+                    old.remove({force: true}, function (err) {
                       if (err) return reject(err);
 
-                      // Rename new container to original name
-                      newContainer.rename({name: organ.name}, function (err) {
-                        if (err) return reject(err);
+                      // // Docker info for additional information
+                      // DockerService.docker.listContainers(function (err, dockerInfo) {
+                      //   if (err) return reject(err);
 
-                        // Remove old container
-                        old.remove({force: true}, function (err) {
-                          if (err) return reject(err);
+                        var created = DockerService.docker.getContainer(newContainer.id);
 
-                          // Docker info for additional information
-                          DockerService.docker.listContainers(function (err, dockerInfo) {
-                            if (err) return reject(err);
-
-                            var created = DockerService.docker.getContainer(newContainer.id);
-                            if (err) return reject(err);
-
-                            created.cell_id = cell.id;
-                            // Complete cell information
-                            completeCells(created, dockerInfo)
-                              .then(resolve)
-                              .catch(reject);
-                          });
-                        })
-                      })
+                        created.cell_id = cell.id;
+                        // Complete cell information
+                        completeCells([created])
+                          .then(function(result) {
+                            resolve(_.find(result, {id: cell.id}));
+                          })
+                          .catch(reject);
+                      //});
                     });
-                  });
-                })
+                  //})
+                //});
+                //});
+                //})
               });
             })
             .catch(function (err) {
@@ -571,7 +571,7 @@ function completeCells(containersArray) {
     DockerService.docker.listContainers(function (err, dockerInfo) {
       if (err) return reject(err);
 
-      async.each(containersArray, function (container, done) {
+      async.map(containersArray, function (container, done) {
 
         container.inspect(function (err, inspectData) {
           if (err) return done(err);
@@ -591,14 +591,11 @@ function completeCells(containersArray) {
           }
 
           // Update database entry with node and ip
-          Cell.update({id: container.cell_id}, update, function (err, updated) {
-            if (err) done(err);
-            else done();
-          })
+          Cell.update({id: container.cell_id}, update, done)
         })
-      }, function (err) {
+      }, function (err, cellArray) {
         if (err) return reject(err);
-        resolve();
+        resolve(cellArray);
       });
     });
   });
@@ -713,53 +710,4 @@ function completeParameters(organ) {
       }
     })
   });
-}
-
-
-// TODO: Extend this conceptual idea of reverse proxies
-function addReverseProxy(organ) {
-  return new Promise(function (resolve, reject) {
-
-    /*  TODO: Create hanzel/load-balancing-swarm container
-     *       - env APP_NAME & CONSUL_IP
-     *
-     *   TODO:
-     *
-     */
-
-
-    // var dir = require('path').join('/tmp', component.name);
-    //
-    // if (!fs.existsSync(dir)) {
-    //   fs.mkdirSync(dir);
-    // }
-    //
-    // fs.writeFile(require('path').join(dir, 'nginx.conf'),
-    //   'http {\n' +
-    //   'upstream proxy-' + component.name + '{\n' +
-    //   'server ' + component.name + ':80;\n' +
-    //   '}\n' +
-    //
-    //   'server {\n' +
-    //   'listen 80;\n' +
-    //
-    //   'location / {\n' +
-    //   "proxy_pass http://proxiedweb;\n" +
-    //   "proxy_http_version 1.1;\n" +
-    //   "proxy_set_header Upgrade $http_upgrade;\n" +
-    //   "proxy_set_header Connection 'upgrade';\n" +
-    //   "proxy_set_header Host $host;\n" +
-    //   "proxy_cache_bypass $http_upgrade;\n" +
-    //   '}\n' +
-    //   '}\n' +
-    //   '}\n'
-    //   , function (err) {
-    //     if (err) {
-    //       return reject(err);
-    //     }
-    //
-    //     console.log("The file was saved!");
-    //   });
-
-  })
 }

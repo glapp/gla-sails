@@ -24,6 +24,10 @@ module.exports = {
     environment: {
       type: 'array',
       defaultsTo: []
+    },
+    isProxy: {
+      type: 'boolean',
+      defaultsTo: false
     }
   }
 };
