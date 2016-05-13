@@ -11,12 +11,19 @@ var rimraf = require('rimraf');
 
 module.exports = {
 
-  getInfo: function (req, res) {
+  getAppInfo: function (req, res) {
     Application.find()
-      //.populate('organs')
       .exec(function (err, apps) {
         if (err) res.notFound();
         else res.json({apps: apps});
+      })
+  },
+
+  getCellInfo: function (req, res) {
+    Cell.find()
+      .exec(function (err, cells) {
+        if (err) res.notFound();
+        else res.json({cells: cells});
       })
   },
 
