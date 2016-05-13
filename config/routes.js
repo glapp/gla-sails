@@ -59,6 +59,9 @@ module.exports.routes = {
   // Cell
   'POST /cell/move': 'CellController.move',
 
+  // Organ
+  'POST /organ/scaleUp': 'OrganController.scaleUp',
+
   // Host
   'GET /host/info': 'HostController.getHostInfo',
 

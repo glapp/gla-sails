@@ -69,5 +69,42 @@ module.exports = {
             })
         })
     });
+  },
+
+  scaleUp: function (organ, opts) {
+    return new Promise(function (resolve, reject) {
+
+      var copy = _.extend({}, organ);
+
+      copy.environment = _.extend(organ.environment, opts.environment);
+
+      // Create cell database entry
+      Cell.create({organ_id: organ.id}, function (err, cell) {
+        if (err) return reject(err);
+
+        DockerService.createContainer(copy)
+          .then(function (newContainer) {
+
+            // Start the new container
+            newContainer.start(function (err) {
+              if (err) return reject(err);
+
+              var created = DockerService.docker.getContainer(newContainer.id);
+
+              created.cell_id = cell.id;
+
+              // Complete cell information
+              common.completeCells([created])
+                .then(function (result) {
+                  resolve(result[0]);
+                })
+                .catch(reject);
+            });
+          })
+          .catch(function (err) {
+            reject(err);
+          })
+      });
+    });
   }
 };
