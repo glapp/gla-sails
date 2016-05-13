@@ -22,6 +22,8 @@ module.exports = {
 
   // Adaptions
   moveContainer: adaptions.moveContainer,
+  scaleUp: adaptions.scaleUp,
+  removeContainer: adaptions.removeContainer,
 
   // Infrastructure
   getHostInfo: infrastructure.getHostInfo,
