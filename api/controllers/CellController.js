@@ -60,8 +60,7 @@ module.exports = {
 
             // Move
             DockerService.moveContainer(cell, {environment: environment})
-              .then(function (cellArray) {
-                var newCell = _.find(cellArray, {id: cell.id});
+              .then(function (newCell) {
                 var newNode = newCell.host;
                 AppLog.create({
                   application_id: organ.application_id,

@@ -57,7 +57,7 @@ module.exports = {
                   // Complete cell information
                   common.completeCells([created])
                     .then(function (result) {
-                      resolve(_.find(result, {id: cell.id}));
+                      resolve(result[0]);
                     })
                     .catch(reject);
                 });

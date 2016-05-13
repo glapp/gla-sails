@@ -62,7 +62,9 @@ module.exports = {
             }
 
             // Update database entry with node and ip
-            Cell.update({id: container.cell_id}, update, done)
+            Cell.update({id: container.cell_id}, update, function(err, updated) {
+              done(null, updated[0]);
+            })
           })
         }, function (err, cellArray) {
           if (err) return reject(err);
