@@ -106,5 +106,18 @@ module.exports = {
           })
       });
     });
+  },
+
+  removeContainer: function (cell) {
+    return new Promise(function (resolve, reject) {
+
+      var container = DockerService.docker.getContainer(cell.container_id);
+
+      // Remove old container
+      container.remove({force: true}, function (err) {
+        if (err) return reject(err);
+        else resolve();
+      });
+    });
   }
 };

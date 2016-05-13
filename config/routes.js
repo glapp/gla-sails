@@ -61,6 +61,7 @@ module.exports.routes = {
 
   // Organ
   'POST /organ/scaleUp': 'OrganController.scaleUp',
+  'POST /organ/scaleDown': 'OrganController.scaleDown',
 
   // Host
   'GET /host/info': 'HostController.getHostInfo',
