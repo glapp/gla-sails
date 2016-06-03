@@ -1,4 +1,4 @@
-/**
+  /**
  * ApplicationController
  *
  * @description :: Server-side logic for managing Applications
@@ -11,8 +11,11 @@ var rimraf = require('rimraf');
 
 module.exports = {
 
+// begin for MAPE ###################
+
   getAppInfo: function (req, res) {
-    Application.find()
+    Application
+      .find()
       .exec(function (err, apps) {
         if (err) res.notFound();
         else res.json({apps: apps});
@@ -20,12 +23,18 @@ module.exports = {
   },
 
   getCellInfo: function (req, res) {
-    Cell.find()
+    Cell
+      .find()
+      .populate('organ_id')
+      .populate('host')
       .exec(function (err, cells) {
         if (err) res.notFound();
         else res.json({cells: cells});
       })
   },
+
+// end for MAPE #####################
+
 
   getUserApps: function (req, res) {
     Application.find({owner: req.session.me})
