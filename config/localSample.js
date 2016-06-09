@@ -86,12 +86,14 @@ module.exports = {
    * 'development' environment.                                              *
    ***************************************************************************/
 
-   // environment: process.env.NODE_ENV || 'development'
+  // environment: process.env.NODE_ENV || 'development'
 
   // Config for docker swarm
   SWARM_HOST: '192.168.99.101',
   SWARM_PORT: '3376',
 
-  DOCKER_CERT_PATH: 'C:/Users/isler/.docker/machine/certs'
+  CONSUL_URL: '192.168.99.100:8500',
+
+  DOCKER_CERT_PATH: 'C:/Users/Fabio/.docker/machine/certs'
 
 };
