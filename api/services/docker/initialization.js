@@ -12,8 +12,12 @@ var common = require('./common.js');
 
 module.exports = {
   docker: new Docker({
+
+    // The swarm master
     host: sails.config.SWARM_HOST || 'localhost',
     port: sails.config.SWARM_PORT || 3376,
+
+    // The certs to access the swarm master
     ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
     cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
     key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')

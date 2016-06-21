@@ -6,6 +6,7 @@
   "keywords": [],
   "dependencies": {
     "async": "^1.5.2",
+    "aws-sdk": "^2.3.19",
     "barrels": "^1.6.4",
     "chai": "^3.5.0",
     "dockerode": "^2.2.9",
