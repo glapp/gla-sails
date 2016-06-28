@@ -6,6 +6,8 @@ var initialization = require('./docker/initialization.js');
 var deployment = require('./docker/deployment.js');
 var infrastructure = require('./docker/infrastructure.js');
 var adaptions = require('./docker/adaptions.js');
+var common = require('./docker/common.js');
+
 
 module.exports = {
 
@@ -24,9 +26,13 @@ module.exports = {
   moveContainer: adaptions.moveContainer,
   scaleUp: adaptions.scaleUp,
   removeContainer: adaptions.removeContainer,
+  removeAppCells: adaptions.removeAppCells,
 
   // Infrastructure
   getHostInfo: infrastructure.getHostInfo,
-  initializeNodes: infrastructure.initializeNodes
+  initializeNodes: infrastructure.initializeNodes,
+
+  // Diverse
+  getCompleteAppData: common.getCompleteAppData
 
 };

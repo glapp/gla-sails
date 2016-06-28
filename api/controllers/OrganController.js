@@ -8,6 +8,18 @@
 var _ = require('lodash');
 
 module.exports = {
+
+  getCellInfo: function (req, res) {
+    Cell
+      .find()
+      .populate('organ_id')
+      .populate('host')
+      .exec(function (err, cells) {
+        if (err) res.notFound();
+        else res.json({cells: cells});
+      })
+  },
+  
   scaleUp: function (req, res) {
     var organ_id = req.param('organ_id');
     var opts = {};

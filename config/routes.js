@@ -53,14 +53,18 @@ module.exports.routes = {
   'GET /application/getUserApps': 'ApplicationController.getUserApps',
   'GET /application/details': 'ApplicationController.getAppDetails',
   'POST /application/add': 'ApplicationController.addApplication',
+  'POST /application/remove': 'ApplicationController.remove',
   'POST /application/deploy': 'ApplicationController.deploy',
+  'POST /application/undeploy': 'ApplicationController.undeploy',
+  'POST /application/rename': 'ApplicationController.rename',
   'GET /application/getAppInfo': 'ApplicationController.getAppInfo',
-  'GET /application/getCellInfo': 'ApplicationController.getCellInfo',
 
   // Cell
   'POST /cell/move': 'CellController.move',
 
   // Organ
+  // TODO: change here and in MAPE to '/organ/getCellInfo
+  'GET /application/getCellInfo': 'OrganController.getCellInfo',
   'POST /organ/scaleUp': 'OrganController.scaleUp',
   'POST /organ/scaleDown': 'OrganController.scaleDown',
 

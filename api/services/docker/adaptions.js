@@ -119,5 +119,22 @@ module.exports = {
         else resolve();
       });
     });
+  },
+
+  removeAppCells: function (app) {
+    return new Promise(function (resolve, reject) {
+      async.each(app.organs, function (organ, organDone) {
+        async.each(organ.cells, function (cell, cellDone) {
+          DockerService.removeContainer(cell)
+            .then(cellDone)
+            .catch(cellDone);
+        }, function onCellsDone(err) {
+          organDone(err);
+        });
+      }, function(err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
   }
 };

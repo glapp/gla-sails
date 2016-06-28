@@ -72,5 +72,51 @@ module.exports = {
         });
       });
     });
+  },
+
+  getCompleteAppData: function(app_id) {
+    return new Promise(function(resolve, reject) {
+      // TODO: Get complete app infos, including organ and cell details
+      Application
+        .findOne({id: app_id})
+        .populate('log', {sort: 'createdAt DESC'})
+        .populate('organs')
+        .exec(function (err, app) {
+          if (err) return reject(err);
+
+          // TODO: With a future sails version, it will be possible to nest populations. This is a quite efficient workaround until then.
+
+          Organ
+            .find({id: _.map(app.organs, 'id')})
+            .populate('cells')
+            .populate('dependent_on')
+            .exec(function (err, organs) {
+              if (err) return reject(err);
+
+              // TODO This is inefficient since it's querying the db for every organ -> nested population should fix this
+              async.map(organs, function (organ, done) {
+                Cell
+                  .find({id: _.map(organ.cells, 'id')})
+                  .populate('host')
+                  .exec(function (err, cells) {
+                    if (err) return done(err);
+
+                    // TODO This is a workaround because somehow to send organ directly doesn't include the hosts of the cells
+                    var newOrgan = _.extend({}, organ);
+                    newOrgan.cells = cells;
+
+                    done(null, newOrgan);
+                  })
+              }, function (err, newOrgans) {
+                if (err) return reject(err);
+
+                // TODO This is a workaround because somehow to send app directly doesn't include the cells of the organs
+                var newApp = _.extend({}, app);
+                newApp.organs = newOrgans;
+                resolve(newApp);
+              });
+            });
+        });
+    });
   }
 };

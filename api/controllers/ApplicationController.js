@@ -1,4 +1,4 @@
-  /**
+/**
  * ApplicationController
  *
  * @description :: Server-side logic for managing Applications
@@ -19,17 +19,6 @@ module.exports = {
       .exec(function (err, apps) {
         if (err) res.notFound();
         else res.json({apps: apps});
-      })
-  },
-
-  getCellInfo: function (req, res) {
-    Cell
-      .find()
-      .populate('organ_id')
-      .populate('host')
-      .exec(function (err, cells) {
-        if (err) res.notFound();
-        else res.json({cells: cells});
       })
   },
 
@@ -57,49 +46,13 @@ module.exports = {
 
     var app_id = req.param('app_id');
 
-
-    Application
-      .findOne({id: app_id, owner: user_id})
-      .populate('log', {sort: 'createdAt DESC'})
-      .populate('organs')
-      .exec(function (err, app) {
-        if (err) return res.serverError(err);
-
-        // TODO: With a future sails version, it will be possible to nest populations. This is a quite efficient workaround until then.
-
-        Organ
-          .find({id: _.map(app.organs, 'id')})
-          .populate('cells')
-          .populate('dependent_on')
-          .exec(function (err, organs) {
-            if (err) return res.serverError(err);
-
-            // TODO This is inefficient since it's querying the db for every organ -> nested population should fix this
-            async.map(organs, function (organ, done) {
-              Cell
-                .find({id: _.map(organ.cells, 'id')})
-                .populate('host')
-                .exec(function (err, cells) {
-                  if (err) return done(err);
-
-                  // TODO This is a workaround because somehow to send organ directly doesn't include the hosts of the cells
-                  var newOrgan = _.extend({}, organ);
-                  newOrgan.cells = cells;
-
-                  done(null, newOrgan);
-                })
-            }, function(err, newOrgans) {
-              if (err) return res.serverError(err);
-
-              // TODO This is a workaround because somehow to send app directly doesn't include the cells of the organs
-              var newApp = _.extend({}, app);
-              newApp.organs = newOrgans;
-              res.ok(newApp);
-            });
-
-
-          });
-      });
+    DockerService.getCompleteAppData(app_id)
+      .then(function (app) {
+        res.ok(app)
+      })
+      .catch(function (err) {
+        res.serverError(err);
+      })
   },
 
   addApplication: function (req, res) {
@@ -229,8 +182,84 @@ module.exports = {
           res.badRequest(err);
         });
     });
+  },
+
+  undeploy: function (req, res) {
+
+    if (!req.session.me) return res.forbidden();
+
+    var app_id = req.param('app_id');
+    var app;
+
+    DockerService.getCompleteAppData(app_id)
+      .then(function (completeApp) {
+        app = completeApp;
+        return DockerService.removeAppCells(completeApp)
+      })
+      .then(function () {
+        return Cell.destroy({organ_id: _.map(app.organs, 'id')})
+      })
+      .then(function () {
+        return Application.update({id: app_id}, {status: 'ready'})
+      })
+      .then(function (updated) {
+        // TODO: Create AppLog
+        res.ok(updated);
+      })
+      .catch(function (err) {
+        // TODO: Create AppLog
+        res.serverError(err);
+      });
+  },
+
+  remove: function (req, res) {
+
+    if (!req.session.me) return res.forbidden();
+
+    var app_id = req.param('app_id');
+    var app;
+
+    DockerService.getCompleteAppData(app_id)
+      .then(function (completeApp) {
+        app = completeApp;
+        return DockerService.removeAppCells(completeApp)
+      })
+      .then(function () {
+        return Cell.destroy({organ_id: _.map(app.organs, 'id')})
+      })
+      .then(function () {
+        return Organ.destroy({id: _.map(app.organs, 'id')})
+      })
+      .then(function () {
+        return Application.destroy({id: app_id})
+      })
+      .then(function (updated) {
+        // TODO: Create AppLog
+        res.ok(updated);
+      })
+      .catch(function (err) {
+        // TODO: Create AppLog
+        res.serverError(err);
+      });
+  },
+
+  rename: function (req, res) {
+
+    var app_id = req.param('app_id');
+    var newName = req.param('name');
+
+    Application.update({id: app_id}, {name: newName})
+      .then(function(updated) {
+        // TODO: Create AppLog
+        res.ok(updated);
+      })
+      .catch(function(err) {
+        // TODO: Create AppLog
+        res.serverError(err);
+      });
   }
 };
+
 
 var cleanUp = function (path) {
   rimraf(path, function (err) {
