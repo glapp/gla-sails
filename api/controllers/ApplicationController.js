@@ -50,8 +50,7 @@ module.exports = {
 
     DockerService.getCompleteAppData(app_id)
       .then(function (app) {
-        var newApp = _.extend({}, app);
-        res.ok(newApp.organs)
+        res.ok(app)
       })
       .catch(function (err) {
         res.serverError(err);
@@ -206,12 +205,22 @@ module.exports = {
         return Application.update({id: app_id}, {status: 'ready'})
       })
       .then(function (updated) {
-        // TODO: Create AppLog
-        res.ok(updated);
+        AppLog.create({
+          application_id: app_id,
+          content: 'Undeployed'
+        }).exec(function (err, created) {
+          if (err) console.error('Couldn\'t create log! ', err);
+          res.ok(updated[0]);
+        });
       })
       .catch(function (err) {
-        // TODO: Create AppLog
-        res.serverError(err);
+        AppLog.create({
+          application_id: app_id,
+          content: 'Undeployement failed'
+        }).exec(function (logErr, created) {
+          if (logErr) console.error('Couldn\'t create log! ', err);
+          res.serverError(err);
+        });
       });
   },
 
@@ -231,17 +240,18 @@ module.exports = {
         return Cell.destroy({organ_id: _.map(app.organs, 'id')})
       })
       .then(function () {
-        return Organ.destroy({id: _.map(app.organs, 'id')})
+        return Organ.destroy({application_id: app_id})
+      })
+      .then(function() {
+        return AppLog.destroy({application_id: app_id})
       })
       .then(function () {
         return Application.destroy({id: app_id})
       })
-      .then(function (updated) {
-        // TODO: Create AppLog
-        res.ok(updated);
+      .then(function () {
+        res.ok();
       })
       .catch(function (err) {
-        // TODO: Create AppLog
         res.serverError(err);
       });
   },
@@ -251,14 +261,26 @@ module.exports = {
     var app_id = req.param('app_id');
     var newName = req.param('name');
 
+    if (!newName) return res.badRequest('new name missing');
+
     Application.update({id: app_id}, {name: newName})
       .then(function(updated) {
-        // TODO: Create AppLog
-        res.ok(updated);
+        AppLog.create({
+          application_id: app_id,
+          content: 'Renamed application to ' + newName + '.'
+        }).exec(function (err, created) {
+          if (err) console.error('Couldn\'t create log! ', err);
+          res.ok(updated[0]);
+        });
       })
       .catch(function(err) {
-        // TODO: Create AppLog
-        res.serverError(err);
+        AppLog.create({
+          application_id: app_id,
+          content: 'Renaming to ' + newName + 'failed.'
+        }).exec(function (logErr, created) {
+          if (logErr) console.error('Couldn\'t create log! ', err);
+          res.serverError(err);
+        });
       });
   }
 };

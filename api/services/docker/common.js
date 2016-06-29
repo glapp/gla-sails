@@ -76,7 +76,6 @@ module.exports = {
 
   getCompleteAppData: function(app_id) {
     return new Promise(function(resolve, reject) {
-      // TODO: Get complete app infos, including organ and cell details
       Application
         .findOne({id: app_id})
         .populate('log', {sort: 'createdAt DESC'})
@@ -87,7 +86,6 @@ module.exports = {
           if (!app) return reject(new Error('No App found for app_id ' + app_id));
 
           // TODO: With a future sails version, it will be possible to nest populations. This is a quite efficient workaround until then.
-
           Organ
             .find({id: _.map(app.organs, 'id')})
             .populate('cells')
@@ -103,17 +101,14 @@ module.exports = {
                   .exec(function (err, cells) {
                     if (err) return done(err);
 
-                    // TODO This is a workaround because somehow to send organ directly doesn't include the hosts of the cells
-                    var newOrgan = _.extend({}, organ);
+                    var newOrgan = organ.toJSON();
                     newOrgan.cells = cells;
-
                     done(null, newOrgan);
                   })
               }, function (err, newOrgans) {
                 if (err) return reject(err);
 
-                // TODO This is a workaround because somehow to send app directly doesn't include the cells of the organs
-                var newApp = _.extend({}, app);
+                var newApp = app.toJSON();
                 newApp.organs = newOrgans;
                 resolve(newApp);
               });
