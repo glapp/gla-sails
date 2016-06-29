@@ -81,8 +81,10 @@ module.exports = {
         .findOne({id: app_id})
         .populate('log', {sort: 'createdAt DESC'})
         .populate('organs')
+        .populate('rules')
         .exec(function (err, app) {
           if (err) return reject(err);
+          if (!app) return reject(new Error('No App found for app_id ' + app_id));
 
           // TODO: With a future sails version, it will be possible to nest populations. This is a quite efficient workaround until then.
 

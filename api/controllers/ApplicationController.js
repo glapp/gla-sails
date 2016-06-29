@@ -35,20 +35,23 @@ module.exports = {
   },
 
   getAppDetails: function (req, res) {
-    var user_id;
+    /*var user_id;
 
     if (req.session.me) {
       user_id = req.session.me;
     } else {
       res.forbidden();
       return;
-    }
+    }*/
 
     var app_id = req.param('app_id');
 
+    if (!app_id) return res.badRequest('app_id missing');
+
     DockerService.getCompleteAppData(app_id)
       .then(function (app) {
-        res.ok(app)
+        var newApp = _.extend({}, app);
+        res.ok(newApp.organs)
       })
       .catch(function (err) {
         res.serverError(err);
