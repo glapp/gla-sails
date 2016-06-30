@@ -12,7 +12,8 @@ var common = require('./docker/common.js');
 module.exports = {
 
   // Initialization
-  docker: initialization.docker,
+  swarm: initialization.swarm,
+  obtainConsulIp: initialization.obtainConsulIp,
   extractComponents: initialization.extractComponents,
   createComponents: initialization.createComponents,
 

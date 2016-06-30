@@ -11,7 +11,7 @@ module.exports = {
   // TODO: clean old nodes
   getHostInfo: function () {
     return new Promise(function (resolve, reject) {
-      DockerService.docker.info(function (err, data) {
+      DockerService.swarm.info(function (err, data) {
         if (err) reject(err);
         else {
           console.log(data);
@@ -51,7 +51,7 @@ module.exports = {
 
   initializeNodes: function () {
     return new Promise(function (resolve, reject) {
-      DockerService.docker.info(function (err, data) {
+      DockerService.swarm.info(function (err, data) {
         if (err) reject(err);
         else {
           data.SystemStatus = parseSystemStatus(data);

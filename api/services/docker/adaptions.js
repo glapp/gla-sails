@@ -44,13 +44,13 @@ module.exports = {
               newContainer.start(function (err) {
                 if (err) return reject(err);
 
-                var old = DockerService.docker.getContainer(old_id);
+                var old = DockerService.swarm.getContainer(old_id);
 
                 // Remove old container
                 old.remove({force: true}, function (err) {
                   if (err) return reject(err);
 
-                  var created = DockerService.docker.getContainer(newContainer.id);
+                  var created = DockerService.swarm.getContainer(newContainer.id);
 
                   created.cell_id = cell.id;
 
@@ -89,7 +89,7 @@ module.exports = {
             newContainer.start(function (err) {
               if (err) return reject(err);
 
-              var created = DockerService.docker.getContainer(newContainer.id);
+              var created = DockerService.swarm.getContainer(newContainer.id);
 
               created.cell_id = cell.id;
 
@@ -111,7 +111,7 @@ module.exports = {
   removeContainer: function (cell) {
     return new Promise(function (resolve, reject) {
 
-      var container = DockerService.docker.getContainer(cell.container_id);
+      var container = DockerService.swarm.getContainer(cell.container_id);
 
       // Remove old container
       container.remove({force: true}, function (err) {

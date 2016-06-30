@@ -19,6 +19,10 @@ module.exports.bootstrap = function(cb) {
       for (var i in result) {
         console.info('- ' + result[i].name);
       }
+      return DockerService.obtainConsulIp();
+    })
+    .then(function(data) {
+      console.log(data);
       cb();
     })
     .catch(function(err) {

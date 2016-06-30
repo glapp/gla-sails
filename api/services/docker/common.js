@@ -39,7 +39,7 @@ module.exports = {
   completeCells: function completeCells(containersArray) {
     return new Promise(function (resolve, reject) {
 
-      DockerService.docker.listContainers(function (err, dockerInfo) {
+      DockerService.swarm.listContainers(function (err, dockerInfo) {
         if (err) return reject(err);
 
         async.map(containersArray, function (container, done) {

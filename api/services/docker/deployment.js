@@ -10,6 +10,9 @@ var proxy_image_tag = '0.7';
 
 var common = require('./common.js');
 
+var CONSUL_URL = process.env.CONSUL_URL || sails.config.CONSUL_URL;
+
+
 module.exports = {
   handleNetwork: function (app) {
     return new Promise(function (resolve, reject) {
@@ -17,7 +20,7 @@ module.exports = {
       if (notReady) {
         reject('At least one component is not ready yet.');
       } else {
-        DockerService.docker.createNetwork({
+        DockerService.swarm.createNetwork({
           Name: app.id
         }, function (err, network) {
           if (err) {
@@ -124,7 +127,7 @@ module.exports = {
 
       organ.environment.push('SERVICE_NAME=' + organ.id);
 
-      DockerService.docker.createContainer({
+      DockerService.swarm.createContainer({
         Image: organ.image,
         //name: organ.name,
         Env: organ.environment,
@@ -162,11 +165,11 @@ module.exports = {
       // Environment
       var environment = [
         'APP_NAME=' + organ.id,
-        'CONSUL_URL=' + sails.config.CONSUL_URL,
+        'CONSUL_URL=' + CONSUL_URL,
         'PORT_NUMBER=' + organ.expose[0]
       ];
 
-      DockerService.docker.createContainer({
+      DockerService.swarm.createContainer({
         Image: proxy_image + ':' + proxy_image_tag,
         name: organ.name,
         Env: environment,

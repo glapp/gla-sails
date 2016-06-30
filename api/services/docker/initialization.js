@@ -10,14 +10,21 @@ var _ = require('lodash');
 
 var common = require('./common.js');
 
+var swarmHostEnv = process.env.SWARM_HOST || sails.config.SWARM_HOST || 'localhost:3376';
+var swarmHostArray = swarmHostEnv.split(":");
+var swarmHost = swarmHostArray[0];
+var swarmPort = swarmHostArray[1] ? swarmHostArray[1] : '3376';
+
+var swarm = new Docker({
+  host: swarmHost,
+  port: swarmPort,
+  ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
+  cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
+  key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')
+});
+
 module.exports = {
-  docker: new Docker({
-    host: sails.config.SWARM_HOST || 'localhost',
-    port: sails.config.SWARM_PORT || 3376,
-    ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
-    cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
-    key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')
-  }),
+  swarm: swarm,
 
   extractComponents: function (path, app_id) {
     return new Promise(function (resolve, reject) {
@@ -169,10 +176,10 @@ module.exports = {
             // Make tar
             tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
               .on('finish', function () {
-                DockerService.docker.buildImage(buildpath + '.tar', {t: organ.image}, function (err, stream) {
+                DockerService.swarm.buildImage(buildpath + '.tar', {t: organ.image}, function (err, stream) {
                   if (err) return done(err);
 
-                  DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
+                  DockerService.swarm.modem.followProgress(stream, onFinished, onProgress);
 
                   function onProgress(event) {
                     console.log(_.values(event));
@@ -193,14 +200,14 @@ module.exports = {
               });
             // If the image has to be pulled
           } else if (organ.image && !organ.build) {
-            var image = DockerService.docker.getImage(organ.image);
+            var image = DockerService.swarm.getImage(organ.image);
             image.inspect(function (err, inspectData) {
               if (err && err.statusCode != 404) return done(err);
               if (err && err.statusCode == 404) {  // Image is not pulled yet -> Pull
-                DockerService.docker.pull(organ.image, function (err, stream) {
+                DockerService.swarm.pull(organ.image, function (err, stream) {
                   if (err) return done(err);
 
-                  DockerService.docker.modem.followProgress(stream, onFinished, onProgress);
+                  DockerService.swarm.modem.followProgress(stream, onFinished, onProgress);
 
                   function onProgress(event) {
                     console.log(_.values(event));
@@ -233,7 +240,32 @@ module.exports = {
         else resolve();
       });
     })
+  },
+
+  obtainConsulIp: function() {
+    return new Promise(function(resolve, reject) {
+      var docker = new Docker({
+        host: swarmHost,
+        port: '2376',
+        ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
+        cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
+        key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')
+      });
+
+      var swarmMasterContainer = docker.getContainer('swarm-agent-master');
+
+      swarmMasterContainer.inspect(function(err, data) {
+        if (err) return reject(err);
+
+        console.log(data);
+        
+
+        resolve(data);
+      })
+    });
+
   }
+
 };
 
 function escapeRegExp(str) {
@@ -242,7 +274,7 @@ function escapeRegExp(str) {
 
 function completeParameters(organ) {
   return new Promise(function (resolve, reject) {
-    var newImage = DockerService.docker.getImage(organ.image);
+    var newImage = DockerService.swarm.getImage(organ.image);
     newImage.inspect(function (err, inspectData) {
       if (err) reject(err);
       else {
