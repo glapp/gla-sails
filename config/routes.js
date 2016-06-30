@@ -70,6 +70,7 @@ module.exports.routes = {
 
   // Host
   'GET /host/info': 'HostController.getHostInfo',
+  'GET /host/infoMape': 'HostController.getHostInfoMape',
 
   // Policy
   'GET /policy': 'RuleController.getRules',

@@ -24,5 +24,15 @@ module.exports = {
       .catch(function (err) {
         res.serverError(err);
       })
+  },
+  
+  getHostInfoMape: function (req, res) {
+    DockerService.getHostInfo()
+      .then(function (data) {
+        res.ok(data);
+      })
+      .catch(function (err) {
+        res.serverError(err);
+      })
   }
 };
