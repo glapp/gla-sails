@@ -15,12 +15,14 @@ var swarmHostArray = swarmHostEnv.split(":");
 var swarmHost = swarmHostArray[0];
 var swarmPort = swarmHostArray[1] ? swarmHostArray[1] : '3376';
 
+var CERT_PATH = process.env.CERT_PATH || require('path').join(require('os').homedir(), '.docker', 'machine', 'certs');
+
 var swarm = new Docker({
   host: swarmHost,
   port: swarmPort,
-  ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
-  cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
-  key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')
+  ca: fs.readFileSync(CERT_PATH + '/ca.pem'),
+  cert: fs.readFileSync(CERT_PATH + '/cert.pem'),
+  key: fs.readFileSync(CERT_PATH + '/key.pem')
 });
 
 module.exports = {
@@ -247,20 +249,31 @@ module.exports = {
       var docker = new Docker({
         host: swarmHost,
         port: '2376',
-        ca: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/ca.pem'),
-        cert: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/cert.pem'),
-        key: fs.readFileSync(sails.config.DOCKER_CERT_PATH + '/key.pem')
+        ca: fs.readFileSync(CERT_PATH + '/ca.pem'),
+        cert: fs.readFileSync(CERT_PATH + '/cert.pem'),
+        key: fs.readFileSync(CERT_PATH + '/key.pem')
       });
 
       var swarmMasterContainer = docker.getContainer('swarm-agent-master');
 
       swarmMasterContainer.inspect(function(err, data) {
         if (err) return reject(err);
+        var consulErr = new Error('No Consul IP found');
 
-        console.log(data);
-        
+        var consulRegEx = /^consul\:\/\/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})$/;
 
-        resolve(data);
+        if (data.Args) {
+          var consulArg = _.find(data.Args, function(arg) {
+            return consulRegEx.test(arg);
+          });
+          if (consulArg) {
+            var matches = consulArg.match(consulRegEx);
+            var consulUrl = matches[1] ? matches[1] : null;
+            if (consulUrl) {
+              resolve(consulUrl);
+            } else reject(consulErr);
+          } else reject(consulErr);
+        } else reject(consulErr);
       })
     });
 

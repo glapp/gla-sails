@@ -89,11 +89,6 @@ module.exports = {
   // environment: process.env.NODE_ENV || 'development'
 
   // Config for docker swarm
-  SWARM_HOST: '192.168.99.101',
-  SWARM_PORT: '3376',
-
-  CONSUL_URL: '192.168.99.100:8500',
-
-  DOCKER_CERT_PATH: 'C:/Users/Fabio/.docker/machine/certs'
+  SWARM_HOST: '192.168.99.101:3376'
 
 };
