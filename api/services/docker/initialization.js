@@ -258,8 +258,7 @@ module.exports = {
 
       swarmMasterContainer.inspect(function(err, data) {
         if (err) return reject(err);
-        var consulErr = new Error('No Consul IP found');
-
+        
         var consulRegEx = /^consul\:\/\/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})$/;
 
         if (data.Args) {
@@ -269,11 +268,9 @@ module.exports = {
           if (consulArg) {
             var matches = consulArg.match(consulRegEx);
             var consulUrl = matches[1] ? matches[1] : null;
-            if (consulUrl) {
-              resolve(consulUrl);
-            } else reject(consulErr);
-          } else reject(consulErr);
-        } else reject(consulErr);
+            resolve(consulUrl);
+          } else resolve(null);
+        } else resolve(null);
       })
     });
 
