@@ -13,10 +13,13 @@ module.exports = {
     var application_id = req.param('app_id');
 
     Rule.find({application_id: application_id})
-      //.populate('rules')
+      .populate('organs')
       .exec(function (err, rules) {
-        if (err) res.notFound();
-        else res.json({rules: rules});
+        if (err) return res.notFound();
+
+        //console.log(rules);
+
+        res.ok({rules: rules});
       })
   },
 
@@ -27,15 +30,18 @@ module.exports = {
 
     async.each(policy, function (rule, done) {
       Rule.findOrCreate({application_id: application_id, metric: rule.metric})
+        .populate('organs')
         .exec(function (err, entry) {
           if (err) done(err);
           else {
             entry.operator = rule.operator;
             entry.value = rule.value;
+            entry.weight = rule.weight;
 
             rule.organs.forEach(function (organ) {
-              console.log(organ.organ_id);
-              //entry.organs.add(organ.organ_id);
+              console.log('Organ ID: ' + organ.organ_id);
+
+              entry.organs.add(organ.organ_id);
             });
 
             entry.save(function (err) {

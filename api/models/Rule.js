@@ -31,11 +31,7 @@ module.exports = {
       via: 'rules',
       dominant: true
     },
-    min: {
-      type: 'float',
-      required: false
-    },
-    max: {
+    weight: {
       type: 'float',
       required: false
     }
