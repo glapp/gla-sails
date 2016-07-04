@@ -74,6 +74,7 @@ module.exports.routes = {
 
   // Policy
   'GET /policy': 'RuleController.getRules',
-  'POST /policy/set': 'RuleController.setRules'
+  'POST /policy/set': 'RuleController.setRules',
+  'POST /policy/remove': 'RuleController.removeRules'
 
 };

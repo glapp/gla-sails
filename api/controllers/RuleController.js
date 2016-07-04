@@ -23,6 +23,16 @@ module.exports = {
       })
   },
 
+  removeRules: function (req, res) {
+    var ids = req.param('ids');
+    Rule.destroy(ids)
+      .exec(function (err, destroyed) {
+        if (err) return res.serverError(err);
+
+        res.ok();
+      })
+  },
+
   // function to set the rules of a specific application
   setRules: function (req, res) {
     var application_id = req.param('app_id');
