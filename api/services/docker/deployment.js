@@ -10,9 +10,6 @@ var proxy_image_tag = '0.7';
 
 var common = require('./common.js');
 
-var CONSUL_URL = process.env.CONSUL_URL || sails.config.CONSUL_URL;
-
-
 module.exports = {
   handleNetwork: function (app) {
     return new Promise(function (resolve, reject) {
@@ -55,7 +52,7 @@ module.exports = {
                 container.cell_id = cell.id;
                 createdContainers.push(container);
 
-                if (organ.expose || organ.ports) {
+                if ((organ.expose && organ.expose.length > 0) || (organ.ports && organ.ports.length > 0)) {
                   Cell.create({organ_id: organ.id, isProxy: true}, function (err, proxyCell) {
                     if (err) return done(err);
 
@@ -162,10 +159,19 @@ module.exports = {
         exposed[port + "/tcp"] = {};
       });
 
+      var consulUrl = sails.config.CONSUL_URL || process.env.CONSUL_URL;
+      if (!consulUrl) {
+        console.error('Creation of Proxy failed because consul url is not found.');
+        return reject(new Error('Creation of Proxy failed because consul url is not found.'));
+      }
+
+      console.log('------- Creating proxy for ' + organ.originalName + ' CONSUL_URL:');
+      console.log(consulUrl);
+
       // Environment
       var environment = [
         'APP_NAME=' + organ.id,
-        'CONSUL_URL=' + CONSUL_URL,
+        'CONSUL_URL=' + consulUrl,
         'PORT_NUMBER=' + organ.expose[0]
       ];
 

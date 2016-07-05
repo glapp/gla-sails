@@ -22,8 +22,12 @@ module.exports.bootstrap = function(cb) {
       return DockerService.obtainConsulIp();
     })
     .then(function(url) {
-      sails.config.CONSUL_URL = url;
-      console.log('set consul url to ' + url + '.');
+      if (url) {
+        sails.config.CONSUL_URL = url;
+        console.log('set consul url to ' + url + '.');
+      } else {
+       console.info('Couldn\'t obtain Consul IP - make sure you provided it via CONSUL_URL environment variable');
+      }
       cb();
     })
     .catch(function(err) {
