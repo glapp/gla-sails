@@ -75,6 +75,9 @@ module.exports.routes = {
   // Policy
   'GET /policy': 'RuleController.getRules',
   'POST /policy/set': 'RuleController.setRules',
-  'POST /policy/remove': 'RuleController.removeRules'
+  'POST /policy/remove': 'RuleController.removeRules',
+
+  // Analytics queries
+  'GET /analytics/organCpu': 'PrometheusController.getOrganCpu'
 
 };

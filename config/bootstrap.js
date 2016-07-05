@@ -25,8 +25,14 @@ module.exports.bootstrap = function(cb) {
       if (url) {
         sails.config.CONSUL_URL = url;
         console.log('set consul url to ' + url + '.');
+
+        // Also set Prometheus URL, assuming it's on the same host
+        var base = url.match(/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/g)[0];
+        console.log('base url is ' + base + '.');
+        var prometheusPort = process.env.PROMETHEUS_PORT || '19090';
+        sails.config.PROMETHEUS_URL = base + ':' + prometheusPort;
       } else {
-       console.info('Couldn\'t obtain Consul IP - make sure you provided it via CONSUL_URL environment variable');
+       console.info('Couldn\'t obtain Consul IP nor Prometheus URL - make sure you provided it via CONSUL_URL environment variable');
       }
       cb();
     })
