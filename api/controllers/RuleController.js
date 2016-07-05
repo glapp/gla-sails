@@ -1,7 +1,7 @@
 /**
- * ConstraintController
+ * RuleController
  *
- * @description :: Server-side logic for managing Constraints
+ * @description :: Server-side logic for managing Rules
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
