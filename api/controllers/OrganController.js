@@ -19,17 +19,24 @@ module.exports = {
         else res.json({cells: cells});
       })
   },
-  
+
   scaleUp: function (req, res) {
     var organ_id = req.param('organ_id');
-    var opts = {};
+    var opts = req.param('options');
 
     Organ.findOne({id: organ_id}, function (err, organ) {
       if (err) return res.serverError(err);
 
-      // TODO: Handle opts, e.g. for environment
+      var environment = [];
 
-      DockerService.scaleUp(organ, opts)
+      // Add constraints
+      _.forEach(opts, function (value, key) {
+        if (value != '') {
+          environment.push('constraint:' + key + '==' + value);
+        }
+      });
+
+      DockerService.scaleUp(organ, {environment: environment})
         .then(function (newCell) {
           AppLog.create({
             application_id: organ.application_id,
