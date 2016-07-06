@@ -78,6 +78,8 @@ module.exports.routes = {
   'POST /policy/remove': 'RuleController.removeRules',
 
   // Analytics queries
-  'GET /analytics/organCpu': 'PrometheusController.getOrganCpu'
+  'GET /analytics/organCpu': 'AnalyticsController.getOrganCpu',
+  'GET /analytics/organMemory': 'AnalyticsController.getOrganMemory'
+
 
 };
