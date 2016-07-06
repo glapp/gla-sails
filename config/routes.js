@@ -79,7 +79,8 @@ module.exports.routes = {
 
   // Analytics queries
   'GET /analytics/organCpu': 'AnalyticsController.getOrganCpu',
-  'GET /analytics/organMemory': 'AnalyticsController.getOrganMemory'
+  'GET /analytics/organMemory': 'AnalyticsController.getOrganMemory',
+  'GET /analytics/events': 'AnalyticsController.getEvents'
 
 
 };

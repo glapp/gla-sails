@@ -14,6 +14,12 @@ module.exports = {
     },
     content: {
       type: 'text'
+    },
+    type: {
+      type: 'string'
+    },
+    name: {
+      type: 'string'
     }
   }
 };

@@ -33,7 +33,9 @@ module.exports = {
             //   .then(function (result) {
             //     AppLog.create({
             //       application_id: organ.application_id,
-            //       content: 'Moved ' + organ.originalName + ' from ' + oldNode + ' to ' + opts.node + '.'
+            //       content: 'Moved ' + organ.originalName + ' from ' + oldNode + ' to ' + opts.node + '.',
+            //       type: 'info',
+            //       name: 'move'
             //     }).exec(function (err, created) {
             //       if (err) console.error('Couldn\'t create log! ', err);
             //       res.ok(result);
@@ -42,7 +44,9 @@ module.exports = {
             //   .catch(function (err) {
             //     AppLog.create({
             //       application_id: organ.application_id,
-            //       content: 'Failed to move ' + organ.originalName + '.'
+            //       content: 'Failed to move ' + organ.originalName + '.',
+            //       type: 'error',
+            //       name: 'move'
             //     }).exec(function (logErr, created) {
             //       if (logErr) console.error('Couldn\'t create log! ', logErr);
             //       res.serverError(err);
@@ -64,7 +68,9 @@ module.exports = {
                 var newNode = newCell.host;
                 AppLog.create({
                   application_id: organ.application_id,
-                  content: 'Moved ' + organ.originalName + ' from ' + oldNode + ' to ' + newNode + '.'
+                  content: 'Moved ' + organ.originalName + ' from ' + oldNode + ' to ' + newNode + '.',
+                  type: 'info',
+                  name: 'move'
                 }).exec(function (err, created) {
                   if (err) console.error('Couldn\'t create log! ', err);
                   res.ok(newCell);
@@ -73,7 +79,9 @@ module.exports = {
               .catch(function (err) {
                 AppLog.create({
                   application_id: organ.application_id,
-                  content: 'Failed to move ' + organ.originalName + '.'
+                  content: 'Failed to move ' + organ.originalName + '.',
+                  type: 'error',
+                  name: 'move'
                 }).exec(function (logErr, created) {
                   if (logErr) console.error('Couldn\'t create log! ', logErr);
                   res.serverError(err);

@@ -52,6 +52,17 @@ module.exports = {
       .catch(function(err) {
         res.serverError(err);
       });
+  },
+
+  getEvents: function(req, res) {
+    var app_id = req.param('app_id');
+
+    AppLog.find({application_id: app_id})
+      .sort('createdAt DESC')
+      .exec(function(err, events) {
+        if (err) return res.serverError(err);
+        res.ok(events);
+      })
   }
 };
 
