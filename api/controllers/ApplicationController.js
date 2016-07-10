@@ -78,7 +78,9 @@ module.exports = {
 
       AppLog.create({
         application_id: app.id,
-        content: 'Application initialized.'
+        content: 'Application initialized.',
+        type: 'info',
+        name: 'init'
       }).exec(function (err) {
         if (err) console.error('Couldn\'t create log! ', err)
       });
@@ -120,7 +122,9 @@ module.exports = {
 
           AppLog.create({
             application_id: app.id,
-            content: 'Application ready to be deployed.'
+            content: 'Application ready to be deployed.',
+            type: 'info',
+            name: 'create'
           }).exec(function (err, created) {
             if (err) console.error('Couldn\'t create log! ', err);
             // TODO: Socket emit 'ready'
@@ -135,7 +139,9 @@ module.exports = {
 
           AppLog.create({
             application_id: app.id,
-            content: 'Creation failed!'
+            content: 'Creation failed!',
+            type: 'error',
+            name: 'create'
           }).exec(function (err, created) {
             if (err) console.error('Couldn\'t create log! ', newErr);
             // TODO: Socket emit 'failed'
@@ -171,7 +177,9 @@ module.exports = {
           app.status = 'deployed';
           AppLog.create({
             application_id: app_id,
-            content: 'Deployed!'
+            content: 'Deployed!',
+            type: 'info',
+            name: 'deploy'
           }).exec(function (err, created) {
             if (err) console.error('Couldn\'t create log! ', err);
             app.save(function (err) {
@@ -207,7 +215,9 @@ module.exports = {
       .then(function (updated) {
         AppLog.create({
           application_id: app_id,
-          content: 'Undeployed'
+          content: 'Undeployed.',
+          type: 'info',
+          name: 'undeploy'
         }).exec(function (err, created) {
           if (err) console.error('Couldn\'t create log! ', err);
           res.ok(updated[0]);
@@ -216,7 +226,9 @@ module.exports = {
       .catch(function (err) {
         AppLog.create({
           application_id: app_id,
-          content: 'Undeployement failed'
+          content: 'Undeployement failed',
+          type: 'error',
+          name: 'undeploy'
         }).exec(function (logErr, created) {
           if (logErr) console.error('Couldn\'t create log! ', err);
           res.serverError(err);
@@ -267,7 +279,9 @@ module.exports = {
       .then(function(updated) {
         AppLog.create({
           application_id: app_id,
-          content: 'Renamed application to ' + newName + '.'
+          content: 'Renamed application to ' + newName + '.',
+          type: 'info',
+          name: 'rename'
         }).exec(function (err, created) {
           if (err) console.error('Couldn\'t create log! ', err);
           res.ok(updated[0]);
@@ -276,7 +290,9 @@ module.exports = {
       .catch(function(err) {
         AppLog.create({
           application_id: app_id,
-          content: 'Renaming to ' + newName + 'failed.'
+          content: 'Renaming to ' + newName + 'failed.',
+          type: 'error',
+          name: 'rename'
         }).exec(function (logErr, created) {
           if (logErr) console.error('Couldn\'t create log! ', err);
           res.serverError(err);

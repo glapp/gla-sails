@@ -75,6 +75,12 @@ module.exports.routes = {
   // Policy
   'GET /policy': 'RuleController.getRules',
   'POST /policy/set': 'RuleController.setRules',
-  'POST /policy/remove': 'RuleController.removeRules'
+  'POST /policy/remove': 'RuleController.removeRules',
+
+  // Analytics queries
+  'GET /analytics/organCpu': 'AnalyticsController.getOrganCpu',
+  'GET /analytics/organMemory': 'AnalyticsController.getOrganMemory',
+  'GET /analytics/events': 'AnalyticsController.getEvents'
+
 
 };

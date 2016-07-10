@@ -40,7 +40,9 @@ module.exports = {
         .then(function (newCell) {
           AppLog.create({
             application_id: organ.application_id,
-            content: 'Scaled up ' + organ.originalName + '.'
+            content: 'Scaled up ' + organ.originalName + '.',
+            type: 'info',
+            name: 'scaleUp'
           }).exec(function (err, created) {
             if (err) console.error('Couldn\'t create log! ', err);
             res.ok(newCell);
@@ -49,7 +51,9 @@ module.exports = {
         .catch(function (err) {
           AppLog.create({
             application_id: organ.application_id,
-            content: 'Failed to scale up ' + organ.originalName + '.'
+            content: 'Failed to scale up ' + organ.originalName + '.',
+            type: 'error',
+            name: 'scaleUp'
           }).exec(function (logErr, created) {
             if (err) console.error('Couldn\'t create log! ', logErr);
             res.serverError(err);
@@ -82,7 +86,9 @@ module.exports = {
                 if (err) return res.serverError(err);
                 AppLog.create({
                   application_id: organ.application_id,
-                  content: 'Scaled down ' + organ.originalName + '.'
+                  content: 'Scaled down ' + organ.originalName + '.',
+                  type: 'info',
+                  name: 'scaleDown'
                 }).exec(function (err, created) {
                   if (err) console.error('Couldn\'t create log! ', err);
                   res.ok();
@@ -92,7 +98,9 @@ module.exports = {
             .catch(function (err) {
               AppLog.create({
                 application_id: organ.application_id,
-                content: 'Failed to scale down ' + organ.originalName + '.'
+                content: 'Failed to scale down ' + organ.originalName + '.',
+                type: 'error',
+                name: 'scaleDown'
               }).exec(function (logErr, created) {
                 if (err) console.error('Couldn\'t create log! ', logErr);
                 res.serverError(err);
