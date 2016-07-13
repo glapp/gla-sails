@@ -15,7 +15,7 @@ var swarmHostArray = swarmHostEnv.split(":");
 var swarmHost = swarmHostArray[0];
 var swarmPort = swarmHostArray[1] ? swarmHostArray[1] : '3376';
 
-var CERT_PATH = process.env.CERT_PATH || require('path').join(require('os').homedir(), '.docker', 'machine', 'certs');
+var CERT_PATH = process.env.CERT_PATH ? process.env.CERT_PATH : require('path').join(require('os').homedir(), '.docker', 'machine', 'certs');
 
 var swarm = new Docker({
   host: swarmHost,
@@ -258,7 +258,7 @@ module.exports = {
 
       swarmMasterContainer.inspect(function(err, data) {
         if (err) return reject(err);
-        
+
         var consulRegEx = /^consul\:\/\/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})$/;
 
         if (data.Args) {

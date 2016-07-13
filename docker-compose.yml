@@ -1,0 +1,21 @@
+version: "2"
+
+services:
+  gla-sails:
+    build: .
+    environment:
+      - MONGO_HOST=mongo
+    depends_on:
+      - mongo
+
+  gla-angular:
+    build: ../gla-angular
+    ports:
+      - 3000
+    environment:
+      - SAILS_HOST=gla-sails
+    depends_on:
+      - gla-sails
+
+  mongo:
+    image: mongo
