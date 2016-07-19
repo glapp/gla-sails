@@ -5,17 +5,20 @@ services:
     build: .
     environment:
       - MONGO_HOST=mongo
+      - SWARM_HOST=${SWARM_HOST}
+    ports:
+      - 1337
     depends_on:
       - mongo
 
-  gla-angular:
-    build: ../gla-angular
-    ports:
-      - 3000
-    environment:
-      - SAILS_HOST=gla-sails
-    depends_on:
-      - gla-sails
+  # gla-angular:
+  #  build: ../gla-angular
+  # environment:
+  #   - SAILS_HOST=gla-sails
+  # ports:
+  #   - 3000
+  # depends_on:
+  #   - gla-sails
 
   mongo:
     image: mongo

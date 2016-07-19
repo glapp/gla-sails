@@ -5,29 +5,13 @@ This application is based on [Sails](http://sailsjs.org).
 ## Pre-requisites
 * [Node.js](https://nodejs.org/)
 * [Docker-Machine](https://docs.docker.com/machine/install-machine/)
+* A fixed infrastructure in place
+  * e.g. https://bitbucket.org/uzh/docker-swarm-creation
 
 ## Prepare
-* `npm install`
-* Set up a docker swarm
-  * Set up key-value storage:
-    * ``docker-machine create -d virtualbox kvstore``
-    * Unix: ``eval $(docker-machine env kvstore)``, Windows: ``FOR /f "tokens=*" %i IN ('docker-machine env --shell=cmd kvstore') DO %i``
-    * ```docker run -d --net=host progrium/consul --server -bootstrap-expect 1```
-  * Create swarm-master
-    * ```docker-machine create -d virtualbox --engine-opt "cluster-store consul://$(docker-machine ip kvstore):8500" --engine-opt "cluster-advertise eth1:2376" --swarm --swarm-master --swarm-discovery consul://$(docker-machine ip kvstore):8500 swarm-master```
-    * Note that this is the same command as setting up a regular swarm-master, but with another swarm-discovery argument and some engine-opts.
-  * Create swarm agents
-    * ```docker-machine create -d virtualbox --engine-opt "cluster-store consul://$(docker-machine ip kvstore):8500" --engine-opt "cluster-advertise eth1:2376" --swarm --swarm-discovery consul://$(docker-machine ip kvstore):8500 swarm-agent-00```
-    * Here, again, the only change to setting up a regular swarm-agent is the swarm-discovery and the engine-opts.
-    * Same command for swarm-agent-01, swarm-agent-02, etc.
-  * To get the IP and the right port on the swarm-master, type ``docker-machine env --swarm swarm-master``
-* Copy config/localSample.js
-  * Name the new file local.js
-  * Set SWARM_HOST and SWARM_PORT to the information extracted from the above command
-  * Add the DOCKER_CERT_PATH
+* Have [gla-angular](git@bitbucket.org:uzh/gla-angular.git) ready in the parent directory
+* Copy your .pem files into config/certs (the content of this folder is gitignored)
 
 ## Run
-* Start app with `npm start`
-
-## Test
-* Run the defined tests with `npm test`
+* Set the environment variable SWARM_HOST to the swarm-host `IP:port` (e.g. `SWARM_HOST=192.168.99.101:3376`)
+* Start app with `docker-compose up -d`
