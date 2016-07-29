@@ -1,19 +1,25 @@
 version: "2"
 
 services:
-  gla_sails:
+  glasails:
     build: .
     environment:
       - SWARM_HOST=${SWARM_HOST}:3376
+    ports:
+      - 1337:1337
+    environment:
+      - MONGO_HOST=mongo
     depends_on:
       - mongo
 
-  gla_angular:
+  glaangular:
     build: ../gla-angular
     ports:
       - 3000:3000
+    environment:
+      - SAILS_PORT=1337
     depends_on:
-      - gla_sails
+      - glasails
 
   mongo:
     image: mongo

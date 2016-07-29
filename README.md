@@ -1,6 +1,4 @@
-# GLA-pilot
-
-This application is based on [Sails](http://sailsjs.org).
+# GLA Backend
 
 ## Pre-requisites
 * [Node.js](https://nodejs.org/)
