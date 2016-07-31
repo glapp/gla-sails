@@ -5,6 +5,7 @@ services:
     build: .
     environment:
       - SWARM_HOST=${SWARM_HOST}:3376
+      - CERT_PATH=/gla-sails/config/certs
     ports:
       - 1337:1337
     environment:
@@ -13,7 +14,7 @@ services:
       - mongo
 
   glaangular:
-    build: ../gla-angular
+    image: clabs/gla-angular
     ports:
       - 3000:3000
     environment:

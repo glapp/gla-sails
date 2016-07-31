@@ -6,7 +6,6 @@
   * e.g. https://bitbucket.org/uzh/docker-swarm-creation
 
 ## Prepare
-* Have [gla-angular](git@bitbucket.org:uzh/gla-angular.git) ready in the parent directory
 * Copy your .pem files into config/certs (the content of this folder is gitignored)
 * Set the environment variable SWARM_HOST to the swarm-host `IP:port` (e.g. `SWARM_HOST=192.168.99.101:3376`). If no port is declared, 3376 is assumed.
 
