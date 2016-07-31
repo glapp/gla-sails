@@ -12,7 +12,7 @@ describe('UserController', function () {
       agent = request.agent(sails.hooks.http.app);
 
       agent
-        .post('/signup')
+        .post('/user/signup')
         .send({email: 'signup@test.com', password: 'test'})
         .expect(200)
         .end(function (err, res) {
@@ -24,7 +24,7 @@ describe('UserController', function () {
 
     it('should log out', function(done) {
       agent
-        .get('/logout')
+        .get('/user/logout')
         .expect(200, done);
     })
   });
@@ -33,7 +33,7 @@ describe('UserController', function () {
     // Logging in
     before(function (done) {
       agent
-        .put('/login')
+        .put('/user/login')
         .send({email: 'test@test.com', password: 'password'})
         .end(function(req, res) {
           done();
@@ -42,7 +42,7 @@ describe('UserController', function () {
 
     it('should confirm being logged in', function (done) {
       agent
-        .get('/confirm-login')
+        .get('/user/confirm-login')
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
@@ -53,7 +53,7 @@ describe('UserController', function () {
 
     it('should log out', function (done) {
       agent
-        .get('/logout')
+        .get('/user/logout')
         .expect(200, done)
     });
   });
@@ -68,7 +68,7 @@ describe('UserController', function () {
 
     it('should confirm not being logged in', function (done) {
       agent
-        .get('/confirm-login')
+        .get('/user/confirm-login')
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
@@ -79,7 +79,7 @@ describe('UserController', function () {
 
     it('should log in', function (done) {
       agent
-        .put('/login')
+        .put('/user/login')
         .send({email: 'test@test.com', password: 'password'})
         .expect(200)
         .end(function (err, res) {
@@ -91,7 +91,7 @@ describe('UserController', function () {
 
     it('should confirm being logged in', function (done) {
       agent
-        .get('/confirm-login')
+        .get('/user/confirm-login')
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;

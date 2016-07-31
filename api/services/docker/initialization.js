@@ -173,35 +173,37 @@ module.exports = {
           if (err) return done(err);
 
           // If we have to build the image first
-          if (changed && organ.build) {
-            var buildpath = require('path').join(path, organ.build);
-            // Make tar
-            tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
-              .on('finish', function () {
-                DockerService.swarm.buildImage(buildpath + '.tar', {t: organ.image}, function (err, stream) {
-                  if (err) return done(err);
-
-                  DockerService.swarm.modem.followProgress(stream, onFinished, onProgress);
-
-                  function onProgress(event) {
-                    console.log(_.values(event));
-                  }
-
-                  function onFinished(err, output) {
-                    if (err) return done(err);
-                    completeParameters(found)
-                      .then(done)
-                      .catch(function (err) {
-                        done(err);
-                      });
-                  }
-                });
-              })
-              .on('error', function (err) {
-                return done(err);
-              });
-            // If the image has to be pulled
-          } else if (organ.image && !organ.build) {
+          // TODO: Since building is not supported by the swarm yet, this is disabled
+          // if (changed && organ.build) {
+          //   var buildpath = require('path').join(path, organ.build);
+          //   // Make tar
+          //   tar.pack(buildpath).pipe(fs.createWriteStream(buildpath + '.tar'))
+          //     .on('finish', function () {
+          //       DockerService.swarm.buildImage(buildpath + '.tar', {t: organ.image}, function (err, stream) {
+          //         if (err) return done(err);
+          //
+          //         DockerService.swarm.modem.followProgress(stream, onFinished, onProgress);
+          //
+          //         function onProgress(event) {
+          //           console.log(_.values(event));
+          //         }
+          //
+          //         function onFinished(err, output) {
+          //           if (err) return done(err);
+          //           completeParameters(found)
+          //             .then(done)
+          //             .catch(function (err) {
+          //               done(err);
+          //             });
+          //         }
+          //       });
+          //     })
+          //     .on('error', function (err) {
+          //       return done(err);
+          //     });
+          //   // If the image has to be pulled
+          // } else
+          if (organ.image && !organ.build) {
             var image = DockerService.swarm.getImage(organ.image);
             image.inspect(function (err, inspectData) {
               if (err && err.statusCode != 404) return done(err);

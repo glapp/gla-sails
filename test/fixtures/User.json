@@ -1,7 +1,6 @@
 [
   {
     "email": "test@test.com",
-    "encryptedPassword": "password",
-    "id": 1
+    "encryptedPassword": "password"
   }
 ]

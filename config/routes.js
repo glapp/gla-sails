@@ -82,5 +82,4 @@ module.exports.routes = {
   'GET /analytics/organMemory': 'AnalyticsController.getOrganMemory',
   'GET /analytics/events': 'AnalyticsController.getEvents'
 
-
 };

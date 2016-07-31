@@ -18,7 +18,7 @@ module.exports = {
         reject('At least one component is not ready yet.');
       } else {
         DockerService.swarm.createNetwork({
-          Name: app.id
+          Name: app.id.toString()
         }, function (err, network) {
           if (err) {
             reject(err);
@@ -132,7 +132,7 @@ module.exports = {
         ExposedPorts: exposed,
         HostConfig: {
           //PortBindings: portBindings,
-          NetworkMode: organ.application_id
+          NetworkMode: organ.application_id.toString()
         }
       }, function (err, container) {
         if (err) reject(err);
@@ -182,7 +182,7 @@ module.exports = {
         ExposedPorts: exposed,
         HostConfig: {
           PortBindings: portBindings,
-          NetworkMode: organ.application_id
+          NetworkMode: organ.application_id.toString()
         }
       }, function (err, container) {
         if (err) reject(err);

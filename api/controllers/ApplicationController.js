@@ -70,6 +70,12 @@ module.exports = {
     var gitUrl = req.param('gitUrl');
     var name = req.param('name');
 
+    var regex = /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?)(([\w\.@:\/\-~]+\/)+)([\w\.@:\/\-~]+)(\.git)(\/)?/;
+    var result = gitUrl.match(regex);
+
+    if (!gitUrl || !name || !result || !result[9]) return res.badRequest('Please specify a name and a valid Git Url!');
+    var gitName = result[9];
+
     Application.create({owner: user_id, name: name, gitUrl: gitUrl, status: 'preparing'}, function (err, app) {
       if (err) {
         res.badRequest(err);
@@ -85,37 +91,24 @@ module.exports = {
         if (err) console.error('Couldn\'t create log! ', err)
       });
 
-      if (req.isSocket) {
-        Application.watch(req);
-        Application.subscribe(req, [app.id]);
-      }
+      var path = require("path").join('.tmp', gitName);
 
-      console.log('---------> Starting git clone');
-
-      var regex = /((git|ssh|http(s)?)|(git@[\w\.]+))(:(\/\/)?)(([\w\.@:\/\-~]+\/)+)([\w\.@:\/\-~]+)(\.git)(\/)?/;
-      var result = gitUrl.match(regex);
-
-      if (!result || !result[9]) {
-        app.status = 'failed';
-        app.save();
-        return;
-      }
-
-      var name = result[9];
-      var path = require("path").join('.tmp', name);
-
-      // Promisified process
+      // Clone repo
       clone(gitUrl, path, null)
+        // Extract components
         .then(function () {
           return DockerService.extractComponents(path, app.id);
         })
+        // Send OK back and finish the process in the background
         .then(function (updatedApp) {
           res.ok({
             app: updatedApp
           });
           return DockerService.createComponents(path, updatedApp)
         })
+        // Cleaning up, finishing
         .then(function () {
+          // TODO: Socket emit 'ready'
           app.status = 'ready';
           app.save();
           cleanUp(path);
@@ -127,8 +120,6 @@ module.exports = {
             name: 'create'
           }).exec(function (err, created) {
             if (err) console.error('Couldn\'t create log! ', err);
-            // TODO: Socket emit 'ready'
-            res.ok();
           })
         })
         .catch(function (err) {
@@ -162,13 +153,11 @@ module.exports = {
     }
 
     var app_id = req.param('app_id');
+    if (!app_id) return res.badRequest('No app id specified');
 
     Application.findOne({id: app_id, owner: user_id}).populate('organs').exec(function (err, app) {
-      if (err) {
-        res.serverError(err);
-        console.error(err);
-        return;
-      }
+      if (err) return res.serverError(err);
+      if (!app) return res.badRequest('No app with id ' + app_id + ' found')
       DockerService.handleNetwork(app)
         .then(function (network) {
           return DockerService.deploy(app, network)
@@ -189,7 +178,7 @@ module.exports = {
           })
         })
         .catch(function (err) {
-          res.badRequest(err);
+          res.serverError(err);
         });
     });
   },
@@ -199,6 +188,8 @@ module.exports = {
     if (!req.session.me) return res.forbidden();
 
     var app_id = req.param('app_id');
+    if (!app_id) return res.badRequest('No app id specified');
+
     var app;
 
     DockerService.getCompleteAppData(app_id)
@@ -210,7 +201,7 @@ module.exports = {
         return Cell.destroy({organ_id: _.map(app.organs, 'id')})
       })
       .then(function () {
-        return Application.update({id: app_id}, {status: 'ready'})
+        return Application.update({id: app_id}, {status: 'ready', networkId: null})
       })
       .then(function (updated) {
         AppLog.create({

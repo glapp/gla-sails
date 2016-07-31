@@ -18,6 +18,7 @@ module.exports = {
     },
     gitUrl: {
       type: 'string',
+      required: true
     },
     organs: {
       collection: 'Organ',

@@ -2,11 +2,13 @@
   {
     "owner": 1,
     "name": "TestApplication",
-    "id": 1
+    "id": 1,
+    "gitUrl": "https://github.com/Clabfabs/docker-network-demos.git"
   },
   {
     "owner": 1,
     "name": "TestApplication2",
-    "id": 2
+    "id": 2,
+    "gitUrl": "https://github.com/Clabfabs/docker-network-demos.git"
   }
 ]

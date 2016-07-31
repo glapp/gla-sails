@@ -18,22 +18,22 @@ describe('ApplicationController', function () {
     before(function (done) {
       agent = request.agent(sails.hooks.http.app);
       agent
-        .put('/login')
+        .put('/user/login')
         .send({email: 'test@test.com', password: 'password'})
         .end(function (err, res) {
-          done();
+          done(err);
         })
     });
 
     it('should get pre-filled application', function (done) {
       agent
-        .get('/getUserApps')
+        .get('/application/getUserApps')
         .expect(200)
         .end(function (err, res) {
-          if (err) throw err;
+          if (err) return done(err);
           expect(res.body.apps).to.have.length(2);
           expect(res.body.apps[0].name).to.equal('TestApplication');
-          expect(res.body.apps[0].components).to.have.length(2);
+          expect(res.body.apps[0].organs).to.have.length(2);
           expect(res.body.apps[1].name).to.equal('TestApplication2');
           done();
         })
@@ -41,29 +41,29 @@ describe('ApplicationController', function () {
 
     it('should add an application', function (done) {
       agent
-        .post('/app')
-        .send({name: 'testapp'})
+        .post('/application/add')
+        .send({name: 'testapp', gitUrl: 'https://github.com/Clabfabs/docker-network-demos.git'})
         .expect(200)
         .end(function (err, res) {
-          if (err) throw err;
-          expect(res.body).to.contain.keys('id');
-          done();
+          if (err) return done(err);
+          expect(res.body).to.contain.keys('app');
+          expect(res.body.app).to.contain.keys('id');
+          expect(res.body.app.id).to.equal(3);
+          setTimeout(done, 1000);
         });
     });
-  });
 
-  describe('When an application is added', function () {
-
-    it('should turn docker-compose.yml into components', function (done) {
+    it('should find details of the application that don\'t include deployment data', function (done) {
       agent
-        .post('/registerComponents')
-        .send({app: 2, gitUrl: 'https://github.com/Clabfabs/docker-network-demos.git'})
+        .get('/application/details?app_id=3')
         .expect(200)
-        .end(function(err, res) {
-          if (err) throw err;
-          expect(res.body).to.have.length(2);
-          expect(res.body[0].image).to.equal('bfirsh/compose-mongodb-demo');
-          expect(res.body[1].image).to.equal('mongo');
+        .end(function (err, res) {
+          if (err) return done(err);
+          expect(res.body).to.contain.keys(['organs', 'rules', 'log', 'owner']);
+          expect(res.body).to.not.contain.keys('networkId');
+          expect(res.body.organs).to.have.length(2);
+          expect(res.body.organs[0]).to.contain.keys(['cells', 'application_id', 'originalName', 'environment', 'image']);
+          expect(res.body.organs[0].cells).to.have.length(0);
           done();
         })
     });
@@ -72,15 +72,103 @@ describe('ApplicationController', function () {
   describe('When an application is ready to deploy', function () {
 
     it('should deploy the application', function (done) {
-      console.log('Your swarm will flooded with 2 containers and a new network in any case - don\'t forget to clean it!');
       agent
-        .post('/deploy')
-        .send({app_id: 1})
+        .post('/application/deploy')
+        .send({app_id: 3})
         .expect(200)
-        .end(function(err, res) {
-          if (err) throw err;
+        .end(done)
+    });
+  });
+
+  describe('When an application is deployed', function () {
+
+    it('should find details of the application, including deployment data', function (done) {
+      agent
+        .get('/application/details?app_id=3')
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          expect(res.body).to.contain.keys(['organs', 'rules', 'log', 'owner', 'networkId']);
+          expect(res.body.organs).to.have.length(2);
+          expect(res.body.organs[0]).to.contain.keys(['cells', 'application_id', 'originalName', 'environment', 'image']);
+          expect(res.body.organs[0].cells).to.have.length(2);
+          expect(res.body.organs[0].cells[0]).to.contain.keys(['host', 'isProxy', 'container_id', 'organ_id', 'environment']);
+          expect(res.body.organs[0].cells[0].host).to.contain.keys(['name', 'ip', 'status']);
           done();
         })
     });
+
+    it('should undeploy the application', function (done) {
+      agent
+        .post('/application/undeploy')
+        .send({app_id: 3})
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          expect(res.body).to.contain.keys(['status', 'networkId']);
+          expect(res.body.status).to.equal('ready');
+          expect(res.body.networkId).to.equal(null);
+          done();
+        })
+    });
+
+  });
+
+  describe('When an application has been undeployed', function () {
+
+    it('should redeploy the application', function (done) {
+      agent
+        .post('/application/deploy')
+        .send({app_id: 3})
+        .expect(200)
+        .end(done)
+    });
+  });
+
+  describe('When an application has been redeployed', function () {
+
+    it('should find details of the application, including deployment data', function (done) {
+      agent
+        .get('/application/details?app_id=3')
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          expect(res.body).to.contain.keys(['organs', 'rules', 'log', 'owner', 'networkId']);
+          expect(res.body.organs).to.have.length(2);
+          expect(res.body.organs[0]).to.contain.keys(['cells', 'application_id', 'originalName', 'environment', 'image']);
+          expect(res.body.organs[0].cells).to.have.length(2);
+          expect(res.body.organs[0].cells[0]).to.contain.keys(['host', 'isProxy', 'container_id', 'organ_id', 'environment']);
+          expect(res.body.organs[0].cells[0].host).to.contain.keys(['name', 'ip', 'status']);
+          done();
+        })
+    });
+
+    it('should remove the application', function (done) {
+      agent
+        .post('/application/remove')
+        .send({app_id: 3})
+        .expect(200)
+        .end(done)
+    });
+  });
+
+  // Clearing docker if tests fail
+  after(function (done) {
+    // Check if the deployed app is still not removed (-> tests failed)
+    agent
+      .get('/application/getUserApps')
+      .end(function(err, res) {
+        if (err) return done(err);
+        if (res.body.apps.length < 3) return done();
+
+        // If so, remove it
+        agent
+          .post('/application/remove')
+          .send({app_id: 3})
+          .end(function (err, res) {
+            console.log('\n ---------> Docker cleared.')
+            done(err, res);
+          })
+      });
   });
 });
