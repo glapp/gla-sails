@@ -4,12 +4,11 @@ services:
   glasails:
     build: .
     environment:
-      - SWARM_HOST=${SWARM_HOST}:3376
+      - SWARM_HOST=${SWARM_HOST}
       - CERT_PATH=/gla-sails/config/certs
+      - MONGO_HOST=mongo
     ports:
       - 1337:1337
-    environment:
-      - MONGO_HOST=mongo
     depends_on:
       - mongo
 
