@@ -24,8 +24,11 @@ module.exports = {
     var organ_id = req.param('organ_id');
     var opts = req.param('options');
 
+    if (!organ_id) return res.badRequest('No organ id specified');
+
     Organ.findOne({id: organ_id}, function (err, organ) {
       if (err) return res.serverError(err);
+      if (!organ) return res.notFound('No organ found with id ' + organ_id);
 
       var environment = [];
 
@@ -66,10 +69,14 @@ module.exports = {
     var organ_id = req.param('organ_id');
     var cell_id = req.param('cell_id');
 
+    if (!organ_id) return res.badRequest('No organ id specified');
+
     Organ.findOne({id: organ_id})
       .populate('cells')
       .exec(function (err, organ) {
         if (err) return res.serverError(err);
+
+        if (!organ) return res.notFound('No organ found with id ' + organ_id);
 
         var cell = _.find(organ.cells, {id: cell_id});
 

@@ -77,10 +77,7 @@ module.exports = {
     var gitName = result[9];
 
     Application.create({owner: user_id, name: name, gitUrl: gitUrl, status: 'preparing'}, function (err, app) {
-      if (err) {
-        res.badRequest(err);
-        return;
-      }
+      if (err) return res.badRequest(err);
 
       AppLog.create({
         application_id: app.id,
@@ -145,19 +142,16 @@ module.exports = {
   deploy: function (req, res) {
     var user_id;
 
-    if (req.session.me) {
-      user_id = req.session.me;
-    } else {
-      res.forbidden();
-      return;
-    }
+    if (req.session.me) user_id = req.session.me;
+    else return res.forbidden();
 
     var app_id = req.param('app_id');
     if (!app_id) return res.badRequest('No app id specified');
 
     Application.findOne({id: app_id, owner: user_id}).populate('organs').exec(function (err, app) {
       if (err) return res.serverError(err);
-      if (!app) return res.badRequest('No app with id ' + app_id + ' found')
+      if (!app) return res.notFound('No app with id ' + app_id + ' found')
+
       DockerService.handleNetwork(app)
         .then(function (network) {
           return DockerService.deploy(app, network)

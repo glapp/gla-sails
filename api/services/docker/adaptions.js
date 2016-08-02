@@ -3,70 +3,43 @@
  */
 
 var _ = require('lodash');
-
 var common = require('./common.js');
 
 module.exports = {
 
-  moveContainer: function (cell, opts) {
+  moveContainer: function (oldContainerId, containerBlueprint) {
     return new Promise(function (resolve, reject) {
 
-      Organ
-        .findOne({id: cell.organ_id})
-        .exec(function (err, organ) {
-          if (err) return res.serverError(err);
+      // Create the new container
+      DockerService.createContainer(containerBlueprint)
+        .then(function (newContainer) {
 
-          // delete previous constraints
-          _.remove(cell.environment, function (compEnv) {
-            var re = /^constraint:.+=/g;
-            return re.test(compEnv);
+          // Start the new container
+          newContainer.start(function (err) {
+            if (err) return reject(err);
+
+            var old = DockerService.swarm.getContainer(oldContainerId);
+
+            // Remove old container
+            old.remove({force: true}, function (err) {
+              if (err) return reject(err);
+
+              var created = DockerService.swarm.getContainer(newContainer.id);
+
+              created.cell_id = containerBlueprint.cell_id;
+
+              // Complete cell information
+              common.completeCells([created])
+                .then(function (result) {
+                  resolve(result[0]);
+                })
+                .catch(reject);
+            });
+
           });
-
-          // Add environment opts
-          _.forEach(opts.environment, function (optEnv) {
-            cell.environment.push(optEnv);
-          });
-
-          // Save cell
-          cell.save();
-
-          var old_id = cell.container_id;
-
-          var copy = _.extend({}, organ);
-
-          copy.environment = _.extend(cell.environment, organ.environment);
-
-          // Create the new container
-          DockerService.createContainer(copy)
-            .then(function (newContainer) {
-
-              // Start the new container
-              newContainer.start(function (err) {
-                if (err) return reject(err);
-
-                var old = DockerService.swarm.getContainer(old_id);
-
-                // Remove old container
-                old.remove({force: true}, function (err) {
-                  if (err) return reject(err);
-
-                  var created = DockerService.swarm.getContainer(newContainer.id);
-
-                  created.cell_id = cell.id;
-
-                  // Complete cell information
-                  common.completeCells([created])
-                    .then(function (result) {
-                      resolve(result[0]);
-                    })
-                    .catch(reject);
-                });
-
-              });
-            })
-            .catch(function (err) {
-              reject(err);
-            })
+        })
+        .catch(function (err) {
+          reject(err);
         })
     });
   },
@@ -79,7 +52,7 @@ module.exports = {
       copy.environment = _.extend(organ.environment, opts.environment);
 
       // Create cell database entry
-      Cell.create({organ_id: organ.id}, function (err, cell) {
+      Cell.create({organ_id: organ.id, environment: opts.environment}, function (err, cell) {
         if (err) return reject(err);
 
         DockerService.createContainer(copy)

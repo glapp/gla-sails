@@ -8,6 +8,7 @@ var request = require('supertest');
 var expect = require('chai').expect;
 
 var agent;
+var appId;
 
 describe('ApplicationController', function () {
 
@@ -38,6 +39,22 @@ describe('ApplicationController', function () {
         })
     });
 
+    it('should fail to add an application because of invalid git url', function (done) {
+      agent
+        .post('/application/add')
+        .send({name: 'testapp', gitUrl: 'https://www.invalid.com'})
+        .expect(400)
+        .end(done);
+    });
+
+    it('should fail to add an application because name is missing', function (done) {
+      agent
+        .post('/application/add')
+        .send({gitUrl: 'https://github.com/Clabfabs/docker-network-demos.git'})
+        .expect(400)
+        .end(done);
+    });
+
     it('should add an application', function (done) {
       agent
         .post('/application/add')
@@ -47,21 +64,21 @@ describe('ApplicationController', function () {
           if (err) return done(err);
           expect(res.body).to.contain.keys('app');
           expect(res.body.app).to.contain.keys('id');
-          expect(res.body.app.id).to.equal(3);
+          appId = res.body.app.id;
           setTimeout(done, 1000);
         });
     });
 
     it('should find details of the application that don\'t include deployment data', function (done) {
       agent
-        .get('/application/details?app_id=3')
+        .get('/application/details?app_id=' + appId)
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
           expect(res.body).to.contain.keys(['organs', 'rules', 'log', 'owner']);
           expect(res.body).to.not.contain.keys('networkId');
           expect(res.body.organs).to.have.length(2);
-          expect(res.body.organs[0]).to.contain.keys(['cells', 'application_id', 'originalName', 'environment', 'image']);
+          expect(res.body.organs[0]).to.contain.keys(['cells', 'application_id', 'originalName', 'environment', 'image', 'id']);
           expect(res.body.organs[0].cells).to.have.length(0);
           done();
         })
@@ -70,10 +87,18 @@ describe('ApplicationController', function () {
 
   describe('When an application is ready to deploy', function () {
 
+    it('should fail to deploy the application because of invalid app id', function (done) {
+      agent
+        .post('/application/deploy')
+        .send({app_id: 'notValid'})
+        .expect(404)
+        .end(done)
+    });
+
     it('should deploy the application', function (done) {
       agent
         .post('/application/deploy')
-        .send({app_id: 3})
+        .send({app_id: appId})
         .expect(200)
         .end(done)
     });
@@ -83,7 +108,7 @@ describe('ApplicationController', function () {
 
     it('should find details of the application, including deployment data', function (done) {
       agent
-        .get('/application/details?app_id=3')
+        .get('/application/details?app_id=' + appId)
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
@@ -100,7 +125,7 @@ describe('ApplicationController', function () {
     it('should undeploy the application', function (done) {
       agent
         .post('/application/undeploy')
-        .send({app_id: 3})
+        .send({app_id: appId})
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
@@ -110,7 +135,6 @@ describe('ApplicationController', function () {
           done();
         })
     });
-
   });
 
   describe('When an application has been undeployed', function () {
@@ -118,7 +142,7 @@ describe('ApplicationController', function () {
     it('should redeploy the application', function (done) {
       agent
         .post('/application/deploy')
-        .send({app_id: 3})
+        .send({app_id: appId})
         .expect(200)
         .end(done)
     });
@@ -128,7 +152,7 @@ describe('ApplicationController', function () {
 
     it('should find details of the application, including deployment data', function (done) {
       agent
-        .get('/application/details?app_id=3')
+        .get('/application/details?app_id=' + appId)
         .expect(200)
         .end(function (err, res) {
           if (err) return done(err);
@@ -145,7 +169,7 @@ describe('ApplicationController', function () {
     it('should remove the application', function (done) {
       agent
         .post('/application/remove')
-        .send({app_id: 3})
+        .send({app_id: appId})
         .expect(200)
         .end(done)
     });
@@ -163,7 +187,7 @@ describe('ApplicationController', function () {
         // If so, remove it
         agent
           .post('/application/remove')
-          .send({app_id: 3})
+          .send({app_id: appId})
           .end(function (err, res) {
             console.log('\n ---------> Docker cleared.')
             done(err, res);
