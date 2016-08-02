@@ -14,7 +14,6 @@ module.exports = {
       DockerService.swarm.info(function (err, data) {
         if (err) reject(err);
         else {
-          console.log(data);
           data.SystemStatus = parseSystemStatus(data);
 
           async.map(data.SystemStatus.Hosts, function (host, done) {

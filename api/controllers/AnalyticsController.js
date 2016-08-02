@@ -21,7 +21,8 @@ module.exports = {
       .populate('cells')
       .then(function (organ) {
         if (!organ || !organ.cells || organ.cells.length == 0) return res.badRequest('Invalid organ id');
-        return PrometheusService.fetchData(cpuMetric, organ.cells, timespan)
+        var cells = _.filter(organ.cells, {isProxy: false});
+        return PrometheusService.fetchData(cpuMetric, cells, timespan)
       })
       .then(PrometheusService.average)
       .then(function(result) {
@@ -43,7 +44,8 @@ module.exports = {
       .populate('cells')
       .then(function (organ) {
         if (!organ || !organ.cells || organ.cells.length == 0) return res.badRequest('Invalid organ id');
-        return PrometheusService.fetchData(memoryMetric, organ.cells, timespan)
+        var cells = _.filter(organ.cells, {isProxy: false});
+        return PrometheusService.fetchData(memoryMetric, cells, timespan)
       })
       .then(PrometheusService.average)
       .then(function(result) {

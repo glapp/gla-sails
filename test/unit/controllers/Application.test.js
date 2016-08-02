@@ -11,19 +11,18 @@ var agent;
 
 describe('ApplicationController', function () {
 
-  describe('When a user is signed in', function () {
-    var Cookies;
+  // Logging in
+  before(function (done) {
+    agent = request.agent(sails.hooks.http.app);
+    agent
+      .put('/user/login')
+      .send({email: 'test@test.com', password: 'password'})
+      .end(function (err, res) {
+        done(err);
+      })
+  });
 
-    // Logging in
-    before(function (done) {
-      agent = request.agent(sails.hooks.http.app);
-      agent
-        .put('/user/login')
-        .send({email: 'test@test.com', password: 'password'})
-        .end(function (err, res) {
-          done(err);
-        })
-    });
+  describe('When a user logs in', function () {
 
     it('should get pre-filled application', function (done) {
       agent

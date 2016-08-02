@@ -9,7 +9,6 @@ module.exports = {
 
   fetchData: function (metric, cells, timespan) {
     return new Promise(function (resolve, reject) {
-      // TODO: If it gets too complex, put this code into PrometheusService
       var url = 'http://' + sails.config.PROMETHEUS_URL + '/api/v1/query?query=';
 
       url += metric + '{id=~"';
@@ -24,8 +23,6 @@ module.exports = {
       console.log('url:', url);
       request(url, function (err, response, body) {
         if (err) return reject(err);
-        console.log(response);
-        console.log(body);
         resolve(JSON.parse(body));
       })
     });
@@ -37,6 +34,7 @@ module.exports = {
       var allValues = [];
       _.forEach(body.data.result, function (cellData) {
         _.forEach(cellData.values, function (dataPair) {
+          dataPair[0] = Math.ceil(dataPair[0] / 5) * 5;
           var existingIndex = _.findIndex(allValues, function (entry) {
             return entry.timestamp == dataPair[0];
           });
