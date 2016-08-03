@@ -47,13 +47,13 @@ module.exports = {
   scaleUp: function (organ, opts) {
     return new Promise(function (resolve, reject) {
 
-      var copy = _.extend({}, organ);
-
-      copy.environment = _.extend(organ.environment, opts.environment);
-
       // Create cell database entry
       Cell.create({organ_id: organ.id, environment: opts.environment}, function (err, cell) {
         if (err) return reject(err);
+
+        var copy = organ.toJSON();
+
+        copy.environment = _.concat(organ.environment, cell.environment);
 
         DockerService.createContainer(copy)
           .then(function (newContainer) {

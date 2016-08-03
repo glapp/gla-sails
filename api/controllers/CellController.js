@@ -60,31 +60,24 @@ module.exports = {
           //     })
           //   });
           // } else {
-          var environment = [];
+          var cellEnvironment = [];
 
           // Add constraints
           _.forEach(opts, function (value, key) {
             if (value != '') {
-              environment.push('constraint:' + key + '==' + value);
+              cellEnvironment.push('constraint:' + key + '==' + value);
             }
           });
 
-          // delete previous constraints
-          _.remove(cell.environment, function (compEnv) {
-            return constraintCheck.test(compEnv);
-          });
-
           // Add environment opts
-          _.forEach(environment, function (optEnv) {
-            cell.environment.push(optEnv);
-          });
+          cell.environment = cellEnvironment;
 
           // Save cell
           cell.save();
 
-          var newContainer = _.extend({}, organ);
+          var newContainer = organ.toJSON();
 
-          newContainer.environment = _.extend(cell.environment, organ.environment);
+          newContainer.environment = _.concat(cellEnvironment, newContainer.environment);
           newContainer.cell_id = cell.id;
 
           // Move

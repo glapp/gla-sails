@@ -17,10 +17,12 @@ module.exports = {
     var correctTimespan = /^[1-9][0-9]*[s|m|h|d|w|y]$/g.test(timespan);
     if (!correctTimespan) return res.badRequest('Invalid timespan');
 
+    if (!organ_id) return res.badRequest('Invalid organ_id');
+
     Organ.findOne({id: organ_id})
       .populate('cells')
       .then(function (organ) {
-        if (!organ || !organ.cells || organ.cells.length == 0) return res.badRequest('Invalid organ id');
+        if (!organ || !organ.cells || organ.cells.length == 0) return res.notFound('No organ or cells found');
         var cells = _.filter(organ.cells, {isProxy: false});
         return PrometheusService.fetchData(cpuMetric, cells, timespan)
       })
@@ -40,10 +42,12 @@ module.exports = {
     var correctTimespan = /^[1-9][0-9]*[s|m|h|d|w|y]$/g.test(timespan);
     if (!correctTimespan) return res.badRequest('Invalid timespan');
 
+    if (!organ_id) return res.badRequest('Invalid organ_id');
+
     Organ.findOne({id: organ_id})
       .populate('cells')
       .then(function (organ) {
-        if (!organ || !organ.cells || organ.cells.length == 0) return res.badRequest('Invalid organ id');
+        if (!organ || !organ.cells || organ.cells.length == 0) return res.badRequest('No organ or cells found');
         var cells = _.filter(organ.cells, {isProxy: false});
         return PrometheusService.fetchData(memoryMetric, cells, timespan)
       })
@@ -58,6 +62,9 @@ module.exports = {
 
   getEvents: function(req, res) {
     var app_id = req.param('app_id');
+
+    if (!app_id) return res.badRequest('Invalid organ_id');
+
 
     AppLog.find({application_id: app_id})
       .sort('createdAt DESC')
