@@ -1,9 +1,7 @@
 /**
  * Created by Fabio-local on 13.11.2015.
  */
-/**
- * Created by isler on 12-Nov-15.
- */
+
 var request = require('supertest');
 var expect = require('chai').expect;
 

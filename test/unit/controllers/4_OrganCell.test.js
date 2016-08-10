@@ -17,6 +17,8 @@ describe('Organ- and CellController', function () {
 
   // Logging in & deploying an app
   before(function (done) {
+    console.log('-- Initializing Organ- and CellController tests...');
+
     agent = request.agent(sails.hooks.http.app);
     agent
       .put('/user/login')
@@ -28,16 +30,22 @@ describe('Organ- and CellController', function () {
           .send({name: 'testapp', gitUrl: 'https://github.com/Clabfabs/docker-network-demos.git'})
           .end(function (err, res2) {
             if (err) return done(err);
+            if (!res2.body) return done(new Error('Failed to add application.'));
             appId = res2.body.app.id;
             setTimeout(function () {
               agent
                 .post('/application/deploy')
                 .send({app_id: res2.body.app.id})
-                .end(done)
+                .end(function (err, res) {
+                  if (err) return done(err);
+                  console.log('-- Organ- and CellController tests initialized.');
+                  done();
+                });
             }, 1000);
           });
       })
   });
+
 
   describe('When an application is deployed', function () {
 

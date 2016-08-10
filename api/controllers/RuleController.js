@@ -25,6 +25,7 @@ module.exports = {
 
   removeRules: function (req, res) {
     var ids = req.param('ids');
+    if (!ids || (ids instanceof Array && ids.length == 0)) return res.badRequest('This request would destroy all rules - not allowed.');
     Rule.destroy(ids)
       .exec(function (err, destroyed) {
         if (err) return res.serverError(err);
