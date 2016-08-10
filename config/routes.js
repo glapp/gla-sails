@@ -71,6 +71,7 @@ module.exports.routes = {
   // Host
   'GET /host/info': 'HostController.getHostInfo',
   'GET /host/infoMape': 'HostController.getHostInfoMape',
+  'GET /host/prometheusUrl': 'HostController.getPrometheusUrl',
 
   // Policy
   'GET /policy': 'RuleController.getRules',

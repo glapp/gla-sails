@@ -34,5 +34,10 @@ module.exports = {
       .catch(function (err) {
         res.serverError(err);
       })
+  },
+
+  getPrometheusUrl: function(req, res) {
+    if (!sails.config.PROMETHEUS_URL) return res.notFound();
+    res.ok({prometheusUrl: sails.config.PROMETHEUS_URL});
   }
 };

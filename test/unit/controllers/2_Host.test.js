@@ -47,5 +47,17 @@ describe('HostController', function () {
           done();
         })
     });
+
+    it('should find the prometheus url', function (done) {
+      agent
+        .get('/host/getPrometheusUrl')
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          expect(res.body).to.contain.keys('prometheusUrl');
+          expect(res.body.prometheusUrl).to.match(/^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}:[0-9]+$/g);
+          done();
+        })
+    });
   });
 });
