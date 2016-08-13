@@ -30,9 +30,13 @@ module.exports.bootstrap = function(cb) {
 
         var base = url.match(/[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/g)[0];
         console.log('base url is ' + base + '.');
+        var prometheusHost = process.env.PROMETHEUS_HOST || base;
         var prometheusPort = process.env.PROMETHEUS_PORT || '19090';
-        var prometheusUrl = process.env.PROMETHEUS_URL || base;
-        sails.config.PROMETHEUS_URL = prometheusUrl + ':' + prometheusPort;
+        sails.config.PROMETHEUS_URL = process.env.PROMETHEUS_URL || prometheusHost + ':' + prometheusPort;
+
+        var metricsHost = process.env.METRICS_HOST || base;
+        var metricsPort = process.env.METRICS_PORT || '9090';
+        sails.config.METRICS_URL = process.env.METRICS_URL || metricsHost + ':' + metricsPort;
       } else {
        console.info('Couldn\'t obtain Consul IP nor Prometheus URL - make sure you provided it via CONSUL_URL environment variable');
       }

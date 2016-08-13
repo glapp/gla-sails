@@ -124,6 +124,8 @@ module.exports = {
 
       organ.environment.push('SERVICE_NAME=' + organ.id);
 
+      organ.environment.push('METRICS_URL=' + sails.config.METRICS_URL);
+
       DockerService.swarm.createContainer({
         Image: organ.image,
         //name: organ.name,
