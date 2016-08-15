@@ -24,7 +24,9 @@ services:
   mongo:
     image: mongo
 
-  mape:
-    image: rpatan/mape
-    environment:
-      - SAILS_HOST=glasails
+#  mape:
+#    image: rpatan/mape
+#    environment:
+#      - SAILS_HOST=glasails
+#    depends_on:
+#      - glasails
