@@ -26,4 +26,5 @@ services:
 
   mape:
     image: rpatan/mape
-    environment: - SAILS_HOST=glasails
+    environment:
+      - SAILS_HOST=glasails
