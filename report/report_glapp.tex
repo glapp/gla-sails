@@ -28,10 +28,11 @@ Riccardo Patane \textmd{(XX-XXX-XXX)}}
 \abstract
 Abstract
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \chapter{Introduction}
 Cloud computing has created a paradigm shift in the last few years, by making infrastructure available at lower costs and with higher efficiency of operations.
 These solutions are increasingly being adopted by enterprises and developers, as they can provision huge amount of resources to scale on-demand in order to meet their business needs.
@@ -50,7 +51,9 @@ We propose a cloud middleware that can take not only take care of application de
 Ideally this middleware also enables developers to specify their intended goals in terms of high level policies to govern the application behavior.
 The middleware can then break down these policies into low level objectives, in order to trigger adaptations by changing the state of application when required.
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Overview}
 \todo{''What I would really do is invest more thought and discussions on the conceptual model behind GLAs - I think there is something pretty cool here, but it does not seem very well-developed to me.''}
 
@@ -72,6 +75,9 @@ This means that in order to be able to deploy a GLA through GLAPP, it is first r
 But no matter where the platform is installed, all GLAs will live in the cloud.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Architecture}
 The middleware consists of 3 different parts/blocks: a front end, a provisioning component and a control loop.
 The front end provides an interface for developer to interact with the middleware to deploy and manage his/her GLAs.
@@ -87,14 +93,67 @@ Possible execution actions are moving cells between different cloud instances (m
 \hfill \\
 
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
+% Remember to always use a new line for a new sentence! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Work}
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Basic Design Decisions}
+
+\subsection{Main Components: Provisioning Backend, Frontend, MAPE}
+\todo{Describe the design decisions of the main components}
+
+\subsection{Deployment: Containerization with Docker}
+\subsubsection{Containerization vs. other virtualization methods:}
+\todo{Explain the advantage of containerization compared to e.g. virtual machines}
+\subsubsection{Docker vs. other containerization implementations:}
+\todo{Explain the advantage of Docker compared to e.g. OpenVZ}
+
+\subsection{Orchestration: Docker Swarm}
+\todo{Explain the advantage of Docker Swarm compared to e.g. Kubernetes}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Implementation Decisions}
+\subsection{Backend: Node.js}
+\todo{Explain the choice and alternatives}
+
+\subsection{GUI: AngularJS}
+\todo{Explain the choice and alternatives}
+
+\subsection{MAPE: Java}
+\todo{Explain the choice and alternatives}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
+% Remember to always use a new line for a new sentence! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Current State}
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
+% Remember to always use a new line for a new sentence! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Case Study}
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
+% Remember to always use a new line for a new sentence! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Conclusion}
+
 
 \bibliographystyle{alpha}
 \bibliography{sources}
