@@ -23,3 +23,7 @@ services:
 
   mongo:
     image: mongo
+
+  mape:
+    image: rpatan/mape
+    environment: - SAILS_HOST=glasails
