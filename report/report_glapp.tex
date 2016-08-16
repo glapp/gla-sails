@@ -42,10 +42,10 @@ In IaaS, virtual computing resources are acquired and released on demand, either
 Along with great flexibility of being able to get new resources on demand and pay for what you use, new problems arise.
 Selecting a cloud service provider can often be a quite challenging decision for the developer or a company, so is being able to monitor and evaluate these infrastructure resources on a regular basis.
 With so much of variance in cost and performance, it is imperative that one would look for a reliable deployment, monitoring solutions to strike a balance with application requirements.
-It's also worth noticing the complexity and skill required to manage multiple layers of application, data, middleware and operating systems is high.
+Furthermore, the complexity and skill required to manage multiple layers of application, data, middleware and operating systems can .
 
 Understanding run time performance, behavior of various application components in realtime can enable us to take advantage of arbitrage opportunities that exist between different machines/regions or even other cloud providers.
-For example, an application can take advantage by moving closer to its users based on timezones, traffic to improve response time.
+For example, an application can take advantage by moving closer to its users based on timezones or traffic to improve response time.
 Currently there is no flexibility to move freely between various cloud providers without great development effort and cost, however such an ability to move freely between providers enables us to benefit from cost and performance differences.
 We propose a cloud middleware that can take not only take care of application deployment to cloud, but also constantly monitor and trigger such necessary adaptations to benefit from these opportunities.
 Ideally this middleware also enables developers to specify their intended goals in terms of high level policies to govern the application behavior.
@@ -54,11 +54,15 @@ The middleware can then break down these policies into low level objectives, in 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Overview}
+\section{Global Living Cloud Applications}
+
+The aim of this project is to develop a middleware for what we call ''global living cloud applications'' (GLAs).
+In a nutshell, GLAs are a bio-inspired notion of cloud-native applications.
+GLAs ''live'' in the cloud, and are able to migrate between data centers and cloud providers automatically, based on changes in cost and performance of cloud offerings, changes in customer behavior or requirements, or other factors.
+
 \todo{''What I would really do is invest more thought and discussions on the conceptual model behind GLAs - I think there is something pretty cool here, but it does not seem very well-developed to me.''}
 
-The aim of this project is to develop a middleware for what we call "global living cloud applications" (GLAs).
-In a nutshell, GLAs are a bio-inspired notion of cloud-native applications. GLAs ''live'' in the cloud, and are able to migrate between data centers and cloud providers automatically, based on changes in cost and performance of cloud offerings, changes in customer behavior or requirements, or other factors.
+
 The bio-inspired terminology applies for the different levels of components of a GLA:
 
 \begin{itemize}
@@ -78,7 +82,7 @@ But no matter where the platform is installed, all GLAs will live in the cloud.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Architecture}
+\section{GLAPP Architecture}
 The middleware consists of 3 different parts/blocks: a front end, a provisioning component and a control loop.
 The front end provides an interface for developer to interact with the middleware to deploy and manage his/her GLAs.
 The provisioning component provides the management functionalities of the middleware including cloud infrastructure management, application deployment and access to the application status information.
@@ -86,11 +90,15 @@ Lastly the control loop is the component responsible for enabling the management
 It follows the MAPE (Monitoring, Analysis, Planning and Execution) principle.
 Possible execution actions are moving cells between different cloud instances (migration), duplicating/splitting cells of the GLA (mitosis), or removing cells.
 
-\hfill \\
-\noindent<Architecture figure here>
+\begin{figure}[!ht]
+\centering
+	\includegraphics[width=\textwidth]{detailed_architecture.pdf}
+	\caption{Detailed Architecture of GLAPP and the Infrastructure}
+	\label{fig:detailed}
+\end{figure}
+\todo{Explain the not yet mentioned parts - maybe, this detailed architecture is rather part of the ''Current State'' chapter, then we need to include a basic architecture here}
 
 \noindent\todo{''I like Fig2 better, but there is still plenty of room for improvement. For instance, I would remove the word "optimal" from the figure - especially, if we now use this iterative Q-learning approach, our deployment will often *not* be optimal, at least temporarily. I am also quite suspicious that the msot dominant block in the figure is the provisioner. Is this really what we want to emphasize?''}
-\hfill \\
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -14,5 +14,6 @@
 
 ## Test
 * Since this will run the tests locally and not in a docker container, [Node.js](https://nodejs.org/en/download/) is required
+    * Install the dependencies locally with `npm install`
 * Make sure the test images are pulled on the swarm so the tests don't time out: `docker pull bfirsh/compose-mongodb-demo && docker pull mongo`
 * Start the tests with `npm test`
