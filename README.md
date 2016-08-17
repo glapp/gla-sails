@@ -6,7 +6,7 @@
   * e.g. https://bitbucket.org/uzh/docker-swarm-creation
 
 ## Prepare
-* Copy your .pem files into config/certs (the content of this folder is gitignored)
+* Copy your .pem files into /swarmcerts on whatever machine the components are going to run on
 * Set the environment variable SWARM_HOST to the swarm-host `IP:port` (e.g. `SWARM_HOST=192.168.99.101:3376`). If no port is declared, 3376 is assumed.
 
 ## Run
