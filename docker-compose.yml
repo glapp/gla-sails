@@ -5,12 +5,11 @@ services:
     image: clabs/gla-sails
     environment:
       - SWARM_HOST=${SWARM_HOST}
-      - CERT_PATH=/swarmcerts
       - MONGO_HOST=mongo
     ports:
       - 1337:1337
     volumes:
-      - /home/docker/certs:/swarmcerts
+      - /root/certs:/root/.docker/machine/certs/
     depends_on:
       - mongo
 
