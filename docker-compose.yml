@@ -2,22 +2,24 @@ version: "2"
 
 services:
   glasails:
-    build: .
+    image: clabs/gla-sails
     environment:
       - SWARM_HOST=${SWARM_HOST}
-      - CERT_PATH=/gla-sails/config/certs
+      - CERT_PATH=/swarmcerts
       - MONGO_HOST=mongo
     ports:
       - 1337:1337
+    volumes:
+      - /home/docker/certs:/swarmcerts
     depends_on:
       - mongo
 
   glaangular:
     image: clabs/gla-angular
-    ports:
-      - 3000:3000
     environment:
       - SAILS_PORT=1337
+    ports:
+      - 3000:3000
     depends_on:
       - glasails
 

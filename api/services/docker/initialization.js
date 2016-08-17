@@ -15,17 +15,43 @@ var swarmHostArray = swarmHostEnv.split(":");
 var swarmHost = swarmHostArray[0];
 var swarmPort = swarmHostArray[1] ? swarmHostArray[1] : '3376';
 
-var CERT_PATH = process.env.CERT_PATH ? process.env.CERT_PATH : require('path').join(require('os').homedir(), '.docker', 'machine', 'certs');
+var certsPath = process.env.CERT_PATH ? process.env.CERT_PATH : require('path').join(require('os').homedir(), '.docker', 'machine', 'certs');
+
+var certFiles = [
+  'ca.pem',
+  'cert.pem',
+  'key.pem'
+];
 
 var swarm = new Docker({
   host: swarmHost,
   port: swarmPort,
-  ca: fs.readFileSync(CERT_PATH + '/ca.pem'),
-  cert: fs.readFileSync(CERT_PATH + '/cert.pem'),
-  key: fs.readFileSync(CERT_PATH + '/key.pem')
+  ca: fs.readFileSync(certsPath + '/ca.pem'),
+  cert: fs.readFileSync(certsPath + '/cert.pem'),
+  key: fs.readFileSync(certsPath + '/key.pem')
 });
 
 module.exports = {
+
+  // This function is always called first in the bootstrap process
+  checkCertsPath: function () {
+    return new Promise(function (resolve, reject) {
+      async.each(certFiles, function (certFile, done) {
+        fs.access(require('path').join(certsPath, certFile), function (err) {
+          if (err) {
+            return done(new Error('At least one necessary cert file for the docker swarm is missing. Make sure you include ca.pem, cert.pem and key.pem in ~/.docker/machine/certs or in the specified CERT_PATH'))
+          } else {
+            done();
+          }
+        })
+      }, function (err) {
+        if (err) return reject(err);
+        console.log('Certs found!');
+        resolve();
+      });
+    })
+  },
+
   swarm: swarm,
 
   extractComponents: function (path, app_id) {
@@ -246,25 +272,25 @@ module.exports = {
     })
   },
 
-  obtainConsulIp: function() {
-    return new Promise(function(resolve, reject) {
+  obtainConsulIp: function () {
+    return new Promise(function (resolve, reject) {
       var docker = new Docker({
         host: swarmHost,
         port: '2376',
-        ca: fs.readFileSync(CERT_PATH + '/ca.pem'),
-        cert: fs.readFileSync(CERT_PATH + '/cert.pem'),
-        key: fs.readFileSync(CERT_PATH + '/key.pem')
+        ca: fs.readFileSync(certsPath + '/ca.pem'),
+        cert: fs.readFileSync(certsPath + '/cert.pem'),
+        key: fs.readFileSync(certsPath + '/key.pem')
       });
 
       var swarmMasterContainer = docker.getContainer('swarm-agent-master');
 
-      swarmMasterContainer.inspect(function(err, data) {
+      swarmMasterContainer.inspect(function (err, data) {
         if (err) return reject(err);
 
         var consulRegEx = /^consul\:\/\/([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\:[0-9]{1,5})$/;
 
         if (data.Args) {
-          var consulArg = _.find(data.Args, function(arg) {
+          var consulArg = _.find(data.Args, function (arg) {
             return consulRegEx.test(arg);
           });
           if (consulArg) {
