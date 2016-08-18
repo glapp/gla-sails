@@ -22,10 +22,6 @@ module.exports = {
       .populate('host')
       .exec(function (err, cell) {
         if (err) throw err;
-        //if (component.node.name == goal_node) {
-        //  res.badRequest('Goal node is identical to current node!');
-        //  return;
-        //}
         if (!cell) return res.notFound('No cell found with id ' + cell_id);
 
         Organ.findOne({id: cell.organ_id}).exec(function (err, organ) {
@@ -71,9 +67,15 @@ module.exports = {
 
           // Add environment opts
           cell.environment = cellEnvironment;
-
           // Save cell
           cell.save();
+
+          // Remove previous constraints on the organ environment
+          organ.environment = _.filter(organ.environment, function(env) {
+            return !constraintCheck.test(env);
+          });
+          // Save organ
+          organ.save();
 
           var newContainer = organ.toJSON();
 
