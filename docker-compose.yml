@@ -7,7 +7,7 @@ services:
       - SWARM_HOST=${SWARM_HOST}
       - MONGO_HOST=mongo
     ports:
-      - 80:1337
+      - 1337:1337
     volumes:
       - /swarmcerts:/root/.docker/machine/certs
     depends_on:
@@ -18,7 +18,7 @@ services:
     environment:
       - SAILS_PORT=1337
     ports:
-      - 3000:3000
+      - 80:3000
     depends_on:
       - glasails
 
