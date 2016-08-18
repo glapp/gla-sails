@@ -20,11 +20,9 @@ module.exports = {
     operator: {
       type: 'String',
       // enum: ['blah7', 'blah8'],
-      required: true
     },
     value: {
       type: 'String',
-      required: true
     },
     organs: {
       collection: 'Organ',
