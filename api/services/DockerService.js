@@ -5,7 +5,7 @@
 var initialization = require('./docker/initialization.js');
 var deployment = require('./docker/deployment.js');
 var infrastructure = require('./docker/infrastructure.js');
-var adaptions = require('./docker/adaptions.js');
+var adaptations = require('./docker/adaptations.js');
 var common = require('./docker/common.js');
 
 
@@ -25,10 +25,10 @@ module.exports = {
   createProxyContainer: deployment.createProxyContainer,
 
   // Adaptions
-  moveContainer: adaptions.moveContainer,
-  scaleUp: adaptions.scaleUp,
-  removeContainer: adaptions.removeContainer,
-  removeAppCells: adaptions.removeAppCells,
+  moveContainer: adaptations.moveContainer,
+  scaleUp: adaptations.scaleUp,
+  removeContainer: adaptations.removeContainer,
+  removeAppCells: adaptations.removeAppCells,
 
   // Infrastructure
   getHostInfo: infrastructure.getHostInfo,
