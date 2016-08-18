@@ -102,7 +102,12 @@ module.exports = {
             .then(cellDone)
             .catch(cellDone);
         }, function onCellsDone(err) {
-          organDone(err);
+          if (err && err.statusCode == 404) {
+            console.log('Could not find container to remove, assuming it\'s already removed.');
+            organDone(null); // No error
+          } else {
+            organDone(err);
+          }
         });
       }, function(err) {
         if (err) reject(err);
