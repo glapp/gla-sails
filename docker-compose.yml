@@ -7,7 +7,7 @@ services:
       - SWARM_HOST=${SWARM_HOST}
       - MONGO_HOST=mongo
     ports:
-      - 1337:1337
+      - 80:1337
     volumes:
       - /swarmcerts:/root/.docker/machine/certs
     depends_on:
