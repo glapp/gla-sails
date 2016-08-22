@@ -2,7 +2,7 @@ version: "2"
 
 services:
   glasails:
-    image: clabs/gla-sails
+    image: glapp/gla-sails
     environment:
       - SWARM_HOST=${SWARM_HOST}
       - MONGO_HOST=mongo
@@ -14,7 +14,7 @@ services:
       - mongo
 
   glaangular:
-    image: clabs/gla-angular
+    image: glapp/gla-angular
     environment:
       - SAILS_PORT=1337
     ports:
