@@ -31,3 +31,4 @@ services:
       - SAILS_HOST=glasails
     depends_on:
       - glasails
+    restart: always
