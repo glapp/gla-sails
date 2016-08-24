@@ -79,6 +79,11 @@ module.exports = {
 
           var newContainer = organ.toJSON();
 
+          // Double check that first constraints are gone
+          newContainer.environment = _.filter(newContainer.environment, function(env) {
+            return !constraintCheck.test(env);
+          });
+
           newContainer.environment = _.concat(cellEnvironment, newContainer.environment);
           newContainer.cell_id = cell.id;
 
