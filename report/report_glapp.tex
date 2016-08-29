@@ -14,7 +14,7 @@
 \author{
 Fabio Isler \textmd{(09-115-965)} \\
 Man Wai Li \textmd{(14-705-156)} \\
-Dinesh Pothineni \textmd{(XX-XXX-XXX)} \\
+Dinesh Pothineni \textmd{(14-707-988)} \\
 Riccardo Patane \textmd{(XX-XXX-XXX)}}
 \home{} % Geburtsort
 \country{}
@@ -33,7 +33,9 @@ Abstract
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Introduction}
+\chapter{4 PAGES: Introduction}
+\todo{DONE BY: Fabio}
+
 Cloud computing has created a paradigm shift in the last few years, by making infrastructure available at lower costs and with higher efficiency of operations.
 These solutions are increasingly being adopted by enterprises and developers, as they can provision huge amount of resources to scale on-demand in order to meet their business needs.
 In cloud computing, resources such as CPU processing time, disk space, or networking capabilities, are rented and released as a service.
@@ -80,38 +82,16 @@ But no matter where the platform is installed, all GLAs will live in the cloud.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NEW SECTION																						%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{GLAPP Architecture}
-The middleware consists of 3 different parts/blocks: a front end, a provisioning component and a control loop.
-The front end provides an interface for developer to interact with the middleware to deploy and manage his/her GLAs.
-The provisioning component provides the management functionalities of the middleware including cloud infrastructure management, application deployment and access to the application status information.
-Lastly the control loop is the component responsible for enabling the management of GLAs by the middleware itself.
-It follows the MAPE (Monitoring, Analysis, Planning and Execution) principle.
-Possible execution actions are moving cells between different cloud instances (migration), duplicating/splitting cells of the GLA (mitosis), or removing cells.
-
-\begin{figure}[!ht]
-\centering
-	\includegraphics[width=\textwidth]{detailed_architecture.pdf}
-	\caption{Detailed Architecture of GLAPP and the Infrastructure}
-	\label{fig:detailed}
-\end{figure}
-\todo{Explain the not yet mentioned parts - maybe, this detailed architecture is rather part of the ''Current State'' chapter, then we need to include a basic architecture here}
-
-\noindent\todo{''I like Fig2 better, but there is still plenty of room for improvement. For instance, I would remove the word "optimal" from the figure - especially, if we now use this iterative Q-learning approach, our deployment will often *not* be optimal, at least temporarily. I am also quite suspicious that the msot dominant block in the figure is the provisioner. Is this really what we want to emphasize?''}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Work}
-
+\chapter{6 PAGES: Background \& Architecture}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Basic Design Decisions}
+\todo{IN CHARGE: Adrian}
 
 \subsection{Main Components: Provisioning Backend, Frontend, MAPE}
 \todo{Describe the design decisions of the main components}
@@ -125,41 +105,117 @@ Possible execution actions are moving cells between different cloud instances (m
 \subsection{Orchestration: Docker Swarm}
 \todo{Explain the advantage of Docker Swarm compared to e.g. Kubernetes}
 
+\subsection{Rule-Based Adaptations vs. Markov Decision Process}
+\todo{DONE BY: Adrian / Riccardo}
+\todo{Explain the thought process behind this decision}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation Decisions}
 \subsection{Backend: Node.js}
+\todo{DONE BY: Fabio}
 \todo{Explain the choice and alternatives}
 
 \subsection{GUI: AngularJS}
+\todo{DONE BY: Dinesh}
 \todo{Explain the choice and alternatives}
 
 \subsection{MAPE: Java}
+\todo{DONE BY: Adrian / Riccardo}
 \todo{Explain the choice and alternatives}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Architecture}
+The platform consists of 3 different parts/blocks: a front end, a provisioning component and a control loop.
+The front end provides an interface for developer to interact with the middleware to deploy and manage his/her GLAs.
+The provisioning component provides the management functionalities of the middleware including cloud infrastructure management, application deployment and access to the application status information.
+Lastly the control loop is the component responsible for enabling the management of GLAs by the middleware itself.
+It follows the MAPE (Monitoring, Analysis, Planning and Execution) principle.
+Possible execution actions are moving cells between different cloud instances (migration), duplicating/splitting cells of the GLA (mitosis), or removing cells.
+
+\begin{figure}[!ht]
+\centering
+	\includegraphics[width=\textwidth]{detailed_architecture.pdf}
+	\caption{Detailed Architecture of GLAPP and the Infrastructure}
+	\label{fig:detailed}
+\end{figure}
+\todo{Explain the separate parts - DONE BY: Dinesh}
+
+\noindent\todo{''I like Fig2 better, but there is still plenty of room for improvement. For instance, I would remove the word "optimal" from the figure - especially, if we now use this iterative Q-learning approach, our deployment will often *not* be optimal, at least temporarily. I am also quite suspicious that the msot dominant block in the figure is the provisioner. Is this really what we want to emphasize?''}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
+% Remember to always use a new line for a new sentence! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{10 PAGES: Components}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{3 PAGES: Backend}
+\todo{DONE BY: Fabio}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{2 PAGES: GUI}
+\todo{DONE BY: Dinesh}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{4 PAGES: MAPE}
+\todo{DONE BY: Adrian / Riccardo}
 Being the control loop of the whole platform, MAPE interfaces with SAILS to retrieve environment information, with monitoring system to retrieve performance metrics, perform computation within itself to decide adaptation action and, in the end, communicate to SAILS to execute the adaptation action.
 
-Regarding the interface with SAILS and monitoring system, HTTP protocol is used with JSON objects in the request and response. The use of JSON objects allows an data structure that is flexible to represent different types of information and to facilitate data exchange. The information retrieved from SAILS includes the infrastructure information of virtual machines, deployment information of application components and their underlying containers. It also includes user-defined policy from the database as well as performance metrics from the backend monitoring system.
+Regarding the interface with SAILS and monitoring system, HTTP protocol is used with JSON objects in the request and response.
+The use of JSON objects allows an data structure that is flexible to represent different types of information and to facilitate data exchange.
+The information retrieved from SAILS includes the infrastructure information of virtual machines, deployment information of application components and their underlying containers.
+It also includes user-defined policy from the database as well as performance metrics from the backend monitoring system.
 
-Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics. Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers. Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}. The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
+Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics.
+Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers.
+Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}.
+The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
 
 % computation of healthiness values
 \todo{elaborate about healthiness computation}
 
 % range query and point query in Prometheus
-Prometheus is also sophisticated in providing different types of query. It supports range query and point query with additional functions that can be applied on the raw data when formulating a query. This enables the fine-grained extraction of data that best fits the corresponding performance metric. For instance, the rate function allows the direct retrieval of the rate of change in CPU time of a container with configurable data point range, data point interval and duration covered by each data point. The robust query functionality provides two major advantages. First of all, it reduces the complexity of computation logic of MAPE that is responsible for getting specific performance metric for subsequent healthiness computation. Secondly, it allows quick tweaking of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
+Prometheus is also sophisticated in providing different types of query.
+It supports range query and point query with additional functions that can be applied on the raw data when formulating a query.
+This enables the fine-grained extraction of data that best fits the corresponding performance metric.
+For instance, the rate function allows the direct retrieval of the rate of change in CPU time of a container with configurable data point range, data point interval and duration covered by each data point.
+The robust query functionality provides two major advantages.
+First of all, it reduces the complexity of computation logic of MAPE that is responsible for getting specific performance metric for subsequent healthiness computation.
+Secondly, it allows quick tweaking of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
 
 % burlap library for MDP and its extensibility
-After the healthiness values of the each individual cell is computed based on the policy and performance metric, all violating cells within an organ are taken into account for an evaluation. When the number of violating cell exceed a defined threshold, the organ will be considered as unhealthy. Once an organ is unhealthy, information of all violations will be further processed in MAPE to determine appropriate adaption action.
+After the healthiness values of the each individual cell is computed based on the policy and performance metric, all violating cells within an organ are taken into account for an evaluation.
+When the number of violating cell exceed a defined threshold, the organ will be considered as unhealthy.
+Once an organ is unhealthy, information of all violations will be further processed in MAPE to determine appropriate adaption action.
 
 % rule based adaptation vs MDP
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NEW CHAPTER																						%
-% Remember to always use a new line for a new sentence! %
+% NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Current State}
+\section{2 PAGES: Other}
+\subsection{Monitoring / Prometheus}
+\todo{DONE BY: Adrian / Riccardo}
+
+\subsection{Supporting Applications}
+\todo{Infrastructure Scripts, Consul, Registrator, Voting-App, Proxy, metrics-server etc.}
+\todo{DONE BY: Fabio}
 
 
 
@@ -167,7 +223,32 @@ After the healthiness values of the each individual cell is computed based on th
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Case Study}
+\chapter{7 PAGES: Case Study}
+\todo{DONE BY: Riccardo}
+
+\section{Explain Demo Application}
+\begin{itemize}
+	\item Explain concept of the app at high level
+	\item Explain the components themselves
+	\item Explain the docker-compose file
+	\item Explain our custom metrics (costs, clicks)
+	\item Explain modifications to the app (region switch button, POST request with click-origin to metrics-server with every click
+\end{itemize}
+
+\section{Scenarios}
+\begin{itemize}
+	\item Explain the scenarios
+	\item Explain the triggers
+	\item Explain how MAPE realizes a necessary adaptation
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
+% Remember to always use a new line for a new sentence! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{2 PAGES: Future Work}
+\todo{DONE BY: Fabio / Adrian}
 
 
 
@@ -175,10 +256,17 @@ After the healthiness values of the each individual cell is computed based on th
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Conclusion}
+\chapter{1 PAGE: Conclusion}
 
 
 \bibliographystyle{alpha}
 \bibliography{sources}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW CHAPTER																						%
+% Evt. APPENDIX
+% Remember to always use a new line for a new sentence! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 \end{document}
