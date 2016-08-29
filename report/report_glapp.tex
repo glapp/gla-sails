@@ -13,7 +13,7 @@
 \subtitle{}
 \author{
 Fabio Isler \textmd{(09-115-965)} \\
-Adrian Li \textmd{(XX-XXX-XXX)} \\
+Man Wai Li \textmd{(14-705-156)} \\
 Dinesh Pothineni \textmd{(XX-XXX-XXX)} \\
 Riccardo Patane \textmd{(XX-XXX-XXX)}}
 \home{} % Geburtsort
@@ -138,7 +138,22 @@ Possible execution actions are moving cells between different cloud instances (m
 
 \subsection{MAPE: Java}
 \todo{Explain the choice and alternatives}
+Being the control loop of the whole platform, MAPE interfaces with SAILS to retrieve environment information, with monitoring system to retrieve performance metrics, perform computation within itself to decide adaptation action and, in the end, communicate to SAILS to execute the adaptation action.
 
+Regarding the interface with SAILS and monitoring system, HTTP protocol is used with JSON objects in the request and response. The use of JSON objects allows an data structure that is flexible to represent different types of information and to facilitate data exchange. The information retrieved from SAILS includes the infrastructure information of virtual machines, deployment information of application components and their underlying containers. It also includes user-defined policy from the database as well as performance metrics from the backend monitoring system.
+
+Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics. Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers. Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}. The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
+
+% computation of healthiness values
+\todo{elaborate about healthiness computation}
+
+% range query and point query in Prometheus
+Prometheus is also sophisticated in providing different types of query. It supports range query and point query with additional functions that can be applied on the raw data when formulating a query. This enables the fine-grained extraction of data that best fits the corresponding performance metric. For instance, the rate function allows the direct retrieval of the rate of change in CPU time of a container with configurable data point range, data point interval and duration covered by each data point. The robust query functionality provides two major advantages. First of all, it reduces the complexity of computation logic of MAPE that is responsible for getting specific performance metric for subsequent healthiness computation. Secondly, it allows quick tweaking of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
+
+% burlap library for MDP and its extensibility
+After the healthiness values of the each individual cell is computed based on the policy and performance metric, all violating cells within an organ are taken into account for an evaluation. When the number of violating cell exceed a defined threshold, the organ will be considered as unhealthy. Once an organ is unhealthy, information of all violations will be further processed in MAPE to determine appropriate adaption action.
+
+% rule based adaptation vs MDP
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW CHAPTER																						%
