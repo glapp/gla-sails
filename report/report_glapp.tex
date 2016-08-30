@@ -125,6 +125,17 @@ But no matter where the platform is installed, all GLAs will live in the cloud.
 \subsection{MAPE: Java}
 \todo{DONE BY: Adrian / Riccardo}
 \todo{Explain the choice and alternatives}
+Java is a widely used programming language with good interoperability and decent support by other system or libraries used in this project.
+MAPE is a key component of the GLAPP platform.
+One of the important aspect of MAPE is the ability to easily interface with other components and system inside or outside GLAPP platform.
+Another consideration is the availability of third party libraries that GLAPP can leverage to perform common computation using well-known algorithm such as various planning and learning algorithms used in Markov Decision Process (MDP).
+
+A set of comprehensive functionality is provided through Java API and third party libraries.
+For instance, though Java standard API, robust interfacing with SAILS backend monitoring system through HTTP connection is readily available.
+In addition, GSON library \todo{add reference} provides easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and monitoring system.
+Most importantly, BURLAP library \todo{add reference} provides not only a set of planning and learning algorithm for Markov Decision Process in reinforcement learning, but also a framework for further extending the processing capability through custom implementation of various components including learning algorithm and approximation function.
+Availability of these functionalities from built-in and third party library makes Java a compelling language in developing MAPE component.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
@@ -173,36 +184,43 @@ Possible execution actions are moving cells between different cloud instances (m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{4 PAGES: MAPE}
 \todo{DONE BY: Adrian / Riccardo}
-Being the control loop of the whole platform, MAPE interfaces with SAILS to retrieve environment information, with monitoring system to retrieve performance metrics, perform computation within itself to decide adaptation action and, in the end, communicate to SAILS to execute the adaptation action.
 
-Regarding the interface with SAILS and monitoring system, HTTP protocol is used with JSON objects in the request and response.
-The use of JSON objects allows an data structure that is flexible to represent different types of information and to facilitate data exchange.
-The information retrieved from SAILS includes the infrastructure information of virtual machines, deployment information of application components and their underlying containers.
-It also includes user-defined policy from the database as well as performance metrics from the backend monitoring system.
+MAPE is the control loop of the platform and responsible for managing the deployment of applications in accordance to the policy.
+It analyze the environment information and performance metrics to determine the healthiness of application and trigger appropriate adaptation action should there be any violation to the policy.
+The environment information includes details of the infrastructure, application deployment and user-defined policy.
 
-Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics.
-Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers.
-Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}.
-The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
+MAPE consists of three parts: one is interfacing systems to retrieve the necessary information for analysis and dispatch the adaptation action, another part is analyzing the application healthiness in regard to the policy, and the last part is determining the adaptation action based on the environment information and computed healthiness.
+
+At the start of each control loop, MAPE interfaces with SAILS backend to retrieve environment information, and with monitoring system to retrieve performance metrics. On the other hand, MAPE communicates to SAILS backend to execute the adaptation action.
+As mentioned in the implementation decision section, MAPE use HTTP protocol with JSON object for data exchange.
+It retrieves the infrastructure, application deployment information and user-defined policy from SAILS backend as well as performance metrics through HTTP requests.
+For instance, infrastructure information includes information of virtual machines such as the service provider, machine location and machine tier. Deployment information, on the other hand, refers to the information of each application components including on which containers they are currently deployed.
+Furthermore, MAPE also retrieve user-defined policy through SAILS backend. A policy is set of rules that defines which metrics the application need to comply to, its threshold for healthiness determine and the weight of each rule relative to the others.
+Lastly, MAPE retrieve the performance metrics from the backend monitoring system.
+JSON objects are used for all these information retrieval.
+The use of JSON objects provides a data structure that is flexible to represent different types of information from different interfacing systems.
+In addition, it allows MAPE to build a object-oriented view of the whole environment that provide quick access to specific information in various computation during the analysis.
 
 % computation of healthiness values
 \todo{elaborate about healthiness computation}
 
-% range query and point query in Prometheus
-Prometheus is also sophisticated in providing different types of query.
-It supports range query and point query with additional functions that can be applied on the raw data when formulating a query.
-This enables the fine-grained extraction of data that best fits the corresponding performance metric.
-For instance, the rate function allows the direct retrieval of the rate of change in CPU time of a container with configurable data point range, data point interval and duration covered by each data point.
-The robust query functionality provides two major advantages.
-First of all, it reduces the complexity of computation logic of MAPE that is responsible for getting specific performance metric for subsequent healthiness computation.
-Secondly, it allows quick tweaking of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
-
-% burlap library for MDP and its extensibility
 After the healthiness values of the each individual cell is computed based on the policy and performance metric, all violating cells within an organ are taken into account for an evaluation.
 When the number of violating cell exceed a defined threshold, the organ will be considered as unhealthy.
 Once an organ is unhealthy, information of all violations will be further processed in MAPE to determine appropriate adaption action.
 
-% rule based adaptation vs MDP
+% burlap library for MDP and its extensibility
+In the first implementation of MAPE, MDP is used to determine the adaptation action.
+Before starting the MDP, the environment and application deployment need to be modelled as states. At the same, actions for state transition are defined.
+BURLAP library and its framework is used for modelling and transition action definition.
+When the state and state-action information is constructed, learning algorithm from the library is applied.
+The learning algorithm is first applied in a simulated environment to verify correctness of the constructed model and defined transition action.
+It also serve a second purpose for understanding MDP process by generating the log of MDP with the aim for fine tuning the parameters in later stage of development.
+While MDP works close to the expected outcome in a simulated environment, concern was raised regarding the convergence of Q-value that learning algorithm rely on to determine the optimal action in a given state.
+More importantly, problem of high number of states and transition actions affects the viability of applying MDP to the optimization problem of MAPE.
+After subsequent iteration of adjustment and refinement to the model and transition actions and execution of MDP in the simulated environment, it is concluded that reduction of number of states is required for applying MDP.
+To reduct the number of states, value function approximation need to be used.
+
+% simulation using burlap
 
 
 
@@ -212,6 +230,20 @@ Once an organ is unhealthy, information of all violations will be further proces
 \section{2 PAGES: Other}
 \subsection{Monitoring / Prometheus}
 \todo{DONE BY: Adrian / Riccardo}
+
+Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics.
+Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers.
+Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}.
+The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
+
+% range query and point query in Prometheus
+Prometheus is also sophisticated in providing different types of query.
+It supports range query and point query with additional functions that can be applied on the raw data when formulating a query.
+This enables the fine-grained extraction of data that best fits the corresponding performance metric.
+For instance, the rate function allows the direct retrieval of the rate of change in CPU time of a container with configurable data point range, data point interval and duration covered by each data point.
+The robust query functionality provides two major advantages.
+First of all, it reduces the complexity of computation logic of MAPE that is responsible for getting specific performance metric for subsequent healthiness computation.
+Secondly, it allows quick tweaking of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
 
 \subsection{Supporting Applications}
 \todo{Infrastructure Scripts, Consul, Registrator, Voting-App, Proxy, metrics-server etc.}
