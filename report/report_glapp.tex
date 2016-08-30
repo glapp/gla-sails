@@ -6,6 +6,7 @@
   left=1.25in,
   right=1.25in
 ]{geometry}
+\usepackage{tabularx,colortbl}
 
 \thesisType{Master Project Report}
 \date{\today}
@@ -115,8 +116,16 @@ But no matter where the platform is installed, all GLAs will live in the cloud.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation Decisions}
 \subsection{Backend: Node.js}
-\todo{DONE BY: Fabio}
-\todo{Explain the choice and alternatives}
+The backend has been implemented with the \textit{Node.js}\footnote{https://nodejs.org/} runtime.
+More specifically, we used a framework called \textit{Sails}\footnote{http://sailsjs.org/}.
+Although it is labeled as a complete MVC framework, we mainly used it to implement the server-side functionality and to provide a clean REST for the other GLAPP components.
+
+There are two reasons why we chose Node.js and Sails in particular.
+For one thing, it was the backend framework some of us were most experienced in, which made it easier to focus on the actual project without having to work our way into a new framework.
+For another thing, Node.js comes with the well-established packaging system \textit{npm}\footnote{https://www.npmjs.com/}, where we found very helpful packages for our problem domain.
+As an example, \textit{dockerode}\footnote{https://www.npmjs.com/package/dockerode} was the module which we used to implement the Docker-specific functionality, and it proved to be very well maintained, adding new functionalities whenever a new Docker release was published.
+Since we were about to work with relatively new technologies like Docker, it seemed reasonable to count on packages which we knew will be adapted to changes in these new technologies.
+
 
 \subsection{GUI: AngularJS}
 \todo{DONE BY: Dinesh}
@@ -157,8 +166,182 @@ Possible execution actions are moving cells between different cloud instances (m
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{3 PAGES: Backend}
-\todo{DONE BY: Fabio}
+\section{Backend}
+
+The backend is mainly responsible for the deployment and is the central component that defines the data structure of the platform. In order to understand the main functionality of the backend server, this section introduces the data models, the REST API, the services and some additional information about this component.
+
+\subsection{Data Models}
+Figure~\ref{fig:models} provides a simple ER-like overview over the way how the server stores the data about users, applications, etc.
+The mentioned attributes are exemplary, but represent the most important ones to understand the whole model.
+It is apparent that the model is tightly coupled to the introduced notion of a GLA - an application which consists of organs, which again consist of cells.
+
+\begin{figure}[!ht]
+\centering
+	\includegraphics[width=\textwidth]{models-overview.pdf}
+	\caption{Simple overview over the models and their relations}
+	\label{fig:models}
+\end{figure}
+
+Sails is built upon an ORM called \textit{waterline}\footnote{https://github.com/balderdashy/waterline}, which allowed us to manage the data on a relatively high level.
+That means that by defining the models and their relations and by setting up a connection to any database in the configuration of Sails, the data could be stored and retrieved by simple function calls.
+We decided to use \textit{MongoDB}\footnote{https://www.mongodb.com/community} as a database.
+
+\subsection{REST API}
+The backend is supposed to serve the frontend and the MAPE component with needed data and to provide an interface for triggering adaptations to the deployment.
+To achieve this clean interface, there is a REST API in place. Table~\ref{tab:endpoints} lists and describes the endpoints of this API.
+Since our components are completely modularized and the communication only happens via this interface, the remaining components like the frontend or the MAPE are easily interchangeable.
+
+\begin{table}
+	\renewcommand{\arraystretch}{1.2}
+	\caption{Endpoints of the REST API}\label{tab:endpoints}
+	\begin{tabularx}{\textwidth}{|l|X|}
+		\hline
+		
+		%%%%% Header
+		\textbf{Endpoint}
+			& \textbf{Description}
+			\\ \hline
+		
+		%%%%% User
+		\rowcolor[gray]{0.9}
+		\multicolumn{2}{|c|}{User} 
+			\\ \hline
+		\textit{POST /user/signup}
+			& Used by the frontend to sign up a user.
+			\\ \hline
+		\textit{PUT /user/login}
+			& Used by the frontend to log in a user.
+			\\ \hline
+		\textit{GET /user/logout}
+			& Used by the frontend to log out a user.
+			\\ \hline
+		\textit{GET /user/confirm-login}
+			& Helper endpoint needed for the frontend to assure a user stays logged in on a refresh of the page.
+			\\ \hline
+
+		%%%%% Application
+		\rowcolor[gray]{0.9}
+		\multicolumn{2}{|c|}{Application} 
+			\\ \hline
+		\textit{GET /application/getUserApps}
+			& Used by the frontend to get high-level information about applications of a specific user.
+			\\ \hline
+		\textit{GET /application/details}
+			& Used by the frontend to get detailed information of a specific application.
+			\\ \hline
+		\textit{POST /application/add}
+			& Used by the frontend to add an application.
+			\\ \hline
+		\textit{POST /application/remove}
+			& Used by the frontend to remove an application, including clearing up its existing cells on the hosts.
+			\\ \hline
+		\textit{POST /application/deploy}
+			& Endpoint used by the frontend to deploy an application on the infrastructure.
+			\\ \hline
+		\textit{POST /application/undeploy}
+			& Used by the frontend to clear up an application's existing cells on the hosts.
+			\\ \hline
+		\textit{POST /application/rename}
+			& Used by the frontend to rename an application.
+			\\ \hline
+		
+		%%%%% Organ
+		\rowcolor[gray]{0.9}
+		\multicolumn{2}{|c|}{Organ} 
+			\\ \hline
+		\textit{POST /organ/scaleUp}
+			& Used by the MAPE to scale up an organ. Constraints can be defined to place the new cell on a specific host, e.g. in the region ``US``.
+			\\ \hline
+		\textit{POST /organ/scaleDown}
+			& Used by the MAPE to scale down an organ. A specific cell can be specified to control what cell is going to be destroyed.
+			\\ \hline
+			
+		%%%%% Cell
+		\rowcolor[gray]{0.9}
+		\multicolumn{2}{|c|}{Cell} 
+			\\ \hline
+		\textit{POST /cell/move}
+			& Used by the MAPE to move a specific cell from one host to another.
+			\\ \hline
+
+		%%%%% Host
+		\rowcolor[gray]{0.9}
+		\multicolumn{2}{|c|}{Host} 
+			\\ \hline
+		\textit{GET /host/info}
+			& Used by the MAPE and the frontend get information about the current infrastructure.
+			\\ \hline
+		\textit{GET /host/prometheusUrl}
+			& Used by the MAPE get obtain the URL of Prometheus.
+			\\ \hline
+			
+		%%%%% Rule
+		\rowcolor[gray]{0.9}
+		\multicolumn{2}{|c|}{Rule} 
+			\\ \hline
+		\textit{GET /policy}
+			& Used by the MAPE and the frontend to get the list of rules for a specific application.
+			\\ \hline
+		\textit{POST /policy/set}
+			& Used by the frontend to set a new or replace an existing rule.
+			\\ \hline
+		\textit{POST /policy/remove}
+			& Used by the frontend to remove a rule.
+			\\ \hline
+		
+		%%%%% Analytics
+		\rowcolor[gray]{0.9}
+		\multicolumn{2}{|c|}{Analytics}
+			\\ \hline
+		\textit{GET /analytics/organCpu}
+			& Used by the frontend to retrieve organ-level data for the cpu usage graph.
+			\\ \hline
+		\textit{GET /analytics/organMemory}
+			& Used by the frontend to retrieve organ-level data for the memory usage graph.
+			\\ \hline
+		\textit{GET /analytics/events}
+			& Used by the frontend to retrieve application-level data for the events graph.
+			\\ \hline
+	\end{tabularx}
+\end{table}
+
+\subsection{Services}
+In the Sails framework, services are used to handle specific, API-independent functionalities.
+For most of the internal logic apart from the actual API of the backend server, we created the following two well-encapsulated services:
+\begin{itemize}
+	\item \textbf{DockerService}: \\
+	The DockerService is responsible for all the low-level, docker-specific functionalities.
+	Many of the requests mentioned in table~\ref{tab:endpoints} trigger quite complex actions.
+	For example, when a user requests to deploy an application, the server generally handles the following steps:
+	(1) Creating an overlay network on the hosts,
+	(2) Creating all the necessary cells in this network, and
+	(3) Creating a reverse proxy cell for each organ that has an exposed port.
+
+	To avoid such low-level logic in the API controllers, it makes sense to encapsulate this in a service.
+	The DockerService handles the connection to the Docker infrastructure by the mentioned npm package \textit{dockerode}.
+	It takes care of everything that is concerned with Docker, consisting of the following categories:
+	\begin{itemize}
+		\item Initialization: Establishing the Docker infrastructure connection, extracting the organs from the initial docker-compose.yml file
+		\item Deployment: Handle the overlay network, deployment (creating the containers and the reverse proxies as cells)
+		\item Adaptations: Moving containers, adding/removing containers, clearing all containers of a certain application
+		\item Infrastructure: Get host information and parse it in order to save it in our database
+	\end{itemize}
+	
+	\item \textbf{PrometheusService}: \\
+	The PrometheusService is responsible for a clean provisioning of analytics data for the frontend.
+	It establishes the connnection to the Prometheus API and allows the fetching of any data the user requests.
+	Since this data is cell-level data, it makes sense to have aggregation functions in place.
+	In the current version of this service, only \textit{average} is implemented, but it's programmed in a pipeline-like way so various alterations and aggregations of the data can be added and chained to the service call.
+\end{itemize}
+
+
+
+- Dockerfile \& docker-compose
+
+- Tests
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

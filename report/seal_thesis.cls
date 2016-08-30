@@ -43,11 +43,11 @@
 %% header/footer
 \pagestyle{fancy}
 \renewcommand{\chaptermark}[1]{\markboth{\chaptername\ \thechapter.\ \ #1}{}}
-\renewcommand{\sectionmark}[1]{\markright{\thesection \ \ #1}}
+\renewcommand{\sectionmark}[1]{\markboth{\chaptername\ \thechapter.\ \ #1}{}}
 \fancyhf{}
 \fancyhead[LE,RO]{\phvbold\small\thepage}
 \fancyhead[LO]{\sffamily\rightmark}
-\fancyhead[RE]{\sffamily\leftmark}
+\fancyhead[RE]{\sffamily\rightmark}
 
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0pt}
