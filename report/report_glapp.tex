@@ -34,8 +34,7 @@ Abstract
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{4 PAGES: Introduction}
-\todo{DONE BY: Fabio}
+\chapter{Introduction}\label{ch:introduction}
 
 Cloud computing has created a paradigm shift in the last few years, by making infrastructure available at lower costs and with higher efficiency of operations.
 These solutions are increasingly being adopted by enterprises and developers, as they can provision huge amount of resources to scale on-demand in order to meet their business needs.
@@ -50,8 +49,8 @@ Furthermore, the complexity and skill required to manage multiple layers of appl
 Understanding run time performance, behavior of various application components in realtime can enable us to take advantage of arbitrage opportunities that exist between different machines/regions or even other cloud providers.
 For example, an application can take advantage by moving closer to its users based on timezones or traffic to improve response time.
 Currently there is no flexibility to move freely between various cloud providers without great development effort and cost, however such an ability to move freely between providers enables us to benefit from cost and performance differences.
-We propose a cloud middleware that can take not only take care of application deployment to cloud, but also constantly monitor and trigger such necessary adaptations to benefit from these opportunities.
-Ideally this middleware also enables developers to specify their intended goals in terms of high level policies to govern the application behavior.
+We propose a cloud middleware that can not only take care of application deployment to the cloud, but also constantly monitor and trigger such necessary adaptations to benefit from these opportunities.
+This middleware also enables developers to specify their intended goals in terms of high level policies to govern the application behavior.
 The middleware can then break down these policies into low level objectives, in order to trigger adaptations by changing the state of application when required.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -59,34 +58,49 @@ The middleware can then break down these policies into low level objectives, in 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Global Living Cloud Applications}
 
-The aim of this project is to develop a middleware for what we call ''global living cloud applications'' (GLAs).
+The aim of this project is to develop a platform for what we call \textit{global living cloud applications} (GLAs).
 In a nutshell, GLAs are a bio-inspired notion of cloud-native applications.
-GLAs ''live'' in the cloud, and are able to migrate between data centers and cloud providers automatically, based on changes in cost and performance of cloud offerings, changes in customer behavior or requirements, or other factors.
-
-\todo{''What I would really do is invest more thought and discussions on the conceptual model behind GLAs - I think there is something pretty cool here, but it does not seem very well-developed to me.''}
-
+GLAs live in the cloud, and are able to migrate between data centers and cloud providers automatically, based on changes in cost and performance of cloud offerings, changes in customer behavior or requirements, or other factors.
 
 The bio-inspired terminology applies for the different levels of components of a GLA:
 
 \begin{itemize}
-	\item Cell: A cell is the lowest-level component of a GLA, consisting of the actual processes \todo{''I wonder whether it makes sense to equate cells to "processes". Is that really the same?''}
-	\item Organ: An organ consists of one or more cells of the same type \todo{''For organs, I understand that organs typically also have cells of different type, i.e., an injected load balancer. I would try to make the model clear in this regard. For instance, it may make sense to distinguish between cells that are user-defined and those that come from your middleware.''}
-	\item GLA: The GLA itself is a collection of organs that form the whole application
+	\item \textbf{GLA}: The GLA itself is a collection of organs that form the whole application.
+	\item \textbf{Organ}: An organ consists of one or more cells.
+	\item \textbf{Cell}: A cell is the lowest-level component of a GLA.
+	There are two kinds of cells: The ones that provide user-defined functionality of the organ, and platform-defined cells like reverse-proxies for exposed ports
 \end{itemize}
 
-In order to manage these GLAs, we introduce a middleware called GLAPP (Global Living Application Platform).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{GLAPP}
+
+In order to manage these GLAs, we introduce a platform called GLAPP (\textbf{G}lobal \textbf{L}iving \textbf{AP}plication \textbf{P}latform).
 It allows a developer to deploy multiple GLAs on whatever cloud he/she has access to and sets a centralized mechanism in place to constantly monitor and manage all the GLAs.
-The middleware supports heterogeneous environment a GLA can live and move across different providers, regions, instance types, etc.
-GLAPP is an open source middleware to be used on a private/individual basis.
-This means that in order to be able to deploy a GLA through GLAPP, it is first required to install the GLAPP platform on the own infrastructure.
-But no matter where the platform is installed, all GLAs will live in the cloud.
+The platform supports heterogeneous environments, so a a GLA can live and move across different providers, regions, instance types, etc.
+
+GLAPP is an open-source platform which can be deployed easily on a server. Set-up instructions can be found on github\footnote{https://github.com/glapp/gla-sails}, as well as all the source code that was developed in the course of this project\footnote{https://github.com/glapp}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Outline}
+This report serves the purpose of giving an overview over the whole project.
+In chapter~\ref{ch:background}, we give some background information about some design and implementation decision as well as the architecture of GLAPP.
+Chapter~\ref{ch:components} introduces all the components GLAPP consists of in more detail.
+In chapter~\ref{ch:casestudy}, we present the case study we had in mind and demoed in our final presentation.
+Chapter~\ref{ch:futurework} discusses possible extensions and future work on the project.
+The report is concluded in chapter~\ref{ch:conclusion}.
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{6 PAGES: Background \& Architecture}
+\chapter{6 PAGES: Background \& Architecture}\label{ch:background}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
@@ -126,7 +140,6 @@ For another thing, Node.js comes with the well-established packaging system \tex
 As an example, \textit{dockerode}\footnote{https://www.npmjs.com/package/dockerode} was the module which we used to implement the Docker-specific functionality, and it proved to be very well maintained, adding new functionalities whenever a new Docker release was published.
 Since we were about to work with relatively new technologies like Docker, it seemed reasonable to count on packages which we knew will be adapted to changes in these new technologies.
 
-
 \subsection{GUI: AngularJS}
 \todo{DONE BY: Dinesh}
 \todo{Explain the choice and alternatives}
@@ -150,10 +163,10 @@ Availability of these functionalities from built-in and third party library make
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Architecture}
-The platform consists of 3 different parts/blocks: a front end, a provisioning component and a control loop.
-The front end provides an interface for developer to interact with the middleware to deploy and manage his/her GLAs.
-The provisioning component provides the management functionalities of the middleware including cloud infrastructure management, application deployment and access to the application status information.
-Lastly the control loop is the component responsible for enabling the management of GLAs by the middleware itself.
+The platform consists of 3 different parts/blocks: a frontend, a server backend and a control loop.
+The frontend provides an interface for developer to interact with the middleware to deploy and manage his/her GLAs.
+The server backend provides the management functionalities of the middleware including cloud infrastructure management, application deployment and access to the application status information.
+Lastly the control loop is the component responsible for enabling the management of GLAs by the platform itself.
 It follows the MAPE (Monitoring, Analysis, Planning and Execution) principle.
 Possible execution actions are moving cells between different cloud instances (migration), duplicating/splitting cells of the GLA (mitosis), or removing cells.
 
@@ -165,21 +178,19 @@ Possible execution actions are moving cells between different cloud instances (m
 \end{figure}
 \todo{Explain the separate parts - DONE BY: Dinesh}
 
-\noindent\todo{''I like Fig2 better, but there is still plenty of room for improvement. For instance, I would remove the word "optimal" from the figure - especially, if we now use this iterative Q-learning approach, our deployment will often *not* be optimal, at least temporarily. I am also quite suspicious that the msot dominant block in the figure is the provisioner. Is this really what we want to emphasize?''}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{10 PAGES: Components}
+\chapter{10 PAGES: Components}\label{ch:components}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Backend}
 
-The backend is mainly responsible for the deployment and is the central component that defines the data structure of the platform. In order to understand the main functionality of the backend server, this section introduces the data models, the REST API, the services and some additional information about this component.
+The backend is mainly responsible for the deployment and is the central component that defines the data structure of the platform. In order to understand the main functionality of the backend server, this section introduces the data models, the REST API, the services and the tests of this component.
 
 \subsection{Data Models}
 Figure~\ref{fig:models} provides a simple ER-like overview over the way how the server stores the data about users, applications, etc.
@@ -339,20 +350,18 @@ For most of the internal logic apart from the actual API of the backend server, 
 	\end{itemize}
 	
 	\item \textbf{PrometheusService}: \\
-	The PrometheusService is responsible for a clean provisioning of analytics data for the frontend.
-	It establishes the connnection to the Prometheus API and allows the fetching of any data the user requests.
+	The PrometheusService is responsible for a clean provisioning of analytic data for the frontend.
+	It establishes the connection to the Prometheus API and allows the fetching of any data the user requests.
 	Since this data is cell-level data, it makes sense to have aggregation functions in place.
 	In the current version of this service, only \textit{average} is implemented, but it's programmed in a pipeline-like way so various alterations and aggregations of the data can be added and chained to the service call.
 \end{itemize}
 
 
-
-- Dockerfile \& docker-compose
-
-- Tests
-
-
-
+\subsection{Tests}
+It is crucial for the whole platform that the backend's interface works as expected.
+To assure this, we wrote tests of all the API endpoints in different scenarios, based on the Node.js testing framework Mocha\footnote{https://mochajs.org/}.
+Since most requests trigger functions of the services, these tests cover the majority of code in the backend.
+How to run the tests is described in the README.md\footnote{https://github.com/glapp/gla-sails} of the backend component.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -428,17 +437,35 @@ The robust query functionality provides two major advantages.
 First of all, it reduces the complexity of computation logic of MAPE that is responsible for getting specific performance metric for subsequent healthiness computation.
 Secondly, it allows quick tweaking of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
 
-\subsection{Supporting Applications}
+\subsection{Supporting Tools \& Applications}
 \todo{Infrastructure Scripts, Consul, Registrator, Voting-App, Proxy, metrics-server etc.}
-\todo{DONE BY: Fabio}
-
+In the course of the project, several further small tools and applications were used to complete the task. This section quickly mentions them with a reference to further information sources:
+\begin{itemize}
+	\item \textbf{Infrastructure scripts}: \\
+	To always work on the same host infrastructure, we soon created handy scripts to set up a complete infrastructure which includes all of the required components.
+	This is all collected in a git repository\footnote{https://github.com/glapp/docker-swarm-creation} and can also be used by other people to set up the same infrastructure as we were working with.
+	\item \textbf{Consul.io}: \\
+	As a discovery service for the Docker swarm hosts, we used the key/value store of Consul.io\footnote{https://www.consul.io/}. It is included in the mentioned infrastructure scripts.
+	\item \textbf{Registrator}: \\
+	To register every exposed port of the deployed applications, we used Consul.io in combination with Registrator\footnote{http://gliderlabs.com/registrator/latest/}. In order to register not only public ports but also exposed ports that are only available in the created overlay network, the \textit{-internal} run option proved to be very helpful.
+	\item \textbf{HAProxy}: \\
+	Registrator was used to create the mentioned reverse proxies.
+	In order to always have an up-to-date reverse proxy with a complete list of active endpoints of a specific organ, we created a HAProxy docker image\footnote{https://github.com/Clabfabs/miniboxes/tree/master/minihaproxy, https://hub.docker.com/r/clabs/haproxylb/} that used Registrator and consul-template\footnote{https://github.com/hashicorp/consul-template} to dynamically adjust the configuration of the HAProxy and restart it with every change.
+	\item \textbf{Voting-App}: \\
+	The voting-app is our demo application that will be introduced in more detail in the chapter~\ref{ch:casestudy}.
+	It is based on an example application by Docker itself\footnote{https://blog.docker.com/2015/11/docker-toolbox-compose/}.
+	We adjusted the individual components to our needs, e.g. to include custom metrics, and they can all be found on our github page.
+	\item \textbf{Metrics-Server}: \\
+	The metrics-server\footnote{https://github.com/glapp/metrics-server} is a small service we created that was used to register the clicks of the demo application.
+	It could be extended to handle all different kinds of metrics via a REST API.
+\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{7 PAGES: Case Study}
+\chapter{7 PAGES: Case Study}\label{ch:casestudy}
 \todo{DONE BY: Riccardo}
 
 \section{Explain Demo Application}
@@ -462,7 +489,7 @@ Secondly, it allows quick tweaking of query parameters to obtain the most releva
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{2 PAGES: Future Work}
+\chapter{2 PAGES: Future Work}\label{ch:futurework}
 \todo{DONE BY: Fabio / Adrian}
 
 
@@ -471,14 +498,13 @@ Secondly, it allows quick tweaking of query parameters to obtain the most releva
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{1 PAGE: Conclusion}
+\chapter{1 PAGE: Conclusion}\label{ch:conclusion}
 
 
 \bibliographystyle{alpha}
 \bibliography{sources}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% NEW CHAPTER																						%
 % Evt. APPENDIX
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

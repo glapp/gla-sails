@@ -17,8 +17,8 @@ Class=LaTeXView
 Document=report_glapp.tex
 
 [Frame0_View0,0]
-TopLine=80
-Cursor=6802
+TopLine=0
+Cursor=153
 
 [Frame1]
 Flags=0
