@@ -1,5 +1,6 @@
 \documentclass{seal_thesis}
 
+\usepackage{amsmath}
 \usepackage[
   top=1.25in,
   bottom=1.25in,
@@ -145,7 +146,7 @@ Since we were about to work with relatively new technologies like Docker, it see
 \todo{Explain the choice and alternatives}
 
 \subsection{MAPE: Java}
-\todo{DONE BY: Adrian / Riccardo}
+\todo{To be reviewed by: Riccardo}
 \todo{Explain the choice and alternatives}
 Java is a widely used programming language with good interoperability and decent support by other system or libraries used in this project.
 MAPE is a key component of the GLAPP platform.
@@ -153,8 +154,8 @@ One of the important aspect of MAPE is the ability to easily interface with othe
 Another consideration is the availability of third party libraries that GLAPP can leverage to perform common computation using well-known algorithm such as various planning and learning algorithms used in Markov Decision Process (MDP).
 
 A set of comprehensive functionality is provided through Java API and third party libraries.
-For instance, though Java standard API, robust interfacing with SAILS backend monitoring system through HTTP connection is readily available.
-In addition, GSON library \todo{add reference} provides easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and monitoring system.
+In addition to functionality included in Java standard API such as HTTP connection used for interfacing with SAILS backend and monitoring system, useful third party libraries are also available.
+For instance, GSON library \todo{add reference} provides easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and monitoring system.
 Most importantly, BURLAP library \todo{add reference} provides not only a set of planning and learning algorithm for Markov Decision Process in reinforcement learning, but also a framework for further extending the processing capability through custom implementation of various components including learning algorithm and approximation function.
 Availability of these functionalities from built-in and third party library makes Java a compelling language in developing MAPE component.
 
@@ -374,9 +375,8 @@ How to run the tests is described in the README.md\footnote{https://github.com/g
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{4 PAGES: MAPE}
-\todo{DONE BY: Adrian / Riccardo}
-
+\section{MAPE}
+\todo{To be reviewed by: Riccardo}
 MAPE is the control loop of the platform and responsible for managing the deployment of applications in accordance to the policy.
 
 % add a detailed description of the problem?
@@ -405,19 +405,55 @@ JSON objects are used for all these information retrieval.
 The use of JSON objects provides a data structure that is flexible to represent different types of information from different interfacing systems.
 In addition, it allows MAPE to build a object-oriented view of the whole environment that provides quick access to specific information for various computations.
 
+\subsection{Policy}
+Policy is a key element for MAPE.
+It consists of a set of user-defined rules that governs the application deployment.
+A rule is specified with the following information:
+\begin{itemize}
+\item \textbf{metric} defines performance indicator that the current deployment will be measured against.
+\item \textbf{organ} defines the organ(s) that the rule is applicable to.
+\item \textbf{threshold} defines the upper or lower bound that the metric value should be compliant to.
+\item \textbf{operator} defines how the metric value should be compared to the threshold.
+For example, a "less than" operator means the metric value need to be less than the specified threshold.
+\item \textbf{weight} defines the weight of a rule relative to others when multiple rules are specified.
+\end{itemize}
+Based on the metric selected, a rule can be classified into one of the following three types:
+\begin{itemize}
+\item \textbf{Resource utilization rule} limits the resource utilization to the specified threshold.
+An example would be to restrict the CPU utilization to be lower than 80\%.
+\item \textbf{Cost rule} limits the total cost incurred from running on the cloud infrastrcture.
+\item \textbf{Application metric rule} specifies the range of application metric that the application need to comply to.
+In current implementation, click rule is an example of application metric rule.
+\end{itemize}
+
 \subsection{Healthiness computation}
-% computation of healthiness values
-\todo{elaborate about healthiness computation}
+Based on the rules defined in the policy, healthiness is computed.
+For the $i$-th rule, the healthiness of a cell is defined as the ratio of the difference between metric value and threshold to the threshold normalized with the weight of the rule:
+\[ \textrm{healthiness}_{cell} = \frac{\textrm{difference between metric value and threshold}}{\textrm{threshold}} \times \frac{w_i}{\sum_{i=1}^{n}{w_i}}\]
+where $w_i$ is the weight of the $i$-th rule and $n$ is the total number of rules.
+
+A positive healthiness value means the metric value is compliant and a negative healthiness value means the metric value is non-compliant.
+For example, assume there is only one rule, if the rule specifies the "CPU utilization" need to be "less than" a threshold of 0.8 (80\%) and the current CPU utilization is 0.6(60\%), the healthiness value will be:
+\begin{align*}
+\textrm{healthiness} &= \frac{0.8 - 0.6}{0.8} \times \frac{1}{1}\\
+&= 0.25
+\end{align*}
+%The healthiness value of a rule is the aggregated value of all cells' healthiness values:
+%\[ \textrm{healthiness}_{rule} = \sum_{i=1}^{n}{h_i}\]
+%where $h_i$ is the healthiness value of the $i$-th cell and $n$ is the total number of cells applicable under a given rule.
+The healthiness value of a rule is the aggregated value of all cells' healthiness values.
 
 After the healthiness values of the each individual cell is computed based on the policy and performance metric, all violating cells within an organ are taken into account for an evaluation.
-When the number of violating cell exceed a defined threshold, the organ will be considered as unhealthy.
-Once an organ is unhealthy, information of all violations will be further processed in MAPE to determine appropriate adaption action.
+When the number of violating cell exceed a defined threshold, the rule will be considered as violated.
+Information of each violating cell along with the healthiness value will added to a list of violations.
+This list of violations will be further processed in MAPE to determine appropriate adaption action.
 
 % add details about the processing the violation information
 
 \subsection{Markov Decision Model}
 % burlap library for MDP and its extensibility
-In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the optimization problem of finding the application deployment that fulfil the requirements specified in the policy.
+Markov Decision Model (MDP) will be triggered to find an application deployment that fulfil policy requirement whenever a rule violation is detected.
+In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the optimization problem.
 The output of solving the optimization problem is an adaptation action or a series of adaptation actions that transit the application from a state where policy is violated to another where the policy is fulfilled.
 Before starting the MDP, the environment and application deployment need to be modelled as states.
 At the same time, adaptation actions are modelled as transition actions in MDP that change state from one to another.
@@ -457,6 +493,7 @@ Possibility of using MDP with alternative function approximation method will be 
 For the final implementation, rule-based adaptation logic is used in MAPE for determination of adaption action. 
 Although MDP is not used in the final implementation, the BURLAP framework is retained.
 As a result, changing to rule-based adaptation logic involves mainly the implementation of a rule set to replace the learning algorithm while the majority of previous implementation for other functionalities are carried over.
+Implementation for state representation and environment interaction is reused.
 For the rule-based adaptation, the rule set is implemented in the \texttt{MapeActionTypeHeuristic} class.
 The \texttt{MapeWorld} class, which define the problem domain, is also updated to use this \texttt{MapeActionTypeHeuristic} class.
 
@@ -478,13 +515,17 @@ It is handled differently from both resource utilization violation and cost viol
 Since click metric represents the amount of click from the application frontend in a specific region, a small amount of click indicates the application and its corresponding cell is underutilized while a large amount of click indicates the application and its responding cell is overutilized.
 In this regard, the healthiness value associated with click violation is the number of clicks to number of serving cells ratio.
 When the ratio for a given region is lower than scale-down threshold, an adaptation action will be triggered to reduce the number of cells in that region.
-On the other hand, when the ratio is higher than the scale-up threshold, an adaptation action will be triggered to duplicate/split cell in that region.
-
+On the contrary, when the ratio is higher than the scale-up threshold, an adaptation action will be triggered to duplicate/split cell in that region.
 
 \subsection{Extensibility}
+\begin{sloppypar}
 Extensibility of control logic is built into MAPE with use of BURLAP framework.
 The framework enables swapping or enhancing of various parts of the MDP, including planning and learning algorithm and value approximation functions, by implementing corresponding interface or extending existing classes.
 The quick switch from MDP to rule-based adaptation logic in final implementation is achieved with this inherited extensibility.
+To replace the learning algorithm provided by the BURLAP library, one can create a class that implements \texttt{burlap.behavior.singleagent.learning.LearningAgent} and a class that implements \texttt{burlap.behavior.valuefunction.QProvider} interface.
+The \texttt{LearningAgent} class defines the learning agent's behaviour in an environment.
+The \texttt{burlap.behavior.valuefunction.QProvider} is responsible for computing Q-value.
+\end{sloppypar}
 
 
 
@@ -493,21 +534,22 @@ The quick switch from MDP to rule-based adaptation logic in final implementation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{2 PAGES: Other}
 \subsection{Monitoring / Prometheus}
-\todo{DONE BY: Adrian / Riccardo}
+\todo{to be reviewed by: Riccardo}
 
 Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics.
 Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers.
 Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}.
 The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
 
-% range query and point query in Prometheus
-Prometheus is also sophisticated in providing different types of query.
-It supports range query and point query with additional functions that can be applied on the raw data when formulating a query.
-This enables the fine-grained extraction of data that best fits the corresponding performance metric.
+% range query and instant query in Prometheus
+Prometheus is sophisticated with capability to support different types of query.
+It provides range query and instant query (query at a single point in time) with support of applying functions on data when formulating a query.
+This enables the fine-grained retrieval of data that best fits the corresponding performance metric.
 For instance, the rate function allows the direct retrieval of the rate of change in CPU time of a container with configurable data point range, data point interval and duration covered by each data point.
+
 The robust query functionality provides two major advantages.
-First of all, it reduces the complexity of computation logic of MAPE that is responsible for getting specific performance metric for subsequent healthiness computation.
-Secondly, it allows quick tweaking of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
+First of all, it shifts some computation from MAPE to Prometheus and thus reducing complexity of MAPE in getting specific performance metric for subsequent healthiness computation.
+Secondly, it allows quick tweaking and testing of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
 
 \subsection{Supporting Tools \& Applications}
 \todo{Infrastructure Scripts, Consul, Registrator, Voting-App, Proxy, metrics-server etc.}
