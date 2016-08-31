@@ -378,21 +378,34 @@ How to run the tests is described in the README.md\footnote{https://github.com/g
 \todo{DONE BY: Adrian / Riccardo}
 
 MAPE is the control loop of the platform and responsible for managing the deployment of applications in accordance to the policy.
-It analyze the environment information and performance metrics to determine the healthiness of application and trigger appropriate adaptation action should there be any violation to the policy.
+
+% add a detailed description of the problem?
+
+It analyzes the environment information and performance metrics to determine the healthiness of application and trigger appropriate adaptation action should there be any violation to the policy.
 The environment information includes details of the infrastructure, application deployment and user-defined policy.
 
-MAPE consists of three parts: one is interfacing systems to retrieve the necessary information for analysis and dispatch the adaptation action, another part is analyzing the application healthiness in regard to the policy, and the last part is determining the adaptation action based on the environment information and computed healthiness.
+MAPE consists of three parts: one interfaces with other systems to retrieve the necessary information for analysis and dispatch the adaptation action, another part analyzes the application status and determine its healthiness with regard to the policy, and the last part determines appropriate adaptation action based on the environment information and the computed healthiness.
 
+MAPE implementation are grouped into several packages:
+\begin{itemize}
+\item Package \texttt{ch.uzh.glapp} contains the core classes of MAPE including \texttt{MainLoop} class where the main function is defined.
+It also include classes for interfacing with other systems as well as an utility class providing auxiliary functions used in various computation. 
+\item Package \texttt{ch.uzh.glapp.mdp} contains the classes for MDP using BURLAP library.
+\item Package \texttt{ch.uzh.glapp.model} and its subpackages contain the classes for modelling the infrastructure information and performance metrics returned by SAILS backend and monitoring system.
+\end{itemize}
+
+\subsection{Interface with other systems}
 At the start of each control loop, MAPE interfaces with SAILS backend to retrieve environment information, and with monitoring system to retrieve performance metrics. On the other hand, MAPE communicates to SAILS backend to execute the adaptation action.
 As mentioned in the implementation decision section, MAPE use HTTP protocol with JSON object for data exchange.
 It retrieves the infrastructure, application deployment information and user-defined policy from SAILS backend as well as performance metrics through HTTP requests.
 For instance, infrastructure information includes information of virtual machines such as the service provider, machine location and machine tier. Deployment information, on the other hand, refers to the information of each application components including on which containers they are currently deployed.
-Furthermore, MAPE also retrieve user-defined policy through SAILS backend. A policy is set of rules that defines which metrics the application need to comply to, its threshold for healthiness determine and the weight of each rule relative to the others.
+Furthermore, MAPE also retrieves user-defined policy through SAILS backend. A policy is set of rules that defines which metrics the application need to comply to, its threshold for healthiness determine and the weight of each rule relative to the others.
 Lastly, MAPE retrieve the performance metrics from the backend monitoring system.
 JSON objects are used for all these information retrieval.
 The use of JSON objects provides a data structure that is flexible to represent different types of information from different interfacing systems.
-In addition, it allows MAPE to build a object-oriented view of the whole environment that provide quick access to specific information in various computation during the analysis.
+In addition, it allows MAPE to build a object-oriented view of the whole environment that provides quick access to specific information for various computations.
 
+\subsection{Healthiness computation}
 % computation of healthiness values
 \todo{elaborate about healthiness computation}
 
@@ -400,19 +413,48 @@ After the healthiness values of the each individual cell is computed based on th
 When the number of violating cell exceed a defined threshold, the organ will be considered as unhealthy.
 Once an organ is unhealthy, information of all violations will be further processed in MAPE to determine appropriate adaption action.
 
+\subsection{Markov Decision Model}
 % burlap library for MDP and its extensibility
-In the first implementation of MAPE, MDP is used to determine the adaptation action.
-Before starting the MDP, the environment and application deployment need to be modelled as states. At the same, actions for state transition are defined.
+In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the optimization problem of finding the application deployment that fulfil the requirements specified in the policy.
+The output of solving the optimization problem is an adaptation action or a series of adaptation actions that transit the application from a state where policy is violated to another where the policy is fulfilled.
+Before starting the MDP, the environment and application deployment need to be modelled as states.
+At the same time, adaptation actions are modelled as transition actions in MDP that change state from one to another.
 BURLAP library and its framework is used for modelling and transition action definition.
-When the state and state-action information is constructed, learning algorithm from the library is applied.
-The learning algorithm is first applied in a simulated environment to verify correctness of the constructed model and defined transition action.
-It also serve a second purpose for understanding MDP process by generating the log of MDP with the aim for fine tuning the parameters in later stage of development.
-While MDP works close to the expected outcome in a simulated environment, concern was raised regarding the convergence of Q-value that learning algorithm rely on to determine the optimal action in a given state.
+Classes in the package \texttt{ch.uzh.glapp.mdp} are implementation according to the BURLAP framework. \todo{add reference to http://burlap.cs.brown.edu/tutorials/bpl/p4.html\#qlearn}
+\begin{itemize}
+\item \texttt{MapeWorld} class defines the domain of optimization problem.
+\item \texttt{MapeCell} class defines the state representation for MDP.
+\item \texttt{MapeActionType<action type>} classes define the transition actions.
+These class perform pre-condition check on the current state and generate applicable actions for that state.
+\item \texttt{MapeAction<action type>} classes define the actual action that can be selected by learning algorithm as output of MDP.
+\item \texttt{MapeEnvironment} class defines the functions to observe the real world environment and to execute the action output from MDP.
+\item \texttt{BasicBehaviorMape} class sets up the whole environment for MDP and specify the learning algorithm used.
+\end{itemize}
+When the state and transition action objects are constructed, learning algorithm from the library can be applied.
+
+Q-Learning algorithm was first applied in a simulated environment.
+A simulated environment was used to verify correctness of the constructed model and the defined transition action.
+It also served a second purpose for understanding MDP process by generating detailed log of MDP.
+This log provides a sequence of transition action and Q-value corresponding to each transition which allows fine tuning of Q-learning parameters in later stage of development.
+While the outcome of MDP in a simulated environment is close to expectation, concern was raised regarding the convergence of Q-value that learning algorithm relies on to determine the optimal action in a given state.
 More importantly, problem of high number of states and transition actions affects the viability of applying MDP to the optimization problem of MAPE.
-After subsequent iteration of adjustment and refinement to the model and transition actions and execution of MDP in the simulated environment, it is concluded that reduction of number of states is required for applying MDP.
-To reduct the number of states, value function approximation need to be used.
+The model and transition actions were further adjusted in subsequent iterations.
+After several testings of MDP in the simulated environment, it is concluded that reduction of number of states is required for applying MDP.
+To reduct the number of states, function approximation is needed.
+Function approximation methods including both on-policy SARSA and off-policy Q-Learning with gradient descent were explored.
+Gradient descent method requires numeric vectors for representing features in states.
+For modelling the GLA, attribute of both the organs and the cells are used as the features.
+More preciously, these attributes are the number of cells in an organ, the cloud service provider, region and hardware specification of the hosts that cells reside.
+These features consist of discrete string values and as a result both SARSA and Q-Learning methods cannot be used.
+However, since the provided function approximation methods from current BURLAP library does not handle string-valued feature, further study of appropriate function approximation and implementation are needed.
+Possibility of using MDP with alternative function approximation method will be discussed in the Future Work chapter.
 
 % simulation using burlap
+
+\subsection{Rule-based logic}
+In the end, rule based logic is used in MAPE for determination of adaption action. 
+
+
 
 
 
