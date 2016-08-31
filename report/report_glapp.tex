@@ -115,8 +115,27 @@ The report is concluded in chapter~\ref{ch:conclusion}.
 \subsection{Deployment: Containerization with Docker}
 \subsubsection{Containerization vs. other virtualization methods:}
 \todo{Explain the advantage of containerization compared to e.g. virtual machines}
+@Adrian: Some resources that help understand this difference
+\begin{itemize}
+	\item http://searchservervirtualization.techtarget.com/answer/How-is-containerization-different-from-virtualization
+	\item https://jaxenter.com/containerization-vs-virtualization-docker-introduction-120562.html
+\end{itemize}
+
+In general, i think the following points can be stated here:
+\begin{itemize}
+	\item Containerization is much more lightweight. Some MB for a container compared to some GB for a whole VM
+	\item This enables faster deployment, which is crucial to our problem
+	\item Disadvantage of containerization is that the containers are less isolated than a whole VM. However, for a student project, such security questions are less important and new developments in current containerization implementations like Docker seem to handle isolation quite well.
+\end{itemize}
+
+
 \subsubsection{Docker vs. other containerization implementations:}
 \todo{Explain the advantage of Docker compared to e.g. OpenVZ}
+\begin{itemize}
+	\item Basically, Docker was a big hype in the early stage of our project, and keeps being in the news until today -> nice to work on a bleeding-edge technology
+	\item There are many similarities between all these containerization implementations, but I think docker is the most straight-forward application containerization (for web-applications / services). E.g., LXD focuses more on the deployment of virtual machines as containers (yes, now it gets inception-like :P)
+	--> See http://unix.stackexchange.com/questions/254956/what-is-the-difference-between-docker-lxd-and-lxc
+\end{itemize}
 
 \subsection{Orchestration: Docker Swarm}
 \todo{Explain the advantage of Docker Swarm compared to e.g. Kubernetes}
@@ -552,7 +571,6 @@ First of all, it shifts some computation from MAPE to Prometheus and thus reduci
 Secondly, it allows quick tweaking and testing of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
 
 \subsection{Supporting Tools \& Applications}
-\todo{Infrastructure Scripts, Consul, Registrator, Voting-App, Proxy, metrics-server etc.}
 In the course of the project, several further small tools and applications were used to complete the task. This section quickly mentions them with a reference to further information sources:
 \begin{itemize}
 	\item \textbf{Infrastructure scripts}: \\
