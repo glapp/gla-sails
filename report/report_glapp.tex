@@ -413,6 +413,8 @@ After the healthiness values of the each individual cell is computed based on th
 When the number of violating cell exceed a defined threshold, the organ will be considered as unhealthy.
 Once an organ is unhealthy, information of all violations will be further processed in MAPE to determine appropriate adaption action.
 
+% add details about the processing the violation information
+
 \subsection{Markov Decision Model}
 % burlap library for MDP and its extensibility
 In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the optimization problem of finding the application deployment that fulfil the requirements specified in the policy.
@@ -432,29 +434,57 @@ These class perform pre-condition check on the current state and generate applic
 \end{itemize}
 When the state and transition action objects are constructed, learning algorithm from the library can be applied.
 
+% simulation using burlap
 Q-Learning algorithm was first applied in a simulated environment.
 A simulated environment was used to verify correctness of the constructed model and the defined transition action.
 It also served a second purpose for understanding MDP process by generating detailed log of MDP.
 This log provides a sequence of transition action and Q-value corresponding to each transition which allows fine tuning of Q-learning parameters in later stage of development.
+
 While the outcome of MDP in a simulated environment is close to expectation, concern was raised regarding the convergence of Q-value that learning algorithm relies on to determine the optimal action in a given state.
 More importantly, problem of high number of states and transition actions affects the viability of applying MDP to the optimization problem of MAPE.
 The model and transition actions were further adjusted in subsequent iterations.
 After several testings of MDP in the simulated environment, it is concluded that reduction of number of states is required for applying MDP.
-To reduct the number of states, function approximation is needed.
+To reduce the number of states, function approximation is needed.
 Function approximation methods including both on-policy SARSA and off-policy Q-Learning with gradient descent were explored.
 Gradient descent method requires numeric vectors for representing features in states.
 For modelling the GLA, attribute of both the organs and the cells are used as the features.
-More preciously, these attributes are the number of cells in an organ, the cloud service provider, region and hardware specification of the hosts that cells reside.
+More precisely, these attributes are the number of cells in an organ, the cloud service provider, region and hardware specification of the hosts that cells reside.
 These features consist of discrete string values and as a result both SARSA and Q-Learning methods cannot be used.
-However, since the provided function approximation methods from current BURLAP library does not handle string-valued feature, further study of appropriate function approximation and implementation are needed.
+However, since the provided function approximation methods from current BURLAP library are not applicable to string-valued feature, further exploration of function approximation and implementation are needed.
 Possibility of using MDP with alternative function approximation method will be discussed in the Future Work chapter.
 
-% simulation using burlap
+\subsection{Rule-based adaptation logic}
+For the final implementation, rule-based adaptation logic is used in MAPE for determination of adaption action. 
+Although MDP is not used in the final implementation, the BURLAP framework is retained.
+As a result, changing to rule-based adaptation logic involves mainly the implementation of a rule set to replace the learning algorithm while the majority of previous implementation for other functionalities are carried over.
+For the rule-based adaptation, the rule set is implemented in the \texttt{MapeActionTypeHeuristic} class.
+The \texttt{MapeWorld} class, which define the problem domain, is also updated to use this \texttt{MapeActionTypeHeuristic} class.
 
-\subsection{Rule-based logic}
-In the end, rule based logic is used in MAPE for determination of adaption action. 
+With the use of rule set, MAPE first analyzes the violation information from the previous stage of healthiness computation.
+If there are multiple violations, the list of violations are sorted in descending order of healthiness value.
+Then MAPE will action on the violation with the most negative healthiness value.
+This ensure the violation that has the largest impact on the overall application healthiness is addressed first.
+The violations are classified into 3 types: resource utilization violation, cost violation and custom metrics violation.
+
+Resource utilization violation is handled by moving the violating cell to a host with better specification (i.e. host in a higher tier).
+In case a higher tier host is not available, for example, the cell is already running on highest tier host, duplicating/splitting cell will take place.
+
+Cost violation is a specific type of custom metric where the adaptation action is scaling down the deployment.
+Whenever there is a cost violation, details of all cells belonging to the organs specified policy are taken into account.
+Then the rule set will specify MAPE to find a host with the cheapest cost and trigger an adaptation action to move a cell to that host.
+
+Click is the custom metric implemented.
+It is handled differently from both resource utilization violation and cost violation as it scales up/out or down based on the magnitude of the healthiness value.
+Since click metric represents the amount of click from the application frontend in a specific region, a small amount of click indicates the application and its corresponding cell is underutilized while a large amount of click indicates the application and its responding cell is overutilized.
+In this regard, the healthiness value associated with click violation is the number of clicks to number of serving cells ratio.
+When the ratio for a given region is lower than scale-down threshold, an adaptation action will be triggered to reduce the number of cells in that region.
+On the other hand, when the ratio is higher than the scale-up threshold, an adaptation action will be triggered to duplicate/split cell in that region.
 
 
+\subsection{Extensibility}
+Extensibility of control logic is built into MAPE with use of BURLAP framework.
+The framework enables swapping or enhancing of various parts of the MDP, including planning and learning algorithm and value approximation functions, by implementing corresponding interface or extending existing classes.
+The quick switch from MDP to rule-based adaptation logic in final implementation is achieved with this inherited extensibility.
 
 
 
