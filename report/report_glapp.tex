@@ -11,13 +11,13 @@
 
 \thesisType{Master Project Report}
 \date{\today}
-\title{GLAPP}
+\title{The Global Living Application Platform (GLAPP)}
 \subtitle{}
 \author{
 Fabio Isler \textmd{(09-115-965)} \\
 Man Wai Li \textmd{(14-705-156)} \\
 Dinesh Pothineni \textmd{(14-707-988)} \\
-Riccardo Patane \textmd{(XX-XXX-XXX)}}
+Riccardo Patane \textmd{(09-177-270)}}
 \home{} % Geburtsort
 \country{}
 \prof{Prof. Dr. Harald C. Gall}
@@ -45,12 +45,12 @@ In IaaS, virtual computing resources are acquired and released on demand, either
 Along with great flexibility of being able to get new resources on demand and pay for what you use, new problems arise.
 Selecting a cloud service provider can often be a quite challenging decision for the developer or a company, so is being able to monitor and evaluate these infrastructure resources on a regular basis.
 With so much of variance in cost and performance, it is imperative that one would look for a reliable deployment, monitoring solutions to strike a balance with application requirements.
-Furthermore, the complexity and skill required to manage multiple layers of application, data, middleware and operating systems can .
+Furthermore, the complexity and skill required to manage multiple layers of application, data, middleware and operating systems can be very high.
 
-Understanding run time performance, behavior of various application components in realtime can enable us to take advantage of arbitrage opportunities that exist between different machines/regions or even other cloud providers.
+Understanding run time performance and behavior of various application components in realtime can enable us to take advantage of arbitrage opportunities that exist between different machines/regions or even other cloud providers.
 For example, an application can take advantage by moving closer to its users based on timezones or traffic to improve response time.
-Currently there is no flexibility to move freely between various cloud providers without great development effort and cost, however such an ability to move freely between providers enables us to benefit from cost and performance differences.
-We propose a cloud middleware that can not only take care of application deployment to the cloud, but also constantly monitor and trigger such necessary adaptations to benefit from these opportunities.
+Currently there is no flexibility to move freely between various cloud providers without great development effort and cost, however such an ability to move freely between providers enables us to benefit from cost and performance differences of cloud providers.
+We propose a cloud middleware that can not only take care of application deployment to the cloud, but also constantly monitor and trigger necessary adaptations to benefit from these opportunities.
 This middleware also enables developers to specify their intended goals in terms of high level policies to govern the application behavior.
 The middleware can then break down these policies into low level objectives, in order to trigger adaptations by changing the state of application when required.
 
@@ -67,7 +67,7 @@ The bio-inspired terminology applies for the different levels of components of a
 
 \begin{itemize}
 	\item \textbf{GLA}: The GLA itself is a collection of organs that form the whole application.
-	\item \textbf{Organ}: An organ consists of one or more cells.
+	\item \textbf{Organ}: An organ consists of one or more cells and is responsible for a service.
 	\item \textbf{Cell}: A cell is the lowest-level component of a GLA.
 	There are two kinds of cells: The ones that provide user-defined functionality of the organ, and platform-defined cells like reverse-proxies for exposed ports
 \end{itemize}
@@ -79,7 +79,7 @@ The bio-inspired terminology applies for the different levels of components of a
 \section{GLAPP}
 
 In order to manage these GLAs, we introduce a platform called GLAPP (\textbf{G}lobal \textbf{L}iving \textbf{AP}plication \textbf{P}latform).
-It allows a developer to deploy multiple GLAs on whatever cloud he/she has access to and sets a centralized mechanism in place to constantly monitor and manage all the GLAs.
+It allows a developer to deploy multiple GLAs on whatever cloud she has access to and sets a centralized mechanism in place to constantly monitor and manage all the GLAs.
 The platform supports heterogeneous environments, so a a GLA can live and move across different providers, regions, instance types, etc.
 
 GLAPP is an open-source platform which can be deployed easily on a server. Set-up instructions can be found on github\footnote{https://github.com/glapp/gla-sails}, as well as all the source code that was developed in the course of this project\footnote{https://github.com/glapp}
@@ -88,8 +88,8 @@ GLAPP is an open-source platform which can be deployed easily on a server. Set-u
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Outline}
-This report serves the purpose of giving an overview over the whole project.
-In chapter~\ref{ch:background}, we give some background information about some design and implementation decision as well as the architecture of GLAPP.
+This report serves the purpose of giving an overview of the whole project.
+In chapter~\ref{ch:background}, we give some background information about design and implementation decision as well as the architecture of GLAPP.
 Chapter~\ref{ch:components} introduces all the components GLAPP consists of in more detail.
 In chapter~\ref{ch:casestudy}, we present the case study we had in mind and demoed in our final presentation.
 Chapter~\ref{ch:futurework} discusses possible extensions and future work on the project.
@@ -174,8 +174,8 @@ Another consideration is the availability of third party libraries that GLAPP ca
 
 A set of comprehensive functionality is provided through Java API and third party libraries.
 In addition to functionality included in Java standard API such as HTTP connection used for interfacing with SAILS backend and monitoring system, useful third party libraries are also available.
-For instance, GSON library \todo{add reference} provides easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and monitoring system.
-Most importantly, BURLAP library \todo{add reference} provides not only a set of planning and learning algorithm for Markov Decision Process in reinforcement learning, but also a framework for further extending the processing capability through custom implementation of various components including learning algorithm and approximation function.
+For instance, GSON library \footnote{https://github.com/google/gson} provides easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and monitoring system.
+Most importantly, BURLAP library \footnote{http://burlap.cs.brown.edu/} provides not only a set of planning and learning algorithm for Markov Decision Process in reinforcement learning, but also a framework for further extending the processing capability through custom implementation of various components including learning algorithm and approximation function.
 Availability of these functionalities from built-in and third party library makes Java a compelling language in developing MAPE component.
 
 
@@ -184,7 +184,7 @@ Availability of these functionalities from built-in and third party library make
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Architecture}
 The platform consists of 3 different parts/blocks: a frontend, a server backend and a control loop.
-The frontend provides an interface for developer to interact with the middleware to deploy and manage his/her GLAs.
+The frontend provides an interface for developer to interact with the middleware to deploy and manage her GLAs.
 The server backend provides the management functionalities of the middleware including cloud infrastructure management, application deployment and access to the application status information.
 Lastly the control loop is the component responsible for enabling the management of GLAs by the platform itself.
 It follows the MAPE (Monitoring, Analysis, Planning and Execution) principle.
@@ -229,7 +229,7 @@ That means that by defining the models and their relations and by setting up a c
 We decided to use \textit{MongoDB}\footnote{https://www.mongodb.com/community} as a database.
 
 \subsection{REST API}
-The backend is supposed to serve the frontend and the MAPE component with needed data and to provide an interface for triggering adaptations to the deployment.
+The backend is supposed to serve the frontend and the MAPE component with data and to provide an interface for triggering adaptations to the deployment.
 To achieve this clean interface, there is a REST API in place. Table~\ref{tab:endpoints} lists and describes the endpoints of this API.
 Since our components are completely modularized and the communication only happens via this interface, the remaining components like the frontend or the MAPE are easily interchangeable.
 
@@ -396,7 +396,7 @@ How to run the tests is described in the README.md\footnote{https://github.com/g
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{MAPE}
 \todo{To be reviewed by: Riccardo}
-MAPE is the control loop of the platform and responsible for managing the deployment of applications in accordance to the policy.
+MAPE is the control loop of the platform and responsible for managing the deployed applications in accordance to the policy.
 
 % add a detailed description of the problem?
 
