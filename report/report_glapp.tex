@@ -181,7 +181,7 @@ This enables extension possibility of MAPE to manage not only the containers, bu
 \todo{To be reviewed by: Riccardo}
 %\todo{Explain the thought process behind this decision}
 Markov Decision Process (MDP) and rule-based adaptations are for determining appropriate adaptation action to change application from an undesired state where policy is violated to a desired state where the policy is fulfilled.
-In reinforcement learning, a reinforcement learning problem is defined as the problem of learning from interaction to achieve a goal \todo{add reference}.
+A reinforcement learning problem is defined as the task of learning from past interactions to achieve a goal \todo{add reference}.
 MDP is a reinforcement learning task that satisfy the Markov property \todo{add reference}.
 During the development of GLAPP, Q-Learning was implemented as a method of MDP to determine the adaptation action.
 However, due to the problem nature, there is a high number of state is resulted from large amount of features in modelling the GLAs.
@@ -733,21 +733,51 @@ In the course of the project, several further small tools and applications were 
 \chapter{7 PAGES: Case Study}\label{ch:casestudy}
 \todo{DONE BY: Riccardo}
 
-\section{Explain Demo Application}
+\section{The demo application}
+For developing and end of project presentation purposes we used an adapted version of the example-voting-app that Docker uses to illustrate the Docker Compose tool.
+It is basically a web application that lets users vote option A or B.
+The version of the voting application that we used is composed of five components:
 \begin{itemize}
-	\item Explain concept of the app at high level
-	\item Explain the components themselves
-	\item Explain the docker-compose file
-	\item Explain our custom metrics (costs, clicks)
-	\item Explain modifications to the app (region switch button, POST request with click-origin to metrics-server with every click
+	\item voting-app (Python)
+	\item result-app (Node.js)
+	\item redis
+	\item PostgreSQL
+	\item worker (Java)
 \end{itemize}
+A user votes A or B on the voting-app and the vote is sent to redis.
+The worker takes the vote from the redis in-memory database and stores it into the PostgreSQL database.
+As the name suggests, the role of the result-app is for displaying the results of the votes.
+Image X is a high level overview of the components.
+
+The voting-app is a Python-Flask web application that lets the user vote either for Batman or for Superman.
+For the end of project presentation we also added a button to switch between US and EU in order to be able to simulate clicks done in the two regions.
+We build into the voting-app the ability to register how many clicks are done in a specific region.
+This was necessary in order to show the ability of the GLAPP platform to adapt the application based on user location.
+More about the click metric can be fund in section 3.3.5 Rule-based Adaptation Logic.
+
+The result-app is a Node.js web application that retrieves the votes in the relational database PostgreSQL.
+
+The worker is a Java application that whenever a new vote is available in the redis in-memory database, the worker takes the vote and inserts into the PostgreSQL database.
+
+The last two components are the standard redis and PostgreSQL databases.
+All five components are available as Docker containers and everything is wrapped up in the Docker Compose file of our gla-demo-app.
+
+When a user wants to deploy an application onto the GLAPP platform, he basically links the git repository where his docker-compose.yml file is stored.
+GLAPP finds the docker-compose.yml file and starts with the provisioning of all images on all involved VMs.
 
 \section{Scenarios}
-\begin{itemize}
-	\item Explain the scenarios
-	\item Explain the triggers
-	\item Explain how MAPE realizes a necessary adaptation
-\end{itemize}
+For the end of project demonstration we showed three typical scenarios that the GLAPP platform is able to handle:
+\begin{enumerate}
+	\item An Instance-to-Instance scenario, where we stressed the CPU
+	\item A Provider-to-Provider scenario, where we changed the cost of a Cloud Provider
+	\item A Region-to-Region scenario, where we monitor clicks on the voting-app
+\end{enumerate}
+
+In the first scenario, we used the Linux terminal to enter into the voting-app Docker container in order to use the stress tool1 for simulate a high CPU utilization.
+
+Second scenario...
+
+Third scenario...
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
