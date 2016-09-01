@@ -109,11 +109,19 @@ The report is concluded in chapter~\ref{ch:conclusion}.
 \section{Basic Design Decisions}
 \todo{IN CHARGE: Adrian}
 
-\subsection{Main Components: Provisioning Backend, Frontend, MAPE}
-\todo{Describe the design decisions of the main components}
+\subsection{Main Components: Provisioning Backend, Frontend, Control Loop}
+GLAPP consists of three building blocks: A provisioning backend, a frontend and a control loop.
+In developing GLAPP, we made different decisions in platform architecture as well as implementation.
+We use Docker containerization as the infrastructure backbone where the GLAs will be deployed to.
+The second component of the platform is the provisioning backend.
+It handles GLA deployment and is implemented with node.js runtime and Sails framework.
+Frontend provides an interface for the user to interact with the platform.
+While is also developed with node.js runtime, AngularJS framework is used.
+Lastly, a control loop following the Monitoring, Analysis, Planning and Execution (MAPE) model is developed using Java with BURLAP library and framework.
 
 \subsection{Deployment: Containerization with Docker}
 \subsubsection{Containerization vs. other virtualization methods:}
+We set out to create a platform to manage GLAs.
 \todo{Explain the advantage of containerization compared to e.g. virtual machines}
 @Adrian: Some resources that help understand this difference
 \begin{itemize}
