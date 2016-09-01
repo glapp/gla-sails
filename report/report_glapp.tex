@@ -125,15 +125,15 @@ Lastly, a control loop following the Monitoring, Analysis, Planning and Executio
 We set out to create a platform to manage GLAs.
 Speed of deployment is therefore an important criterion when considering the underlying technology.
 While both virtual machine and containerization are virtualization technologies that provision shared cloud computing resources, virtual machine focus on virtualization of infrastructure resources and containerization focus on virtualization of platform \todo{add reference}.
-Being a lightweight virtualization technology, containerization get rid of the guest OS layer as in traditional virtual machine architecture.
-Instead, applications are deployed on top of a container engine which runs on the host OS.
-In addition, in containerization application binary are stored in a package along with the necessary libraries.
+Being a lightweight virtualization technology, containerization gets rid of the guest OS layer as in traditional virtual machine architecture.
+Instead, applications are deployed on top of a container engine which runs on host OS.
+In addition, application binaries are stored in a package along with the necessary libraries in the case of containerization.
 This contrasts to the full OS required for a virtual machine.
 These lightweight runtime and packaging provides a fast deployment that is a crucial aspect of GLAPP.
 With this containerization techology, GLAPP can deploy application components in seconds when the application images are present on the host.
 In addition to the fast deployment, containerization has a much smaller footprint comparing with virtual machines.
 A normal virtual machine image has a size in gigabytes due to the presence of a full OS.
-In contrasts, a container image used in our case study take up only a few hundred megabytes as it only includes the application binary and required libraries.
+In contrasts, a container image used in our case study take up only a few hundred megabytes as it only includes the application binaries and required libraries.
 
 % full os vs packaged binary and library
 
@@ -152,21 +152,51 @@ In contrasts, a container image used in our case study take up only a few hundre
 %\end{itemize}
 
 
-\subsubsection{Docker vs. other containerization implementations:}
-\todo{Explain the advantage of Docker compared to e.g. OpenVZ}
-\begin{itemize}
-	\item Basically, Docker was a big hype in the early stage of our project, and keeps being in the news until today -> nice to work on a bleeding-edge technology
-	\item There are many similarities between all these containerization implementations, but I think docker is the most straight-forward application containerization (for web-applications / services). E.g., LXD focuses more on the deployment of virtual machines as containers (yes, now it gets inception-like :P)
-	--> See http://unix.stackexchange.com/questions/254956/what-is-the-difference-between-docker-lxd-and-lxc
-\end{itemize}
+\subsubsection{Docker vs. other containerization technologies:}
+In containerization, there are various models and technologies.
+For example, both Docker and OpenVZ are containerization technologies but they use different models.
+However, Docker container functions as an application or a service while OpenVZ container functions as a virtual private server (VPS) for deploying additional application stack on top of it \todo{add reference https://openvz.org/Main\_Page}.
+Similar to OpenVZ, LXD is another machine containerization technology \todo{add reference}.
+As GLAPP aims at managing GLAs, Docker provides the most direct way of containerization of application.
+With other containerization technologies like OpenVZ or LXD, the platform will need to manage both the application deployment on those containers as well as deployment of the container on cloud infrastructure.
+This adds another layer of overhead and complexity.
+
+%\todo{Explain the advantage of Docker compared to e.g. OpenVZ}
+%\begin{itemize}
+%	\item Basically, Docker was a big hype in the early stage of our project, and keeps being in the news until today -> nice to work on a bleeding-edge technology
+%	\item There are many similarities between all these containerization implementations, but I think docker is the most straight-forward application containerization (for web-applications / services). E.g., LXD focuses more on the deployment of virtual machines as containers (yes, now it gets inception-like :P)
+%	--> See http://unix.stackexchange.com/questions/254956/what-is-the-difference-between-docker-lxd-and-lxc
+%\end{itemize}
 
 \subsection{Orchestration: Docker Swarm}
-\todo{Explain the advantage of Docker Swarm compared to e.g. Kubernetes}
+%\todo{Explain the advantage of Docker Swarm compared to e.g. Kubernetes}
+For GLAPP to manage the GLAs in response to the needs of application or changing environment, GLA need to be run in form of a cluster across different cloud computing resource.
+Docker Swarm is the orchestration tool used to manage this cluster of containers.
+Orchestration tool is used to control the deployment of containers across the cloud infrastructure to satisfy various objective such as load-balancing.
+While there exists other tools such as Kubernetes that provides orchestration functionalities, Docker Swarm provides additional capability to manage hosts of different cloud service providers.
+For example, Docker Swarm can also create and delete of hosts and mange the members of the cluster.
+This enables extension possibility of MAPE to manage not only the containers, but also underlying cloud computing resources.
 
 \subsection{Rule-Based Adaptations vs. Markov Decision Process}
-\todo{DONE BY: Adrian / Riccardo}
-\todo{Explain the thought process behind this decision}
-
+\todo{To be reviewed by: Riccardo}
+%\todo{Explain the thought process behind this decision}
+Markov Decision Process (MDP) and rule-based adaptations are for determining appropriate adaptation action to change application from an undesired state where policy is violated to a desired state where the policy is fulfilled.
+In reinforcement learning, a reinforcement learning problem is defined as the problem of learning from interaction to achieve a goal \todo{add reference}.
+MDP is a reinforcement learning task that satisfy the Markov property \todo{add reference}.
+During the development of GLAPP, Q-Learning was implemented as a method of MDP to determine the adaptation action.
+However, due to the problem nature, there is a high number of state is resulted from large amount of features in modelling the GLAs.
+This leads to an ineffective Q-Learning when lookup table is used for Q-values.
+Details of this problem is discussed in Markov Decision Process section of Components chapter (section 3.3.4).
+As a result, rule-based adaptations was used in the final implementation.
+Instead of a reinforcement learning approach, heuristic is used for adaptation action determination.
+Rule-based adaptation is fast in finding adaptation action to address violated policy comparing with Q-Learning when lookup table.
+This is because adaptation action generated by rule-based adaptation will be effective when the rules are well-defined.
+In contrasts, MDP requires the convergence of Q-values in order to generate effective adaptation actions.
+At the same time, the heuristic rules used are easy to understand for further tweaking.
+However, rule-based adaptation also has its disadvantages.
+For instance, it does not scale well as the types of metric or the complexity of policy due to additional rules are required when new types of metric are introduced or the policy becomes more complex.
+In such case, MDP will scale well as the Q-value will converge learnt over time.
+That means even with additional metrics and complex policy, once Q-Learning have the converged Q-values, it is expected to generate effective adaptation action.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
@@ -471,7 +501,7 @@ An example would be to restrict the CPU utilization to be lower than 80\%.
 In current implementation, click rule is an example of application metric rule.
 \end{itemize}
 
-\subsection{Healthiness computation}
+\subsection{Healthiness Computation}
 Based on the rules defined in the policy, healthiness is computed.
 For the $i$-th rule, the healthiness of a cell is defined as the ratio of the difference between metric value and threshold to the threshold normalized with the weight of the rule:
 \[ \textrm{healthiness}_{cell} = \frac{\textrm{difference between metric value and threshold}}{\textrm{threshold}} \times \frac{w_i}{\sum_{i=1}^{n}{w_i}}\]
@@ -498,8 +528,8 @@ This list of violations will be further processed in MAPE to determine appropria
 \subsection{Markov Decision Model}
 % burlap library for MDP and its extensibility
 Markov Decision Model (MDP) will be triggered to find an application deployment that fulfil policy requirement whenever a rule violation is detected.
-In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the optimization problem.
-The output of solving the optimization problem is an adaptation action or a series of adaptation actions that transit the application from a state where policy is violated to another where the policy is fulfilled.
+In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the problem of determining adaptation action in response to the rule violation.
+The output of solving this problem is an adaptation action or a series of adaptation actions that transit the application from a state where policy is violated to another where the policy is fulfilled.
 Before starting the MDP, the environment and application deployment need to be modelled as states.
 At the same time, adaptation actions are modelled as transition actions in MDP that change state from one to another.
 BURLAP library and its framework is used for modelling and transition action definition.
@@ -522,7 +552,7 @@ It also served a second purpose for understanding MDP process by generating deta
 This log provides a sequence of transition action and Q-value corresponding to each transition which allows fine tuning of Q-learning parameters in later stage of development.
 
 While the outcome of MDP in a simulated environment is close to expectation, concern was raised regarding the convergence of Q-value that learning algorithm relies on to determine the optimal action in a given state.
-More importantly, problem of high number of states and transition actions affects the viability of applying MDP to the optimization problem of MAPE.
+More importantly, problem of high number of states and transition actions affects the viability of MDP.
 The model and transition actions were further adjusted in subsequent iterations.
 After several testings of MDP in the simulated environment, it is concluded that reduction of number of states is required for applying MDP.
 To reduce the number of states, function approximation is needed.
@@ -534,7 +564,7 @@ These features consist of discrete string values and as a result both SARSA and 
 However, since the provided function approximation methods from current BURLAP library are not applicable to string-valued feature, further exploration of function approximation and implementation are needed.
 Possibility of using MDP with alternative function approximation method will be discussed in the Future Work chapter.
 
-\subsection{Rule-based adaptation logic}
+\subsection{Rule-based Adaptation Logic}
 For the final implementation, rule-based adaptation logic is used in MAPE for determination of adaption action. 
 Although MDP is not used in the final implementation, the BURLAP framework is retained.
 As a result, changing to rule-based adaptation logic involves mainly the implementation of a rule set to replace the learning algorithm while the majority of previous implementation for other functionalities are carried over.
