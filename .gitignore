@@ -301,3 +301,7 @@ TSWLatexianTemp*
 
 # LaTeX output file
 report/report_glapp.pdf
+
+#TeXniCenter project session information
+report/report_glapp.tps
+
