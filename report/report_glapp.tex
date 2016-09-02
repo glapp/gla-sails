@@ -534,6 +534,98 @@ How to run the tests is described in the README.md\footnote{https://github.com/g
 \section{2 PAGES: GUI}
 \todo{DONE BY: Dinesh}
 
+User interface is primarily responsible for facilitating developers to create, deploy and manage their GLA's on the platform. It's responsible to showcase all the critical data of the application in an intuitive manner. 
+The following sections will explain in detail about the technology used under the hood, features of the platform and internals of the source code components.
+
+\subsection{Technology}
+
+As mentioned earlier, user interface is built using Angularjs, a popular framework to built efficient single page applications. 
+This project used material angular\footnote{http://material.angularjs.org} library for the interaction design as a whole and to built responsive layouts that can work on most screen sizes. 
+Bower is used as a package manager for all the view related libraries and NPM is used side by side for the necessary libraries. 
+We integrated gulp, a stream building system to utilize the power of node streams and perform fast builds. 
+Gulp not only makes development easy with live reloads of the changes in source code, but also offers an efficient pipeline to integrate all the controllers, assets, services etc into a production ready build. 
+Choice of bower is due to its ability to resolve dependencies between packages efficiently. Its paramount to not maintain multiple copies of the same library, which can bog down the application in due course. 
+Bower can prevent such problems by resolving the packages in a flat manner. 
+Major libraries we used in this section are, angular-material, angular-ui-router, angular-messages, angular-sails, d3, nvd3\footnote{http://krispo.github.io/angular-nvd3}, angular-visjs\footnote{http://visjs.org}, toastr and many more minor libraries. 
+Each library was chosen based on the level of adoption, revision history and the track record of open issues at the time. 
+Wrong choice of libraries can often lead to additional development cost and break down the code which is undesirable. 
+We also used a set of libraries with npm package manager including, lodash, eslint-angular, gulp-uglify, gulp-minify etc., to achieve our objectives. 
+Angularjs offers dynamic synchronization between models and views through its two-way data binding capabilities. 
+This is particularly important to present dynamic information and smooth user interactions. 
+Decoupling DOM manipulation from application logic is a great boon for development, as we could focus on writing the important logic and not worry about the rendering. 
+Using dependency injection, we could integrate many services and functions with the views easily. 
+Also two way binding relieves the server from template related responsibilities, as these are rendered in html according to the details specified in the model. 
+As soon as there is a change in data model, angular's scope service will trigger a watch-digest cycle, by which it passes the new changes to the view via controller. 
+Simpler routing service allow us to structure the application well, and be able to navigate between the states easily.
+
+\subsection{Usage of the platform}
+
+Interface is organized into two main views at the higher level. 
+One is the apps view and the other is the dashboard. 
+Users can enter the platform with valid login credentials, else they can create a new one at the time of landing. 
+On entering the platform, they can access the apps page, which is an aggregation of all global living applications (GLA) created in the platform. 
+Each widget of GLA on the apps page provides additional information related to it, such as no of organs that are part of the GLA, recent events, current deployment status etc. 
+Users can also access the current infrastructure details from the hosts tab in the same view. 
+One can see the details of the swarm cluster, swarm agents, including the details of cloud provider, region where the agent is hosted. 
+Hosts page also showcases the information regarding tier, operating system details of the agents and other hardware specs like memory etc.
+
+Creating a new GLA is made to be quite simple with GLAPP platform. 
+Users can create a new GLA application by clicking on new and providing the repo URL of their application code. 
+One constraint is that, this repository should contain a docker compose file. 
+With this basic information they can add a new GLA to their apps profile. 
+Client then forwards these details to the back-end which then handles extraction of cells and organs with the help of cloning and container management module. 
+Users can see the status of readiness of their GLA's in the apps page. 
+Once the organs of GLA are extracted and prepared for deployment, it is moved to ready state. 
+User interface differentiates these states with color coding for easy reference. If the GLA is in ready state, users can proceed for deployment through the dashboard.
+
+Dashboard aims to provide all the application information, metric data and deployment related settings at one place. 
+Dashboard is specific to each GLA and can be accessed by simply clicking on the GLA in the apps view. 
+Dashboard is organized into five sub views named overview, policy, analytics, history and settings. 
+As shown in the figure, overview renders the current visualization of GLA with it organs and cells in a network graph. 
+Platform uses visjs library with few modifications for this purpose. 
+The large blocks are known as organs and the smaller green blocks are the cells that are part of each organ, while the red blocks are the proxy cells. 
+Proxy cells are also like gateway cells, as they are responsible for carrying the information from and to the other cells in the organ.
+
+
+\begin{figure}[!ht]
+\centering
+	\includegraphics[width=\textwidth]{gla.pdf}
+	\caption{Visualization of a GLA in the platform}
+	\label{fig:models}
+\end{figure}
+
+Users can switch between list and graph views of the GLA. 
+Current endpoints of the application are also updated from time to time in the same view, so users can check out the live status of the application. 
+List view contains detailed view of each cell, showcasing low level information including various environment variables and the host information. 
+List view is also intended to serve as a manual mode for users, if they intend to move or scale certain cells of their application. 
+All the capabilities of the platform are offered here in the manual mode. 
+Policy view in dashboard allows users to create and modify one or more policies at the same time. 
+Each policy can accept a weight and a goal. 
+This goal being a particular metric chosen to be applied on a set of organs, with certain constraints through operators such as less than, greater than etc. 
+Policy view is responsible for end-end policy management in the platform. 
+MAPE module mentioned below takes over the job, once the policy is created or modified. 
+Speaking of analytics, this page provides a real-time feed of important metrics related to application such as cpu, memory and events. 
+Analytics are rendered using nvd3 visualization library. 
+In both CPU, memory charts users can check the data for any specific organ and varying time frames. 
+Data is pulled by calling sails api, which then queries the prometheus server for the actual data. 
+All charts are updated in real-time. 
+Refresh rate can be modified in the config file. 
+Events chart is particularly interesting, as it shows a real time view of deployment adaptations happening on the GLA. 
+History page shows a detailed log of all the application related events happened till date. 
+Settings view provides options to deploy or undeploy the GLA application. 
+Users can also delete the whole GLA, which proceeds to not only clean up the GLA in database, but also clean up any traces of related organs and cells deployed in the infrastructure.
+
+\subsection{Internals}
+
+Source code is organized to be modular and easy to iterate over development cycles. 
+Code related to the client can be accessed through the gla-angular\footnote{https://github.com/glapp/gla-angular} repository.
+Major part of the code in located in src folder which is further organized in apps, components, dashboard, home, infrastructure and landing. 
+Each of these folders and sub-folders is responsible for one complete set of MVC and contains a controller file and the view file inside them. 
+Pathways are organized by the router service. 
+Various build scripts for production, test and deployment are organized in the gulp folder. 
+This client component itself is dockerized as part of larger GLAPP platform, and these settings can be modified in the Dockerfile. 
+Barring the other commonalities, we believe this structure helped us a lot with development and also make future updates easier.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
