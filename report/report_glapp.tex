@@ -1,6 +1,7 @@
 \documentclass{seal_thesis}
 
 \usepackage{amsmath}
+\usepackage{url}
 \usepackage[
   top=1.25in,
   bottom=1.25in,
@@ -135,7 +136,7 @@ Several design decision had to be made considering those main components and the
 \subsubsection{Containerization vs. other virtualization methods:}
 We set out to create a platform to manage GLAs.
 Speed of deployment is therefore an important criterion when considering the underlying technology.
-While both virtual machine and containerization are virtualization technologies that provision shared cloud computing resources, virtual machine focuses on virtualization of infrastructure resources and containerization focuses on virtualization of platform \todo{add reference}.
+While both virtual machine and containerization are virtualization technologies that provision shared cloud computing resources, virtual machine focuses on virtualization of infrastructure resources and containerization focuses on virtualization of platform \cite{pahl2015containerisation}.
 Being a lightweight virtualization technology, containerization gets rid of the guest OS layer that exists in traditional virtual machine architecture.
 Instead, applications are deployed on top of a container engine which runs on host OS.
 In addition, application binaries are stored in a package along with the necessary libraries in the case of containerization.
@@ -144,7 +145,7 @@ These lightweight runtime and packaging provides a fast deployment that is a cru
 With this containerization technology, GLAPP can deploy application components in seconds when the application images are present on the host.
 In addition to the fast deployment, containerization has a much smaller footprint comparing with virtual machines.
 A normal virtual machine image has a size in gigabytes due to the presence of a full OS.
-In contrasts, a container image used in our case study take up only a few hundred megabytes as it only includes the application binaries and required libraries.
+In contrasts, container images used in our case study take up only a few hundred megabytes of space as a container image includes only the application binaries and required libraries.
 
 % full os vs packaged binary and library
 
@@ -166,8 +167,8 @@ In contrasts, a container image used in our case study take up only a few hundre
 \subsubsection{Docker vs. other containerization technologies:}
 In containerization, there are various models and technologies.
 For example, both Docker\footnote{https://www.docker.com/} and OpenVZ\footnote{https://openvz.org/} are containerization technologies but they use different models.
-However, Docker container functions as an application or a service while OpenVZ container functions as a virtual private server (VPS) for deploying additional application stack on top of it \todo{add reference https://openvz.org/Main\_Page}.
-Similar to OpenVZ, LXD\footnote{http://www.ubuntu.com/cloud/lxd} is another machine containerization technology \todo{add reference}.
+However, Docker container functions as an application or a service while OpenVZ container functions as a virtual private server (VPS) for deploying additional application stack on top of it \cite{openvz}.
+Similar to OpenVZ, LXD\footnote{http://www.ubuntu.com/cloud/lxd} is another machine containerization technology.
 As GLAPP aims at managing GLAs, Docker provides the most direct way of containerization of application.
 With other containerization technologies like OpenVZ or LXD, the platform will need to manage both the application deployment on containers as well as deployment of those container on cloud infrastructure.
 This adds another layer of overhead and complexity.
@@ -193,26 +194,27 @@ This enables extension possibility of MAPE to manage not only the containers, bu
 %\todo{Explain the thought process behind this decision}
 
 Markov Decision Process (MDP) and rule-based adaptations are for determining appropriate adaptation action to change application from an undesired state where policy is violated to a desired state where the policy is fulfilled. MDP is a reinforcement learning method whereas the rule-based adaptations are represented by a set of rules that are coded into the MAPE.
-A reinforcement learning problem is defined as the task of learning from past interactions to achieve a goal \todo{add reference}.
-MDP is a reinforcement learning task that satisfy the Markov property \todo{add reference}.
-For the development of the MAPE loop we used the BURLAP\footnote{http://burlap.cs.brown.edu/} reinforcing learning library of Brown University. The work consisted in:
+A reinforcement learning problem is defined as the task of learning from interactions to achieve a goal \cite{sutton1998reinforcement}.
+MDP is a reinforcement learning task that satisfy the Markov property \cite{sutton1998reinforcement}.
+\todo{Adrian: seems the use of burlap library is covered in the component:MAPE section. it is better to include only comparison of MDP and rule-based adaptation in this section}
+For the development of the MAPE loop we used the BURLAP reinforcement learning library\footnote{http://burlap.cs.brown.edu/} of Brown University. The work consisted in:
 \begin{enumerate}
 	\item representing the current state of the application (s)
 	\item define the possible actions (a)
 	\item define the transitions from the current state to the next state (s, a, s')
-	\item applying learning algorith, e.g. Q-Learning or SARSA
+	\item applying learning algorithm, e.g. Q-Learning or SARSA
 \end{enumerate}
 Representing the current state resulted in a huge state space.
-Considering that MDP learns from past rewards of getting to a specific state, we realized that our MDP wouldn't be efficient.
-The main reason is that it would take too much exploring time until the system could begin to explote the knowledge aquired.
+Considering that MDP learns from past rewards of getting to a specific state, we realized that our MDP would be inefficient.
+The main reason is that it would take too much exploring time until the system could begin to apply the knowledge acquired.
 Every adaptation the MAPE would trigger, would also give the reward for the new state.
-If we assume that in the normal operation of the system a rule violation should not be very frequently, then it could last years until the whole state-action space is explored, if at all.
-A solution to this is using a function approximation.
-With function approximation in place the system doesn't need anymore to explore all state-action pairs.
-But instead, when a new pair is encountered it uses the same values of a similar state-action pair.
-BURLAP in its current version 3 supports function approximation only for numeric representation of the state.
-Since we have nominal values (strings) for the representation, an additional effort would be needed to use function approximation.
-But unfortunately this was out of scope.
+If we assume that in the normal operation of the system a rule violation should not be very frequently, then it could last years until the whole state-action space is exploded, if at all.
+A solution to this is using function approximation.
+With function approximation, the system does not need anymore to explore all state-action pairs.
+Instead, when a new state-action pair is encountered it approximates the Q-value based on a similar state-action pair.
+BURLAP in its current version 3 supports standard function approximation only for numeric representation of feature of the state.
+Since we have nominal values (strings) for the representation, alternative function approximation is needed which requires further study and implementation.
+But unfortunately this was out of scope. \todo{Adrian: suggest to remove or rephrase this sentence}
 Details of this problem is discussed in later on in section~\ref{sec:mdp}.
 
 As a result, rule-based adaptations was used in the final implementation.
@@ -223,9 +225,9 @@ In contrasts, MDP requires the convergence of Q-values in order to generate effe
 At the same time, the heuristic rules used are easy to understand for further tweaking.
 However, rule-based adaptation also has its disadvantages.
 For instance, it does not scale well when the policy becomes more complex, or when new types of metrics are introduced.
-In such case, MDP will scale well as the Q-value will converge learnt over time. \todo{What do you mean by this?}
-That means even with additional metrics and complex policy, once Q-Learning have the converged Q-values, it is expected to generate effective adaptation action.
-A further down side of rule-based adaptation is that the system doesn't react or has a undefined behaviour in case the MAPE encounters an unknown situation.
+In such case, MDP will scale well as the Q-value will converge over time. \todo{What do you mean by this? / Adrian: updated wording. It means the as the Q-value converges, MDP will be able to find the best action no matter how different the metric is}
+In other words, even with additional metrics and complex policy, once Q-Learning have the converged Q-values, it is expected to generate effective adaptation action.
+A further down side of rule-based adaptation is that the system does not react or has an undefined behaviour in case the MAPE encounters an unknown situation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
@@ -276,8 +278,8 @@ Another consideration is the availability of third party libraries that GLAPP ca
 
 A set of comprehensive functionality is provided through Java API and third party libraries.
 In addition to functionality included in Java standard API such as HTTP connection used for interfacing with the SAILS backend and monitoring system, useful third party libraries are also available.
-For instance, GSON library \footnote{https://github.com/google/gson} provides easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and monitoring system.
-Most importantly, BURLAP library \footnote{http://burlap.cs.brown.edu/} provides not only a set of planning and learning algorithm for Markov Decision Process in reinforcement learning, but also a framework for further extending the processing capability through custom implementation of various components including learning algorithm and approximation function.
+For instance, GSON library\footnote{https://github.com/google/gson} provides easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and monitoring system.
+Most importantly, BURLAP library\footnote{http://burlap.cs.brown.edu/} provides not only a set of planning and learning algorithm for Markov Decision Process in reinforcement learning, but also a framework for further extending the processing capability through custom implementation of various components including learning algorithm and approximation function.
 Availability of these functionalities from built-in and third party library makes Java a compelling language in developing MAPE component.
 
 
@@ -668,8 +670,8 @@ It also includes classes for interfacing with other systems as well as an utilit
 \subsection{Interface with other systems}
 At the start of each control loop, the MAPE interfaces with the SAILS backend to retrieve environment information, and with the monitoring system to retrieve performance metrics. To conclude the loop, the MAPE communicates again to the SAILS backend to execute the adaptation action and to get the new state information.
 As mentioned in the implementation decision section, MAPE use HTTP protocol with JSON object for data exchange.
-It retrieves everything through HTTP requests, like for example the infrastructure information, the application deployment information, the user-defined policies, and the performance metrics.
-For instance, the infrastructure information includes information of the instances such as the service provider, instance location and size. Deployment information, on the other hand, refers to the information of each application components including on which containers they are currently deployed.
+It retrieves everything including infrastructure information, application deployment information, user-defined policies, and performance metrics through HTTP requests.
+For instance, the infrastructure information includes information of the hosts such as the service provider, instance location and size. Deployment information, on the other hand, refers to the information of each application components including on which containers they are currently deployed.
 Furthermore, MAPE also retrieves user-defined policy through SAILS backend.
 A policy is set of rules that defines which metrics the application need to comply to, its threshold for calculating the healthiness and the weight of each rule relative to the others.
 Lastly, the MAPE retrieves the performance metrics from the monitoring system.
@@ -730,7 +732,7 @@ The output of solving this problem is an adaptation action or a series of adapta
 Before starting the MDP, the environment and application deployment need to be modelled as states.
 At the same time, adaptation actions are modelled as transition actions in MDP that change state from one to another.
 BURLAP library and its framework is used for modelling and transition action definition.
-Classes in the package \texttt{ch.uzh.glapp.mdp} are implementation according to the BURLAP framework \todo{http://burlap.cs.brown.edu/tutorials/bpl/p4.html\#qlearn}.
+Classes in the package \texttt{ch.uzh.glapp.mdp} are implementation according to the BURLAP framework for learning agent\footnote{http://burlap.cs.brown.edu/tutorials/bpl/p4.html\#qlearn}.
 \begin{itemize}
 \item \texttt{MapeWorld} class defines the domain of optimization problem.
 \item \texttt{MapeCell} class defines the state representation for MDP.
@@ -745,8 +747,8 @@ When the state and transition action objects are constructed, learning algorithm
 % simulation using burlap
 Q-Learning algorithm was first applied in a simulated environment.
 A simulated environment was used to verify correctness of the constructed model and the defined transition action.
-It also served a second purpose for understanding MDP process by generating detailed log of MDP.
-This log provides a sequence of transition action and Q-value corresponding to each transition which allows fine tuning of Q-learning parameters in later stage of development.
+It also served a second purpose for understanding MDP process by generating detailed log of MDP execution.
+This log provides a sequence of transition actions and Q-value corresponding to each transition that allows fine tuning of Q-learning parameters in later stage of development.
 
 While the outcome of MDP in a simulated environment is close to expectation, concern was raised regarding the convergence of Q-value that learning algorithm relies on to determine the optimal action in a given state.
 More importantly, problem of large states spaces affects the viability of MDP.
@@ -759,12 +761,12 @@ For modelling the GLA, attribute of both the organs and the cells are used as th
 More precisely, these attributes are the number of cells in an organ, the cloud service provider, region and hardware specification of the hosts that cells reside.
 These features consist of nominal values and as a result both SARSA and Q-Learning methods cannot be used.
 However, since the provided function approximation methods from current BURLAP library are not applicable to nominal feature, further exploration of function approximation and implementation are needed.
-Possibility of using MDP with alternative function approximation method will be discussed in the Future Work chapter.
+Possibility of using MDP with alternative function approximation method will be discussed in the chapter~\ref{ch:futurework} Future Work.
 
-\subsection{Rule-based Adaptation Logic} \label{RBAdaptationLogic}
-For the final implementation, rule-based adaptation logic is used in MAPE for determination of adaption action. 
+\subsection{Rule-based Adaptation} \label{RBAdaptationLogic}
+For the final implementation, rule-based adaptation is used in MAPE for determination of adaption action. 
 Although MDP is not used in the final implementation, the BURLAP framework is retained.
-As a result, changing to rule-based adaptation logic involves mainly the implementation of a rule set to replace the learning algorithm while the majority of previous implementation for other functionalities are carried over.
+As a result, changing to rule-based adaptation involves mainly the implementation of a rule set to replace the learning algorithm while the majority of previous implementation for other functionalities are carried over.
 Implementation for state representation and environment interaction is reused.
 For the rule-based adaptation, the rule set is implemented in the \texttt{MapeActionTypeHeuristic} class.
 The \texttt{MapeWorld} class, which define the problem domain, is also updated to use this \texttt{MapeActionTypeHeuristic} class.
@@ -789,11 +791,11 @@ In this regard, the healthiness value associated with click violation is the num
 When the ratio for a given region is lower than scale-down threshold, an adaptation action will be triggered to reduce the number of cells in that region.
 On the contrary, when the ratio is higher than the scale-up threshold, an adaptation action will be triggered to duplicate/split cell in that region.
 
-\subsection{Extensibility}
+\subsection{Extensibility}\label{sec:mdpext}
 \begin{sloppypar}
 Extensibility of control logic is built into MAPE with use of BURLAP framework.
 The framework enables swapping or enhancing of various parts of the MDP, including planning and learning algorithm and value approximation functions, by implementing corresponding interface or extending existing classes.
-The quick switch from MDP to rule-based adaptation logic in final implementation is achieved with this inherited extensibility.
+The quick switch from MDP to rule-based adaptation in final implementation is achieved with this inherited extensibility.
 To replace the learning algorithm provided by the BURLAP library, one can create a class that implements \texttt{burlap.behavior.singleagent.learning.LearningAgent} and a class that implements \texttt{burlap.behavior.valuefunction.QProvider} interface.
 The \texttt{LearningAgent} class defines the learning agent's behaviour in an environment.
 The \texttt{burlap.behavior.valuefunction.QProvider} is responsible for computing Q-value.
@@ -808,14 +810,14 @@ The \texttt{burlap.behavior.valuefunction.QProvider} is responsible for computin
 \subsection{Monitoring / Prometheus}
 \todo{to be reviewed by: Riccardo}
 
-Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics.
+Prometheus\footnote{https://prometheus.io/} is a monitoring system that can provide both infrastructure and application performance metrics.
 Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers.
-Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}.
+Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format\footnote{https://prometheus.io/docs/instrumenting/exposition\_formats/}.
 The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
 
 % range query and instant query in Prometheus
 Prometheus is sophisticated with capability to support different types of query.
-It provides range query and instant query (query at a single point in time) with support of applying functions on data when formulating a query.
+It provides range query and instant query (query at a single point in time \cite{prometheus_api}) with support of applying functions on data when formulating a query.
 This enables the fine-grained retrieval of data that best fits the corresponding performance metric.
 For instance, the rate function allows the direct retrieval of the rate of change in CPU time of a container with configurable data point range, data point interval and duration covered by each data point.
 
@@ -967,14 +969,14 @@ This control loop would have a meta-perspective on the infrastructure, would mon
 \section{MDP for Learning}
 %MAPE
 Extensibility is also an important aspect of MAPE.
-As discussed in section 3.3.6, MAPE allows custom learning algorithm to used in place of existing rule-based adaptations.
+As discussed in section~\ref{sec:mdpext}, MAPE allows custom learning algorithm to used in place of existing rule-based adaptations.
 On the other hand, while the learning algorithms with standard function approximation in BURLAP library does not handle nominal feature in states, they can be replaced with other function approximation implementation.
 One possible method to explore is Free-Energy based Reinforcement Learning (FERL).
-In FERL, the action-value function, Q, is approximated as the negative free-energy of a restricted Boltzmann machine \todo{add reference} where a restricted Boltzmann machine is a type of the product of experts model.
-In a restricted Boltzmann machine, binary random variables are represented as nodes in a bipartite graph.
-The nodes belong to two disjointed set: visible state and action nodes and hidden nodes with weight on every edge connecting a visible node and a hidden node.
-Free energy can be computed as an expected energy, which is determined by the weights, minus an entropy.
-The negative free energy is used to approximate the Q-value ($Q_t = -F_t$).
+With FERL, the action-value function, Q, is approximated as the negative free-energy of a restricted Boltzmann machine \cite{sallans2004reinforcement}.
+In a restricted Boltzmann machine, binary random variables are represented as nodes in a bipartite graph \cite{sallans2004reinforcement}.
+The nodes belong to two disjointed set: visible state and action nodes and hidden nodes with weight on every edge connecting a visible node and a hidden node \cite{sallans2004reinforcement, 10.3389/fnbot.2013.00003}.
+Free energy can be computed as an expected energy, which is determined by the weights, minus an entropy \cite{sallans2004reinforcement}.
+The negative free energy is used to approximate the Q-value ($Q_t = -F_t$) \cite{sallans2004reinforcement, 10.3389/fnbot.2013.00003}.
 Further study in free-energy based reinforcement learning can be done to determine the viability of using it as an function approximator in MDP to address the large state space problem.
 
 
