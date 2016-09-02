@@ -649,11 +649,9 @@ Barring the other commonalities, we believe this structure helped us a lot with 
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{MAPE}
-\todo{To be reviewed by: Riccardo}
+%\todo{To be reviewed by: Riccardo}
 MAPE is the control loop of the platform and responsible for managing the deployed applications in accordance to the policy.
-
 % add a detailed description of the problem?
-
 It analyzes the environment information and performance metrics to determine the healthiness of the deployed application and triggers appropriate adaptation action in case of any violation to the user defined policies.
 The environment information includes details of the infrastructure, application deployment and user-defined policy.
 
@@ -679,24 +677,24 @@ JSON objects are used for all these information retrievals.
 The use of JSON objects provides a data structure that is flexible to represent different types of information from different interfacing systems.
 In addition, it allows the MAPE to build an object-oriented view of the whole environment that provides quick access to specific information for various computations.
 
-\subsection{Policy}
-Policy is a key element for MAPE.
+\subsection{User-Defined Policy}
+The user-defined policy is a key element for the MAPE.
 It consists of a set of user-defined rules that governs the application deployment.
-A rule is specified with the following information:
+A rule is specified with the input in the following fields:
 \begin{itemize}
-\item \textbf{metric} defines performance indicator that the current deployment will be measured against.
-\item \textbf{organ} defines the organ(s) that the rule is applicable to.
-\item \textbf{threshold} defines the upper or lower bound that the metric value should be compliant to.
-\item \textbf{operator} defines how the metric value should be compared to the threshold.
+\item The \textbf{metric} field defines the performance indicator that the current deployment will be measured against.
+\item The \textbf{organ} field defines one or more organs to whitch the rule applies.
+\item The \textbf{threshold} field defines the upper or lower bound that the metric value should be compliant to.
+\item The \textbf{operator} field defines how the metric value should be compared to the threshold. (e.g. less than, bigger than)
 For example, a "less than" operator means the metric value need to be less than the specified threshold.
-\item \textbf{weight} defines the weight of a rule relative to others when multiple rules are specified.
+\item The \textbf{weight} field defines the weight of a rule relative to others when multiple rules are specified.
 \end{itemize}
 Based on the metric selected, a rule can be classified into one of the following three types:
 \begin{itemize}
-\item \textbf{Resource utilization rule} limits the resource utilization to the specified threshold.
+\item A \textbf{resource utilization rule} limits the resource utilization to the specified threshold.
 An example would be to restrict the CPU utilization to be lower than 80\%.
-\item \textbf{Cost rule} limits the total cost incurred from running on the cloud infrastructure.
-\item \textbf{Application metric rule} specifies the range of application metric that the application need to comply to.
+\item A \textbf{cost rule} limits the total cost incurred for running the cloud infrastructure.
+\item An \textbf{application metric rule} specifies the range of application metric that the application need to comply to.
 In current implementation, click rule is an example of application metric rule.
 \end{itemize}
 
@@ -732,7 +730,7 @@ The output of solving this problem is an adaptation action or a series of adapta
 Before starting the MDP, the environment and application deployment need to be modelled as states.
 At the same time, adaptation actions are modelled as transition actions in MDP that change state from one to another.
 BURLAP library and its framework is used for modelling and transition action definition.
-Classes in the package \texttt{ch.uzh.glapp.mdp} are implementation according to the BURLAP framework. \todo{add reference to http://burlap.cs.brown.edu/tutorials/bpl/p4.html\#qlearn}
+Classes in the package \texttt{ch.uzh.glapp.mdp} are implementation according to the BURLAP framework \todo{http://burlap.cs.brown.edu/tutorials/bpl/p4.html\#qlearn}.
 \begin{itemize}
 \item \texttt{MapeWorld} class defines the domain of optimization problem.
 \item \texttt{MapeCell} class defines the state representation for MDP.
