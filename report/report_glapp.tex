@@ -730,7 +730,7 @@ The output of solving this problem is an adaptation action or a series of adapta
 Before starting the MDP, the environment and application deployment need to be modelled as states.
 At the same time, adaptation actions are modelled as transition actions in MDP that change state from one to another.
 BURLAP library and its framework is used for modelling and transition action definition.
-Classes in the package \texttt{ch.uzh.glapp.mdp} are implementation according to the BURLAP framework \todo{http://burlap.cs.brown.edu/tutorials/bpl/p4.html\#qlearn}.
+Classes in the package \texttt{ch.uzh.glapp.mdp} are implementation according to the BURLAP framework\footnote{http://burlap.cs.brown.edu/tutorials/bpl/p4.html\#qlearn}.
 \begin{itemize}
 \item \texttt{MapeWorld} class defines the domain of optimization problem.
 \item \texttt{MapeCell} class defines the state representation for MDP.
@@ -769,9 +769,9 @@ Implementation for state representation and environment interaction is reused.
 For the rule-based adaptation, the rule set is implemented in the \texttt{MapeActionTypeHeuristic} class.
 The \texttt{MapeWorld} class, which define the problem domain, is also updated to use this \texttt{MapeActionTypeHeuristic} class.
 
-With the use of rule set, MAPE first analyzes the violation information from the previous stage of healthiness computation.
+With the use of a rule set, MAPE first analyzes the violation information from the previous stage of healthiness computation.
 If there are multiple violations, the list of violations are sorted in descending order of healthiness value.
-Then MAPE will action on the violation with the most negative healthiness value.
+Then the MAPE will action on the violation with the most negative healthiness value.
 This ensure the violation that has the largest impact on the overall application healthiness is addressed first.
 The violations are classified into 3 types: resource utilization violation, cost violation and custom metrics violation.
 
@@ -806,9 +806,9 @@ The \texttt{burlap.behavior.valuefunction.QProvider} is responsible for computin
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Other}
 \subsection{Monitoring / Prometheus}
-\todo{to be reviewed by: Riccardo}
+%\todo{to be reviewed by: Riccardo}
 
-Prometheus \todo{add reference} is a monitoring system that can provide both infrastructure and application performance metrics.
+Prometheus\footnote{https://prometheus.io/} is a monitoring system that can provide both infrastructure and application performance metrics.
 Infrastructure metrics are provided by exporters, which is a set of library that expose metrics data of the host environments and the Docker containers.
 Application metrics are provided with the use of custom-built program to expose the needed data in a Prometheus exposition format \todo{add reference}.
 The use of Prometheus and its exposition format enable MAPE to access custom metrics such as application performance data or cost metrics of the host from various cloud service providers.
@@ -832,7 +832,7 @@ In the course of the project, several further small tools and applications were 
 	\item \textbf{Consul.io}: \\
 	As a discovery service for the Docker swarm hosts, we used the key/value store of Consul.io\footnote{https://www.consul.io/}. It is included in the mentioned infrastructure scripts.
 	\item \textbf{Registrator}: \\
-	To register every exposed port of the deployed applications, we used Consul.io in combination with Registrator\footnote{http://gliderlabs.com/registrator/latest/}. In order to register not only public ports but also exposed ports that are only available in the created overlay network, the \textit{-internal} run option proved to be very helpful.
+	To register every exposed port of the deployed applications, we used Consul.io in combination with Registrator\footnote{http://gliderlabs.com/registrator/latest/}. In order to register not only public ports but also exposed ports that are only available in the created overlay network, the \textit{-internal} run option proved to be very helpful. \todo{what is the -internal flag doing exacly?}
 	\item \textbf{HAProxy}: \\
 	Registrator was used to create the mentioned reverse proxies.
 	In order to always have an up-to-date reverse proxy with a complete list of active endpoints of a specific organ, we created a HAProxy docker image\footnote{https://github.com/Clabfabs/miniboxes/tree/master/minihaproxy, https://hub.docker.com/r/clabs/haproxylb/} that used Registrator and consul-template\footnote{https://github.com/hashicorp/consul-template} to dynamically adjust the configuration of the HAProxy and restart it with every change.
@@ -841,8 +841,8 @@ In the course of the project, several further small tools and applications were 
 	It is based on an example application by Docker itself\footnote{https://blog.docker.com/2015/11/docker-toolbox-compose/}.
 	We adjusted the individual components to our needs, e.g. to include custom metrics, and they can all be found on our github page.
 	\item \textbf{Metrics-Server}: \\
-	The metrics-server\footnote{https://github.com/glapp/metrics-server} is a small service we created that was used to register the clicks of the demo application.
-	It could be extended to handle all different kinds of metrics via a REST API.
+	The metrics-server\footnote{https://github.com/glapp/metrics-server} is a small service we created that was used to register the clicks of the demo application. Later on we used it to serve the cost metrics as well.
+	It can be extended to handle all different kinds of metrics that are scrappet via a REST API from the prometheus server.
 \end{itemize}
 
 
@@ -944,6 +944,8 @@ However, this doesn't solve most of the mentioned problems. E.g., what if the da
 
 An example of a library that presents a possible solution is Flocker\footnote{https://github.com/ClusterHQ/flocker}, which introduces Flocker data volumes that are supposed to be portable and following a container when it's moved.
 
+Another idea would be to just let the data where it is and just create a new data store somewhere else that is somehow "connected" to the first one. This goes to the direction of distributed databases.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
@@ -954,8 +956,10 @@ We ensured that it's as easy as possible to set it up by providing scripts, but 
 However, it's desirable to be flexible when it comes to available hosts in the GLAPP infrastructure.
 In theory, in a fixed infrastructure, there should be one host for every possible combination of deployment attributes like region, provider, tier, etc. to ensure that a cell can move freely between those attributes.
 
-In a dynamic infrastructure, the hosts would be spawned and killed on the fly, depending on the required resources. So if a cell should be moved to a DigitalOcean instance in Europe and there is no such host yet, the backend would spawn such a host and add it to the network of the existing hosts.
-Technically, this is not a big challenge, since most providers offer an API to automatically spawn and kill instances, and to join a Docker swarm once an instance is spawned is simple.
+In a dynamic infrastructure, the hosts would be spawned and killed on the fly, depending on the required resources.
+So, if a cell should be moved to a DigitalOcean instance in Europe and there is no such host yet, the backend would spawn such a host and add it to the network of the existing hosts.
+Technically, this is not a big challenge, since most providers offer an API to automatically spawn and kill instances.
+Moreover, to join a Docker swarm once an instance is spawned is simple.
 It would still be a trade-off between costs and availability/speed - if we keep some hosts with a common combination of attributes like a US instance on DigitalOcean with tier 1 alive constantly, movements to this host would be instant.
 
 But the main problem here and the reason that this turned out to be out of scope of this project is the fact that these hosts need to be managed by a separate, higher-level control loop as well.
@@ -966,8 +970,8 @@ This control loop would have a meta-perspective on the infrastructure, would mon
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{MDP for Learning}
 %MAPE
-Extensibility is also an important aspect of MAPE.
-As discussed in section 3.3.6, MAPE allows custom learning algorithm to used in place of existing rule-based adaptations.
+Extensibility is also an important aspect of the MAPE.
+As discussed in section 3.3.6, the MAPE allows custom learning algorithm to be used instead of the actual implemented rule-based adaptations.
 On the other hand, while the learning algorithms with standard function approximation in BURLAP library does not handle nominal feature in states, they can be replaced with other function approximation implementation.
 One possible method to explore is Free-Energy based Reinforcement Learning (FERL).
 In FERL, the action-value function, Q, is approximated as the negative free-energy of a restricted Boltzmann machine \todo{add reference} where a restricted Boltzmann machine is a type of the product of experts model.
