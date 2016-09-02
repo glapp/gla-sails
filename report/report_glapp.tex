@@ -101,24 +101,35 @@ The report is concluded in chapter~\ref{ch:conclusion}.
 % NEW CHAPTER																						%
 % Remember to always use a new line for a new sentence! %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{6 PAGES: Background \& Architecture}\label{ch:background}
+\chapter{Background \& Architecture}\label{ch:background}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Basic Design Decisions}
-\todo{IN CHARGE: Adrian}
 
-\subsection{Main Components: Provisioning Backend, Frontend, Control Loop}
-GLAPP consists of three building blocks: A provisioning backend, a frontend and a control loop.
-In developing GLAPP, we made different decisions in platform architecture as well as implementation.
-Docker containerization is the infrastructure backbone where the GLAs are deployed to.
-GLA deployment on this infrastructure is handled by the provisioning backend.
-It is implemented with node.js runtime and Sails framework.
-The second component is the frontend.
-It provides an interface for the user to interact with the platform.
-While is also developed with node.js runtime, AngularJS framework is used.
-Lastly, a control loop following the Monitoring, Analysis, Planning and Execution (MAPE) model is developed using Java with BURLAP library and framework.
+We decided to build GLAPP on three pillars, as visualized in figure~\ref{fig:simple}:
+A backend server that handles everything related to the deployment of the GLAs and therefore also talks to the host infrastructure, a frontend to serve the users of the platform and give a visual overview over the state of their GLAs, and a control loop called MAPE that monitors the deployed GLAs and triggers adaptions via the backend server. These components will be introduced in section~\ref{sec:detailedArchitecture} and discussed in detail in chapter~\ref{ch:components}.
+
+\begin{figure}[!ht]
+\centering
+	\includegraphics{simple_architecture.pdf}
+	\caption{Main components of GLAPP}
+	\label{fig:simple}
+\end{figure}
+
+Several design decision had to be made considering those main components and the infrastructure. This section introduces some of these decision processes.
+
+
+%GLAPP consists of three building blocks: A provisioning backend, a frontend and a control loop.
+%In developing GLAPP, we made different decisions in platform architecture as well as implementation.
+%Docker containerization is the infrastructure backbone where the GLAs are deployed to.
+%GLA deployment on this infrastructure is handled by the provisioning backend.
+%It is implemented with node.js runtime and Sails framework.
+%The second component is the frontend.
+%It provides an interface for the user to interact with the platform.
+%While is also developed with node.js runtime, AngularJS framework is used.
+%Lastly, a control loop following the Monitoring, Analysis, Planning and Execution (MAPE) model is developed using Java with BURLAP library and framework.
 
 \subsection{Deployment: Containerization with Docker}
 \subsubsection{Containerization vs. other virtualization methods:}
@@ -130,7 +141,7 @@ Instead, applications are deployed on top of a container engine which runs on ho
 In addition, application binaries are stored in a package along with the necessary libraries in the case of containerization.
 This contrasts to the full OS required for a virtual machine.
 These lightweight runtime and packaging provides a fast deployment that is a crucial aspect of GLAPP.
-With this containerization techology, GLAPP can deploy application components in seconds when the application images are present on the host.
+With this containerization technology, GLAPP can deploy application components in seconds when the application images are present on the host.
 In addition to the fast deployment, containerization has a much smaller footprint comparing with virtual machines.
 A normal virtual machine image has a size in gigabytes due to the presence of a full OS.
 In contrasts, a container image used in our case study take up only a few hundred megabytes as it only includes the application binaries and required libraries.
@@ -154,9 +165,9 @@ In contrasts, a container image used in our case study take up only a few hundre
 
 \subsubsection{Docker vs. other containerization technologies:}
 In containerization, there are various models and technologies.
-For example, both Docker and OpenVZ are containerization technologies but they use different models.
+For example, both Docker\footnote{https://www.docker.com/} and OpenVZ\footnote{https://openvz.org/} are containerization technologies but they use different models.
 However, Docker container functions as an application or a service while OpenVZ container functions as a virtual private server (VPS) for deploying additional application stack on top of it \todo{add reference https://openvz.org/Main\_Page}.
-Similar to OpenVZ, LXD is another machine containerization technology \todo{add reference}.
+Similar to OpenVZ, LXD\footnote{http://www.ubuntu.com/cloud/lxd} is another machine containerization technology \todo{add reference}.
 As GLAPP aims at managing GLAs, Docker provides the most direct way of containerization of application.
 With other containerization technologies like OpenVZ or LXD, the platform will need to manage both the application deployment on those containers as well as deployment of the container on cloud infrastructure.
 This adds another layer of overhead and complexity.
@@ -171,9 +182,9 @@ This adds another layer of overhead and complexity.
 \subsection{Orchestration: Docker Swarm}
 %\todo{Explain the advantage of Docker Swarm compared to e.g. Kubernetes}
 For GLAPP to manage the GLAs in response to the needs of application or changing environment, GLA need to be run in form of a cluster across different cloud computing resource.
-Docker Swarm is the orchestration tool used to manage this cluster of containers.
+Docker Swarm\footnote{https://www.docker.com/products/docker-swarm} is the orchestration tool used to manage this cluster of containers.
 Orchestration tool is used to control the deployment of containers across the cloud infrastructure to satisfy various objective such as load-balancing.
-While there exists other tools such as Kubernetes that provides orchestration functionalities, Docker Swarm provides additional capability to manage hosts of different cloud service providers.
+While there exists other tools such as Kubernetes\footnote{http://kubernetes.io/} that provides orchestration functionalities, Docker Swarm provides additional capability to manage hosts of different cloud service providers.
 For example, Docker Swarm can also create and delete of hosts and mange the members of the cluster.
 This enables extension possibility of MAPE to manage not only the containers, but also underlying cloud computing resources.
 
@@ -186,7 +197,7 @@ MDP is a reinforcement learning task that satisfy the Markov property \todo{add 
 During the development of GLAPP, Q-Learning was implemented as a method of MDP to determine the adaptation action.
 However, due to the problem nature, there is a high number of state is resulted from large amount of features in modelling the GLAs.
 This leads to an ineffective Q-Learning when lookup table is used for Q-values.
-Details of this problem is discussed in Markov Decision Process section of Components chapter (section 3.3.4).
+Details of this problem is discussed in later on in section~\ref{sec:mdp}.
 As a result, rule-based adaptations was used in the final implementation.
 Instead of a reinforcement learning approach, heuristic is used for adaptation action determination.
 Rule-based adaptation is fast in finding adaptation action to address violated policy comparing with Q-Learning when lookup table.
@@ -195,7 +206,7 @@ In contrasts, MDP requires the convergence of Q-values in order to generate effe
 At the same time, the heuristic rules used are easy to understand for further tweaking.
 However, rule-based adaptation also has its disadvantages.
 For instance, it does not scale well as the types of metric or the complexity of policy due to additional rules are required when new types of metric are introduced or the policy becomes more complex.
-In such case, MDP will scale well as the Q-value will converge learnt over time.
+In such case, MDP will scale well as the Q-value will converge learnt over time. \todo{What do you mean by this?}
 That means even with additional metrics and complex policy, once Q-Learning have the converged Q-values, it is expected to generate effective adaptation action.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -219,10 +230,10 @@ Since we were about to work with relatively new technologies like Docker, it see
 
 
 This component of the application facilitates users to interact with rest of the platform. 
-Since the whole back-end already provides REST endpoints for all the services, platform is fairly relaxed in choosing a framework for the front-end. 
-Angular was particularly chosen for two important reasons. 
-Since we had already decided to use node.js for the server component, it helps a great deal in terms of productivity to be able to use the same language for other components. 
-Team could easily switch between the server and front-end while developing features. 
+Since the whole backend already provides REST endpoints for all the services, the platform is fairly relaxed in choosing a framework for the front-end. 
+AngularJS\footnote{https://angularjs.org/} was particularly chosen for two important reasons. 
+Since we had already decided to use Node.js for the server component, it helps a great deal in terms of productivity to be able to use the same language for other components. 
+The team could easily switch between the server and front-end while developing features. 
 This can greatly aid us to iterate faster on the feedback received. 
 
 Some of the benefits of using Angular framework are as follows. 
@@ -255,7 +266,7 @@ Availability of these functionalities from built-in and third party library make
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Architecture}
+\section{Detailed Architecture}\label{sec:detailedArchitecture}
 The platform consists of 3 different parts/blocks: a frontend, a server backend and a control loop.
 The frontend provides an interface for developer to interact with the middleware to deploy and manage her GLAs.
 The server backend provides the management functionalities of the middleware including cloud infrastructure management, application deployment and access to the application status information.
@@ -269,51 +280,51 @@ Possible execution actions are moving cells between different cloud instances (m
 	\caption{Detailed Architecture of GLAPP and the Infrastructure}
 	\label{fig:detailed}
 \end{figure}
-\todo{Explain the separate parts - DONE BY: Dinesh}
-
 
 Going into the details of architecture, GLAPP platform is designed to be modular and interoperable from the very beginning. 
 Every component is connected to each other through a series of API calls, so that every critical component in the platform can be modified without large dependency chains, or even completely replaced with a better one if needed.
 A simple user interaction flow through the platform architecture looks as follows. 
 Once the developer decides to use the platform, they interact with the user interface (UI) to create a new global living application (GLA). 
 One can create a new GLA by simply providing the URL address of their code repository. 
-If it's a valid repository, front-end module passes the repository URL to the sails server through API. 
-Git Module in the sails server then clones this repository to find the compose file. 
-Platform presumes that this repository contains a docker compose file, which is a means of specifying configuration of main components in their application. 
+If it's a valid repository, the front-end module passes the repository URL to the sails server through its API. 
+The Git Module in the sails server then clones this repository to find the compose file. 
+The platform presumes that this repository contains a docker compose file, which is a means of specifying configuration of main components in their application. 
 The structure of this compose file specifies the important services in the application, the sources of each of their images, various environment variables, ports to be exposed and dependencies to make them run smoothly. 
-Docker Interpreter module will perform this task of analyzing the compose file and storing the necessary information into the database. 
+The Docker-compose Interpreter module will perform this task of analyzing the compose file and storing the necessary information into the database. 
 It creates the high level definition of the GLA, with its main organs and other important information.
-	
-Database module is responsible for storing every piece of information related to the application, users, except the cell images themselves. 
-This is handled by the docker remote API, which is a part of container management module. Container management is an important liaison between the infrastructure and the sails server. 
-It is responsible for pulling images mentioned in the compose file and storing them in the infrastructure, in a ready to deploy state. 
+
+The Database module is responsible for storing every piece of information related to the application, users, except the cell images themselves. 
+This is handled by the docker remote API, which is a part of Container Management module.
+Container management is an important liaison between the infrastructure and the sails server. 
+It is responsible for pulling images mentioned in the compose file and storing them in the infrastructure, in a ready-to-deploy state. 
 It also executes the initial deployment and any future changes to deployment in terms of adaptations. 
 Each image pulled from the compose file is stored as an elementary cell, from which future cells of the GLA are created. 
-Each cell stored in the infrastructure can be re-used if any other GLA's has a specification of the same cell. 
-For example, if your GLA has a postgres database mentioned as a cell this will be stored and made readily available for any other GLA's using the postgress cell. 
-In this way, we cut down the waiting time for images to be pulled down to a fraction of what it would usually take and many GLA's can be created and deployed instantaneously in the cloud.
+Each cell stored in the infrastructure can be re-used if any other GLAs has a specification of the same cell. 
+For example, if your GLA has a postgres database mentioned as a cell this will be stored and made readily available for any other GLAs using the postgres cell. 
+In this way, we cut down the waiting time for images to be pulled down to a fraction of what it would usually take and many GLAs can be created and deployed instantaneously in the cloud.
 
 Infrastructure is the bottom layer in GLAPP platform. 
-Our architecture uses docker swarm technology underneath to create a cluster of servers across various cloud providers with a common internal network routing in place. 
-This allows us to have servers in any part of the world, or with any provider like Google, Amazon, Digitalocean and still be able to talk to each other as they are part of one entity. 
+Our architecture uses the docker swarm technology underneath to create a cluster of servers across various cloud providers with a common internal network routing in place. 
+This allows us to have servers in any part of the world, or with any provider like Google, Amazon, DigitalOcean and still be able to talk to each other as they are part of one entity. 
 In the cluster, there is one swarm master and multiple swarm-agents which talk to each other through the swarm master. 
-We deployed a key value store in one of host machines to keep track of the host information. 
-Consul application is used to help with service discovery and keep track of any changes. 
-Registrator is used along with consul as a service registry bridging tool, to automatically register and deregister services of any cells as they become on-line or off-line. 
-Whole infrastructure cluster with multiple hosts, and application services running inside these host machines are organized into one major module. 
-This infrastructure module communicates with sails server through the remote API. 
+We deployed a key value store in one of host machines to keep track of the host information and provide service discovery as it will be described later in section~\ref{sec:supportingTools}.
+%%% This is covered later on
+%Consul application is used to help with service discovery and keep track of any changes. 
+%Registrator is used along with consul as a service registry bridging tool, to automatically register and deregister services of any cells as they become on-line or off-line. 
+The whole infrastructure cluster with multiple hosts and the application services running inside these host machines are organized into one major module. 
+The sails server communicates with the infrastructure through the Docker Remote API. 
 
 Additionally we also use Prometheus, a powerful monitoring solution and a time series database to feed our application metrics data. 
 In order to make this happen, we run a prometheus agent on every host machine, which periodically monitors all the containers that are currently running on a particular host to feed respective data into this time series database. 
 We use cAdvisor for this function. 
 It is a daemon, that collects information related to the resource usage, network statistics and performance of the running containers in the machine. 
 It has native support for docker containers, which makes it a perfect bid for the job. 
-Prometheus server scrapes data from all agents every few seconds. 
-Best part is, prometheus not only collects the data, but also provides a powerful query language to aggregate and query the metric data. 
-This monitoring module is also extensible with external application metrics, as REST API is built into the prometheus tool. 
-GLAPP platform facilitates a way to feed third party application metrics into the platform, with the help of this.
+The prometheus server scrapes data from all agents every few seconds. 
+The best part is, prometheus not only collects the data, but also provides a powerful query language to aggregate and query the metric data. 
+This monitoring module is also extensible with external application metrics, as a REST API is built into the prometheus tool. 
+The GLAPP platform facilitates a way to feed third party application metrics into the platform, with the help of this.
 
-During the creation of a new GLA, a developer can specify high level application policies to guide their GLA's. 
+During the creation of a new GLA, a developer can specify high level application policies to guide their GLAs. 
 For example, a policy related to cost can be set as not to exceed 1USD/hr, irrespective of the load or the number of cells running at the moment. 
 It's then the job of GLAPP platform to continuously optimize deployment strategy, so that this policy is never breached. 
 Theoretically meaning, it should strike a balance between cheaper instances, high availability in all regions for the users while ensuring other goals if there are any. 
@@ -321,11 +332,11 @@ This is where MAPE comes into the picture.
 It serves as the nucleus of the platform. 
 As soon as the application is deployed, MAPE looks for policies set on the GLA. 
 If there are any, it then retrieves the related application metric data from the prometheus server. 
-Analysis module then compares the policies with metric data to detect if there are any current violations. 
+The analysis module then compares the policies with metric data to detect if there are any current violations. 
 In the event of a violation, planning module then recomputes the optimal deployment strategy and necessary adaptations to achieve that goal. 
-Execution module then executes the planned adaptations by communicating the specifics to the sails server, which then executes the actual changes in the infrastructure. 
-Planning module is the crucial step here, and this is extensible. 
-Meaning, one can swap this part with a different planning algorithm of their choice to optimize the deployment. 
+The execution module then executes the planned adaptations by communicating the specifics to the sails server, which then executes the actual changes in the infrastructure. 
+The planning module is the crucial step here, and this is extensible. 
+That means that one can swap this part with a different planning algorithm of their choice to optimize the deployment. 
 Currently MAPE supports a basic form of markov decision process using Q-learning and a rule based algorithm. 
 This whole cycle of monitoring, analysis, planning and execution is repeated until the application reaches a healthy state. 
 It ensures the application is always healthy and adheres to the set policies. 
@@ -341,7 +352,7 @@ More details on the individual components and their implementation follows in th
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Backend}
+\section{Backend Server}
 
 The backend is mainly responsible for the deployment and is the central component that defines the data structure of the platform. In order to understand the main functionality of the backend server, this section introduces the data models, the REST API, the services and the tests of this component.
 
@@ -573,7 +584,7 @@ Based on the metric selected, a rule can be classified into one of the following
 \begin{itemize}
 \item \textbf{Resource utilization rule} limits the resource utilization to the specified threshold.
 An example would be to restrict the CPU utilization to be lower than 80\%.
-\item \textbf{Cost rule} limits the total cost incurred from running on the cloud infrastrcture.
+\item \textbf{Cost rule} limits the total cost incurred from running on the cloud infrastructure.
 \item \textbf{Application metric rule} specifies the range of application metric that the application need to comply to.
 In current implementation, click rule is an example of application metric rule.
 \end{itemize}
@@ -602,7 +613,7 @@ This list of violations will be further processed in MAPE to determine appropria
 
 % add details about the processing the violation information
 
-\subsection{Markov Decision Model}
+\subsection{Markov Decision Model}\label{sec:mdp}
 % burlap library for MDP and its extensibility
 Markov Decision Model (MDP) will be triggered to find an application deployment that fulfil policy requirement whenever a rule violation is detected.
 In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the problem of determining adaptation action in response to the rule violation.
@@ -684,7 +695,7 @@ The \texttt{burlap.behavior.valuefunction.QProvider} is responsible for computin
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW SECTION																						%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{2 PAGES: Other}
+\section{Other}
 \subsection{Monitoring / Prometheus}
 \todo{to be reviewed by: Riccardo}
 
@@ -703,7 +714,7 @@ The robust query functionality provides two major advantages.
 First of all, it shifts some computation from MAPE to Prometheus and thus reducing complexity of MAPE in getting specific performance metric for subsequent healthiness computation.
 Secondly, it allows quick tweaking and testing of query parameters to obtain the most relevant data for adaptation action determination during later development stage. 
 
-\subsection{Supporting Tools \& Applications}
+\subsection{Supporting Tools \& Applications}\label{sec:supportingTools}
 In the course of the project, several further small tools and applications were used to complete the task. This section quickly mentions them with a reference to further information sources:
 \begin{itemize}
 	\item \textbf{Infrastructure scripts}: \\
