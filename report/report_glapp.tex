@@ -225,8 +225,8 @@ As an example, \textit{dockerode}\footnote{https://www.npmjs.com/package/dockero
 Since we were about to work with relatively new technologies like Docker, it seemed reasonable to count on packages which we knew will be adapted to changes in these new technologies.
 
 \subsection{GUI: AngularJS}
-\todo{DONE BY: Dinesh}
-\todo{Explain the choice and alternatives}
+%\todo{DONE BY: Dinesh}
+%\todo{Explain the choice and alternatives}
 
 
 This component of the application facilitates users to interact with rest of the platform. 
@@ -776,6 +776,9 @@ All five components are available as Docker containers and everything is wrapped
 When a user wants to deploy an application onto the GLAPP platform, he basically links the git repository where his docker-compose.yml file is stored.
 GLAPP finds the docker-compose.yml file and starts with the provisioning of all images on all involved VMs.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Scenarios}
 For the end of project demonstration we showed three typical scenarios that the GLAPP platform is able to handle:
 \begin{enumerate}
@@ -797,6 +800,53 @@ Third scenario...
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{2 PAGES: Future Work}\label{ch:futurework}
 \todo{DONE BY: Fabio / Adrian}
+
+In the process of developing GLAPP, we came across several possible extensions that could have been implemented but turned out to be out of scope of this master project.
+However, GLAPP could be extended in future student projects, so it's still worth mentioning those possible extensions.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Support Data Mobility}
+It requires a lot of work to ensure consistent and persistent data management if a cell with data is moved.
+In the current state, GLAPP ignores the data when moving a cell, so a database will be removed on one host and re-created on another host, which means all data is lost.
+This is fine for the scope of this project, but as a product it's obvious that GLAPP would have to support data mobility.
+That is not trivial however, since it would require to e.g. copy a whole database from one host to another host while ensuring that no data is lost in the meantime.
+It also drastically slows down the movement process.
+
+This is a common problem and therefore there exist libraries and possible solutions for this.
+Docker itself tries to provide a native solution for it by allowing to turn the data of a container into a tar-file before moving it\footnote{https://docs.docker.com/engine/tutorials/dockervolumes/\#/backup-restore-or-migrate-data-volumes}.
+However, this doesn't solve most of the mentioned problems. E.g., what if the database should be further filled during the movement process?
+
+An example of a library that presents a possible solution is Flocker\footnote{https://github.com/ClusterHQ/flocker}, which introduces Flocker data volumes that are supposed to be portable and following a container when it's moved.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Dynamic Infrastructure}
+Currently, GLAPP relies on a fixed infrastructure of hosts.
+We ensured that it's as easy as possible to set it up by providing scripts, but once the infrastructure is in place, it's not supposed to change.
+However, it's desirable to be flexible when it comes to available hosts in the GLAPP infrastructure.
+In theory, in a fixed infrastructure, there should be one host for every possible combination of deployment attributes like region, provider, tier, etc. to ensure that a cell can move freely between those attributes.
+
+In a dynamic infrastructure, the hosts would be spawned and killed on the fly, depending on the required resources. So if a cell should be moved to a DigitalOcean instance in Europe and there is no such host yet, the backend would spawn such a host and add it to the network of the existing hosts.
+Technically, this is not a big challenge, since most providers offer an API to automatically spawn and kill instances, and to join a Docker swarm once an instance is spawned is simple.
+It would still be a trade-off between costs and availability/speed - if we keep some hosts with a common combination of attributes like a US instance on DigitalOcean with tier 1 alive constantly, movements to this host would be instant.
+
+But the main problem here and the reason that this turned out to be out of scope of this project is the fact that these hosts need to be managed by a separate, higher-level control loop as well.
+This control loop would have a meta-perspective on the infrastructure, would monitor the metrics of the cloud instances and trigger adaptions in the form of the creation or destruction of instances with certain attributes.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{MDP for Learning}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% NEW SECTION																						%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Decentralized MAPE}
 
 
 
