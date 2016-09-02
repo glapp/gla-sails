@@ -652,7 +652,7 @@ These features consist of discrete string values and as a result both SARSA and 
 However, since the provided function approximation methods from current BURLAP library are not applicable to string-valued feature, further exploration of function approximation and implementation are needed.
 Possibility of using MDP with alternative function approximation method will be discussed in the Future Work chapter.
 
-\subsection{Rule-based Adaptation Logic}
+\subsection{Rule-based Adaptation Logic} \label{RBAdaptationLogic}
 For the final implementation, rule-based adaptation logic is used in MAPE for determination of adaption action. 
 Although MDP is not used in the final implementation, the BURLAP framework is retained.
 As a result, changing to rule-based adaptation logic involves mainly the implementation of a rule set to replace the learning algorithm while the majority of previous implementation for other functionalities are carried over.
@@ -745,7 +745,7 @@ In the course of the project, several further small tools and applications were 
 \todo{DONE BY: Riccardo}
 
 \section{The demo application}
-For developing and end of project presentation purposes we used an adapted version of the example-voting-app that Docker uses to illustrate the Docker Compose tool.
+For developing and end of project presentation purposes we used an adapted version of the example-voting-app\footnote{https://github.com/docker/example-voting-app} that Docker uses to illustrate the Docker Compose tool.
 It is basically a web application that lets users vote option A or B.
 The version of the voting application that we used is composed of five components:
 \begin{itemize}
@@ -760,18 +760,18 @@ The worker takes the vote from the redis in-memory database and stores it into t
 As the name suggests, the role of the result-app is for displaying the results of the votes.
 Image X is a high level overview of the components.
 
-The voting-app is a Python-Flask web application that lets the user vote either for Batman or for Superman.
+The voting-app is a Python-Flask web application that lets the user vote either for Batman or for Superman\footnote{At the time we modified the application, the movie Batman vs. Superman was running in the Swiss cinemas.}.
 For the end of project presentation we also added a button to switch between US and EU in order to be able to simulate clicks done in the two regions.
 We build into the voting-app the ability to register how many clicks are done in a specific region.
 This was necessary in order to show the ability of the GLAPP platform to adapt the application based on user location.
-More about the click metric can be fund in section 3.3.5 Rule-based Adaptation Logic.
+More about the click metric can be found in section ~\ref{RBAdaptationLogic}.
 
 The result-app is a Node.js web application that retrieves the votes in the relational database PostgreSQL.
 
 The worker is a Java application that whenever a new vote is available in the redis in-memory database, the worker takes the vote and inserts into the PostgreSQL database.
 
 The last two components are the standard redis and PostgreSQL databases.
-All five components are available as Docker containers and everything is wrapped up in the Docker Compose file of our gla-demo-app.
+All five components are available as Docker containers and everything is wrapped up in the Docker Compose file of our gla-demo-app\footnote{https://github.com/glapp/gla-demo-app}.
 
 When a user wants to deploy an application onto the GLAPP platform, he basically links the git repository where his docker-compose.yml file is stored.
 GLAPP finds the docker-compose.yml file and starts with the provisioning of all images on all involved VMs.
@@ -784,11 +784,27 @@ For the end of project demonstration we showed three typical scenarios that the 
 	\item A Region-to-Region scenario, where we monitor clicks on the voting-app
 \end{enumerate}
 
-In the first scenario, we used the Linux terminal to enter into the voting-app Docker container in order to use the stress tool1 for simulate a high CPU utilization.
+\subsection{Instance-to-Instance}
 
-Second scenario...
+In the first scenario, we used the Linux terminal to enter into one voting-app Docker container in order to use the stress tool\footnote{http://linux.die.net/man/1/stress} for simulate a high CPU utilization.
+We also set up a policy that lets the MAPE monitor all cells of the voting-app organ. When stressing the cell, the MAPE will take care of it by transferring the cell to another host with more CPUs assuming that it will alleviate the CPU load.
 
-Third scenario...
+\subsection{Provider-to-Provider}
+
+For second scenario we had a policy that monitored the total cost of the whole application in terms of USD per hour.
+The MAPE calculates the current cost and whenever the cost exceeds the policy, it triggers an adaptation.
+In this case we changed the cost per hour of Amazon Web Services (AWS) instances.
+To this end we implemented a RESTful API in the GLAPP platform that enables us to switch between two cost profiles for AWS.
+These two profiles are then uploaded in the metric server described in section ~\ref{supportingTools}.
+As soon as the MAPE detects the higher costs of the AWS machines, it successively migrates affected cells to a cheaper cloud provider until the total cost satisfies the policy again.
+
+\subsection{Region-to-Region}
+In the last scenario showed that the platform is able to follow the users.
+It moves or creates new cells where the voting-app users are geographically located.
+We utilized the custom click metrics, as described in section ~\ref{RBAdaptationLogic}.
+After ensuring that the click policy is in place we started to click on the voting-app buttons.
+The system registered the user clicks and spawned new cells in the corresponding region as soon as the threshold of clicks per minutes has been hit.
+After stop clicking the clicks per minute went down again and the original state was established.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
