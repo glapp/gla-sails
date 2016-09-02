@@ -671,12 +671,13 @@ It also includes classes for interfacing with other systems as well as an utilit
 At the start of each control loop, the MAPE interfaces with the SAILS backend to retrieve environment information, and with the monitoring system to retrieve performance metrics. To conclude the loop, the MAPE communicates again to the SAILS backend to execute the adaptation action and to get the new state information.
 As mentioned in the implementation decision section, MAPE use HTTP protocol with JSON object for data exchange.
 It retrieves everything through HTTP requests, like for example the infrastructure information, the application deployment information, the user-defined policies, and the performance metrics.
-For instance, the infrastructure information includes information of virtual machines such as the service provider, machine location and machine tier. Deployment information, on the other hand, refers to the information of each application components including on which containers they are currently deployed.
-Furthermore, MAPE also retrieves user-defined policy through SAILS backend. A policy is set of rules that defines which metrics the application need to comply to, its threshold for healthiness determine and the weight of each rule relative to the others.
-Lastly, MAPE retrieve the performance metrics from the backend monitoring system.
-JSON objects are used for all these information retrieval.
+For instance, the infrastructure information includes information of the instances such as the service provider, instance location and size. Deployment information, on the other hand, refers to the information of each application components including on which containers they are currently deployed.
+Furthermore, MAPE also retrieves user-defined policy through SAILS backend.
+A policy is set of rules that defines which metrics the application need to comply to, its threshold for calculating the healthiness and the weight of each rule relative to the others.
+Lastly, the MAPE retrieves the performance metrics from the monitoring system.
+JSON objects are used for all these information retrievals.
 The use of JSON objects provides a data structure that is flexible to represent different types of information from different interfacing systems.
-In addition, it allows MAPE to build a object-oriented view of the whole environment that provides quick access to specific information for various computations.
+In addition, it allows the MAPE to build an object-oriented view of the whole environment that provides quick access to specific information for various computations.
 
 \subsection{Policy}
 Policy is a key element for MAPE.
