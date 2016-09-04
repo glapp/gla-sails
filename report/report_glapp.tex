@@ -87,7 +87,7 @@ The bio-inspired terminology applies for the different levels of components of a
 
 In order to manage these GLAs, we introduce a platform called GLAPP (\textbf{G}lobal \textbf{L}iving \textbf{AP}plication \textbf{P}latform).
 It allows a developer to deploy multiple GLAs on whatever cloud she has access to and sets a centralized mechanism in place to constantly monitor and manage all the GLAs.
-The platform supports heterogeneous environments, so a a GLA can live and move across different providers, regions, instance types, etc.
+The platform supports heterogeneous environments, so a GLA can live and move across different providers, regions, instance types, etc.
 
 GLAPP is an open-source platform which can be deployed easily on a server. Set-up instructions can be found on github\footnote{https://github.com/glapp/gla-sails}, as well as all the source code that was developed in the course of this project\footnote{https://github.com/glapp}.
 
@@ -285,8 +285,8 @@ One of the important aspect of MAPE is the ability to easily interface with othe
 Another consideration is the availability of third party libraries that GLAPP can leverage to perform common computation using well-known algorithm such as various planning and learning algorithms used in Markov Decision Process (MDP).
 
 A set of comprehensive functionality is provided through Java API and third party libraries.
-In addition to functionality included in Java standard API such as HTTP connection used for interfacing with the SAILS backend and monitoring system, useful third party libraries are also available.
-For instance, the GSON library\footnote{https://github.com/google/gson} provides an easy API to create and manipulate JSON objects that is used for data exchange between MAPE and SAILS backend as well as between MAPE and the monitoring system.
+In addition to functionality included in Java standard API such as HTTP connection used for interfacing with the sails backend and monitoring system, useful third party libraries are also available.
+For instance, the GSON library\footnote{https://github.com/google/gson} provides an easy API to create and manipulate JSON objects that is used for data exchange between MAPE and sails backend as well as between MAPE and the monitoring system.
 Most importantly, the BURLAP library\footnote{http://burlap.cs.brown.edu/} provides not only a set of planning and learning algorithm for Markov Decision Process in reinforcement learning, but also a framework for further extending the processing capability through custom implementation of various components including learning algorithm and approximation function.
 The availability of these functionalities and third party libraries makes Java a compelling language in developing MAPE component.
 
@@ -742,9 +742,9 @@ This list of violations will be further processed in MAPE to determine an approp
 
 % add details about the processing the violation information
 
-\subsection{Markov Decision Model}\label{sec:mdp}
+\subsection{Markov Decision Process}\label{sec:mdp}
 % burlap library for MDP and its extensibility
-A Markov Decision Model (MDP) will be triggered to find an application deployment that fulfills the policy requirement whenever a rule violation is detected.
+A Markov Decision Process (MDP) will be triggered to find an application deployment that fulfills the policy requirement whenever a rule violation is detected.
 In the first implementation of MAPE, MDP as a reinforcement learning process was used to solve the problem of determining adaptation action in response to the rule violation.
 The output of solving this problem is an adaptation action or a series of adaptation actions that transit the application from a state where policy is violated to another where the policy is fulfilled.
 Before starting the MDP, the environment and application deployment need to be modelled as states.
@@ -1009,7 +1009,7 @@ In a restricted Boltzmann machine, binary random variables are represented as no
 The nodes belong to two disjointed sets: visible state and action nodes and hidden nodes with weight on every edge connecting a visible node and a hidden node \cite{sallans2004reinforcement, 10.3389/fnbot.2013.00003}.
 Free energy can be computed as an expected energy, which is determined by the weights, minus an entropy \cite{sallans2004reinforcement}.
 The negative free energy is used to approximate the Q-value ($Q_t = -F_t$) \cite{sallans2004reinforcement, 10.3389/fnbot.2013.00003}.
-Further studies in free-energy based reinforcement learning can be done to determine the viability of using it as an function approximation in MDP to address the large state space problem.
+Further studies in free-energy based reinforcement learning can be done to determine the viability of using it as an approximation function in MDP to address the large state space problem.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1021,7 +1021,7 @@ Currently MAPE is run in a centralized way such that an instance of MAPE retriev
 Moving to a decentralized MAPE, one can change MAPE to work on only one GLA and instantiate a separate MAPE instance for every GLA deployed.
 Since the GLAPP is containerized, this means instantiating a decentralized MAPE instance can be done easily by starting container for its corresponding GLA.
 GLAs with a decentralized MAPE lead to autonomous GLAs in the sense that it is now equipped with a capability to manage itself.
-However, further consideration on coordination between multiple MAPE instances is needed, since decentralized MAPE instances also need to manage underlying cloud computing resources.
+However, further consideration on coordination between multiple MAPE instances is needed, when decentralized MAPE instances also need to manage underlying cloud computing resources.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % NEW CHAPTER																						%
@@ -1043,7 +1043,7 @@ Our GLAPP platform is designed from the ground up to take advantage of arbitrage
 To this extent we not only succeeded in building such a platform, but we also provided through a series of scenarios and sample GLAs that we can take advantage of these opportunities and adapt the deployment plan from time to time.
 
 The platform is designed in a modular and extensible way, so that the developers can plug in external application metrics to feed the control loop easily.
-It is also possible to switch the planning module to apply different optimization strategies.
+It is also possible to switch the learning module to apply different optimization strategies.
 With a simple specification of a compose file and details of the code repository, GLAPP is capable of building the images and deploy the GLA application instantaneously.
 Another successful result is how fast GLAPP can respond to adaptations.
 It can move to another cloud provider or create new cells in real-time without any downtime for the applications.
