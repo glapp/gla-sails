@@ -1002,6 +1002,31 @@ However, further consideration on coordination between multiple MAPE instances i
 \chapter{1 PAGE: Conclusion}\label{ch:conclusion}
 
 
+Staying true to our initial goal, this project successfully introduced the notion of global living applications (GLA) and a new cloud middleware platform to manage these GLA's. These bio-inspired notion of GLA's are constructed with several organs and cells. 
+We were able to abstract different components in a cloud application to the notion of cells in GLA's. Apart from the macro level design of GLA's, we also introduced several microscopic phenomenons at the cellular level. 
+Cells in GLA can replicate to create two identical copies of themselves, akin to mitosis. Similarly, we showed through on the of deployment scenarios, that cells can move around, including between cloud providers  and regions as well. 
+We also introduced a MAPE control loop into our deployment platform, with capabilities of continuous optimization of GLA's runtime environment. 
+Our platform is designed in a way for users to define certain high level policies to guide their GLA's easily. 
+This policy language is quite simplistic and is extensible with third party application metrics. Our GLAPP platform is designed from the ground up to take advantage of arbitrage opportunities that exist between cloud providers in terms of cost, performance, availability, region etc., 
+To this extent we not only succeeded in building such a platform, but we also provided through a series of scenarios and sample GLA's that we can take advantage of these opportunities and adapt the deployment plan from time to time.
+
+Platform is designed in a modular and extensible way, so that the developers can plug in external application metrics to feed the control loop easily. 
+It is also possible to switch the planning module to apply different optimization strategies. 
+With a simple specification of a compose file and details of the code repository, GLAPP is capable of building the images and deploy the GLA application instantaneously. 
+Another successful result, is how fast GLAPP can respond to adaptations. 
+It can move to another cloud provider or create new cells in real-time without any downtime for the applications. 
+It is also important to mention about the introduction of red cells, which are responsible for the gateway functionality. 
+They act as proxies for the organ and make sure application endpoints are always reachable. 
+We had built a flexible infrastructure cluster that takes advantage of latest technologies, to push the overall resource utilization and performance to the next level. 
+So overall, we believe the notion of GLA's as a living, breathing applications are quite promising and a great first step towards building truly autonomous self-managing cloud applications. 
+GLAPP as a platform succeeded in meeting its objectives and also delivered an extensible platform. 
+In the end, GLAPP goes many steps beyond a conventional cloud middleware that deploys and performs some sort of linear scaling. 
+GLAPP is capable of multi-cloud deployment and offer a multitude of new opportunities in terms of availability and resource utilization to its users. 
+With GLAPP and the introduction of MAPE control loop, we are able to constantly monitor the overall state of a complex application spread across the world, and be able to optimize the deployment plan in real-time. 
+This marks a new beginning in the domain of cloud deployments, and we hope further inspire others to build on the approach.
+
+
+
 \bibliographystyle{alpha}
 \bibliography{sources}
 
