@@ -17,8 +17,8 @@ Class=LaTeXView
 Document=report_glapp.tex
 
 [Frame0_View0,0]
-TopLine=896
-Cursor=64492
+TopLine=16
+Cursor=1802
 
 [Frame1]
 Flags=0
@@ -36,7 +36,7 @@ Document=sources.bib
 
 [Frame1_View0,0]
 TopLine=0
-Cursor=0
+Cursor=669
 
 [SessionInfo]
 FrameCount=2

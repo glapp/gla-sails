@@ -29,7 +29,13 @@ Riccardo Patane \textmd{(09-177-270)}}
 \maketitle
 
 \abstract
-Abstract
+This master project takes the idea of a so-called global living cloud application (GLA), a bio-inspired notion of cloud applications, and presents a platform called GLAPP to deploy and constantly optimize the deployment of such GLAs. The work included the development of a frontend to serve the users of this platform, a backend to effectively deploy those GLAs, and a control loop to constantly monitor and adapt this deployment.
+
+The goal of GLAPP is to go some steps further than conventional cloud application platforms by supporting a deployment across several cloud providers and by offering a constantly optimized deployment with regards to user-defined policies. Examples of such optimizations are scaling actions or moving certain parts of a GLA across regions in order to satisfy the declared policies.
+
+Setting up the platform is easy on any machine that supports Docker. All the set-up instructions and source code are open-source and can be found on \textit{https://github.com/glapp}.
+
+This report introduces the underlying concepts of a GLA and GLAPP, and provides details on the design, the architecture and the concrete components of GLAPP.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -887,7 +893,7 @@ Figure~\ref{fig:demoapp} is a high level overview of these components.
 
 \begin{figure}[!ht]
 \centering
-	\includegraphics[width=\textwidth]{gla.png}
+	\includegraphics[scale=0.5]{demo-app.png}
 	\caption{The demo application components}
 	\label{fig:demoapp}
 \end{figure}
