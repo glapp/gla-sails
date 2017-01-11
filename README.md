@@ -1,9 +1,11 @@
-# GLA Backend
+# Backend for GLAPP
+Based on the [sails.js](http://sailsjs.com/) framework.
+This is the base repository to run the complete GLAPP platform by performing the following steps:
 
 ## Pre-requisites
 * [Docker Toolbox](https://www.docker.com/products/docker-toolbox)
 * A fixed infrastructure in place
-  * e.g. https://bitbucket.org/uzh/docker-swarm-creation
+  * e.g. https://github.com/glapp/docker-swarm-creation
 
 ## Prepare
 * Copy your .pem files into /swarmcerts on whatever machine the components are going to run on
