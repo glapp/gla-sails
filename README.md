@@ -1,4 +1,6 @@
 # Backend for GLAPP
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fglapp%2Fgla-sails.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fglapp%2Fgla-sails?ref=badge_shield)
+
 Based on the [sails.js](http://sailsjs.com/) framework.
 This is the base repository to run the complete GLAPP platform by performing the following steps:
 
@@ -19,3 +21,7 @@ This is the base repository to run the complete GLAPP platform by performing the
     * Install the dependencies locally with `npm install`
 * Make sure the test images are pulled on the swarm so the tests don't time out: `docker pull bfirsh/compose-mongodb-demo && docker pull mongo`
 * Start the tests with `npm test`
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fglapp%2Fgla-sails.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fglapp%2Fgla-sails?ref=badge_large)
